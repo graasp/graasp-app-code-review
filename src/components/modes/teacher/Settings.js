@@ -127,13 +127,11 @@ class Settings extends Component {
   }
 }
 
-const mapStateToProps = ({ layout, appInstance }) => {
-  return {
-    open: layout.settings.open,
-    settings: appInstance.content.settings,
-    activity: Boolean(appInstance.activity.length),
-  };
-};
+const mapStateToProps = ({ layout, appInstance }) => ({
+  open: layout.settings.open,
+  settings: appInstance.content.settings,
+  activity: Boolean(appInstance.activity.length),
+});
 
 const mapDispatchToProps = {
   dispatchCloseSettings: closeSettings,
