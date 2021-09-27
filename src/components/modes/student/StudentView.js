@@ -1,7 +1,7 @@
 import React from 'react';
 import { withTranslation } from 'react-i18next';
 import { withStyles } from '@material-ui/core/styles';
-import Editor from '@monaco-editor/react';
+import CodeReview from '../../common/CodeReview';
 
 const styles = (theme) => ({
   main: {
@@ -16,13 +16,7 @@ const styles = (theme) => ({
   },
 });
 
-export const StudentView = () => (
-  <Editor
-    height="90vh"
-    defaultLanguage="python"
-    defaultValue="# write code here"
-  />
-);
+export const StudentView = () => <CodeReview />;
 
 StudentView.propTypes = {};
 

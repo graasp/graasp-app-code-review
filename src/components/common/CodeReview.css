@@ -1,0 +1,30 @@
+.line-number {
+  width: 1%;
+  min-width: 50px;
+  padding-right: 10px;
+  padding-left: 10px;
+  font-family: ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas,
+    Liberation Mono, monospace;
+  font-size: 12px;
+  line-height: 20px;
+  color: #545d68;
+  text-align: right;
+  white-space: nowrap;
+  vertical-align: top;
+}
+
+.code-line {
+  position: relative;
+  padding-right: 10px;
+  padding-left: 10px;
+  line-height: 20px;
+  vertical-align: top;
+}
+
+.container {
+  border: 1px solid red;
+  max-width: 800px;
+  width: 90%;
+  margin: 20px auto auto;
+  box-sizing: border-box;
+}
