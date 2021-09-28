@@ -67,43 +67,27 @@ const codeSnippet =
   "            await msg_error(ctx, 'You are lacking the necessary permissions. Sorry.')\n" +
   "    '''\n";
 
+const styles = {
+  container: {
+    borderSpacing: 0,
+    maxWidth: '800px',
+    width: '90%',
+    margin: '20px auto auto',
+    boxSizing: 'border-box',
+  },
+};
+
 class CodeReview extends Component {
   static propTypes = {
     classes: PropTypes.shape({
-      root: PropTypes.string,
-      table: PropTypes.string,
-      actions: PropTypes.string,
-      button: PropTypes.string,
+      container: PropTypes.string,
     }).isRequired,
   };
 
   static defaultProps = {};
 
-  static styles = (theme) => ({
-    root: {
-      padding: theme.spacing(1),
-      margin: theme.spacing(1),
-    },
-    button: {
-      marginTop: theme.spacing(3),
-    },
-    actions: {
-      justifyContent: 'flex-end',
-    },
-  });
-
   static highlightCode(code, syntax) {
-    let highlighted;
-    if (syntax === 'python') {
-      highlighted = Prism.highlight(code, Prism.languages.python, 'python');
-    } else {
-      highlighted = Prism.highlight(
-        code,
-        Prism.languages.javascript,
-        'javascript',
-      );
-    }
-    return highlighted;
+    return Prism.highlight(code, Prism.languages[syntax], syntax);
   }
 
   state = {
@@ -136,18 +120,15 @@ class CodeReview extends Component {
   ];
 
   handleDelete = (id) => {
-    // console.log('Delete', id);
     this.comments = this.comments.filter((com) => com.id !== id);
     this.setState({ focusedId: null });
   };
 
   handleEdit = (id) => {
-    // console.log('Edit', id)
     this.setState({ focusedId: id });
   };
 
   handleSubmit = (text, id) => {
-    // console.log('Submit', id)
     this.comments = this.comments.map((com) => {
       if (com.id === id) {
         return { ...com, content: text };
@@ -158,7 +139,6 @@ class CodeReview extends Component {
   };
 
   handleAddComment(lineNum) {
-    // console.log('Add a comment on', lineNum);
     const id = `changeToUnique${lineNum}`;
     this.comments = [
       ...this.comments,
@@ -211,8 +191,9 @@ class CodeReview extends Component {
   }
 
   render() {
+    const { classes } = this.props;
     return (
-      <table className="code-review container">
+      <table className={classes.container}>
         <tbody className="code-area">
           {this.renderCodeReview(codeSnippet, this.comments)}
         </tbody>
@@ -221,8 +202,6 @@ class CodeReview extends Component {
   }
 }
 
-const StyledCodeReview = withStyles(CodeReview.style, { withTheme: true })(
-  CodeReview,
-);
+const StyledCodeReview = withStyles(styles, { withTheme: true })(CodeReview);
 
 export default StyledCodeReview;

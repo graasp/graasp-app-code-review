@@ -2,10 +2,10 @@ import React from 'react';
 import { Dialog, DialogActions, DialogTitle } from '@material-ui/core';
 import Button from '@material-ui/core/Button';
 import PropTypes from 'prop-types';
+import { withTranslation } from 'react-i18next';
 
-const ConfirmDialog = ({ open, setOpen, onClose }) => {
+const ConfirmDialog = ({ open, setOpen, onClose, t }) => {
   const handleClose = (message) => {
-    // console.log('Got closed', message);
     setOpen(false);
     onClose(message);
   };
@@ -17,14 +17,14 @@ const ConfirmDialog = ({ open, setOpen, onClose }) => {
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        Are you sure you want to delete this comment ?
+        {t('Are you sure you want to delete this comment ?')}
       </DialogTitle>
       <DialogActions>
         <Button onClick={() => handleClose(false)} color="primary">
-          Cancel
+          {t('Cancel')}
         </Button>
         <Button onClick={() => handleClose(true)} color="primary" autoFocus>
-          Yes
+          {t('Yes')}
         </Button>
       </DialogActions>
     </Dialog>
@@ -32,9 +32,10 @@ const ConfirmDialog = ({ open, setOpen, onClose }) => {
 };
 
 ConfirmDialog.propTypes = {
+  t: PropTypes.func.isRequired,
   open: PropTypes.bool.isRequired,
   setOpen: PropTypes.func.isRequired,
   onClose: PropTypes.func.isRequired,
 };
 
-export default ConfirmDialog;
+export default withTranslation()(ConfirmDialog);

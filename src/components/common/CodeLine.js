@@ -9,6 +9,25 @@ const useStyles = makeStyles((theme) =>
     root: {
       marginRight: theme.spacing(1),
     },
+    pre: {
+      display: 'inline',
+      whiteSpace: 'pre-wrap',
+      wordWrap: 'break-word',
+    },
+    lineNumber: {
+      width: '1%',
+      minWidth: '50px',
+      paddingRight: '10px',
+      paddingLeft: '10px',
+      fontFamily:
+        'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
+      fontSize: '12px',
+      lineHeight: '20px',
+      color: '#545d68',
+      textAlign: 'right',
+      whiteSpace: 'nowrap',
+      verticalAlign: 'top',
+    },
   }),
 );
 
@@ -23,7 +42,7 @@ const CodeLine = ({ htmlLine, lineNumber, onClickAdd }) => {
       onMouseOut={() => setShowAdd(false)}
       onBlur={() => setShowAdd(false)}
     >
-      <td className="line-number">
+      <td className={classes.lineNumber}>
         {lineNumber}
         <IconButton
           className={classes.root}
@@ -38,11 +57,7 @@ const CodeLine = ({ htmlLine, lineNumber, onClickAdd }) => {
       </td>
       <td className="code-line">
         <pre
-          style={{
-            display: 'inline',
-            whiteSpace: 'pre-wrap',
-            wordWrap: 'break-word',
-          }}
+          className={classes.pre}
           dangerouslySetInnerHTML={{ __html: htmlLine }}
         />
       </td>

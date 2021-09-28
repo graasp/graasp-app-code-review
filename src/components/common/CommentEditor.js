@@ -16,10 +16,35 @@ import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import { withTranslation } from 'react-i18next';
 import ConfirmDialog from './ConfirmDialog';
+
+const styles = (theme) => ({
+  root: {
+    padding: theme.spacing(1),
+    margin: theme.spacing(1),
+  },
+  header: {
+    padding: theme.spacing(1),
+  },
+  content: {
+    paddingTop: 0,
+    '&:last-child': {
+      paddingBottom: 0,
+    },
+  },
+  actions: {
+    padding: theme.spacing(1),
+    justifyContent: 'flex-end',
+  },
+  commentText: {
+    paddingLeft: '38px',
+  },
+});
 
 class CommentEditor extends Component {
   static propTypes = {
+    t: PropTypes.func.isRequired,
     comment: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string.isRequired,
@@ -42,26 +67,6 @@ class CommentEditor extends Component {
   };
 
   static defaultProps = {};
-
-  static styles = (theme) => ({
-    root: {
-      padding: theme.spacing(1),
-      margin: theme.spacing(1),
-    },
-    header: {
-      padding: theme.spacing(1),
-    },
-    content: {
-      paddingTop: 0,
-      '&:last-child': {
-        paddingBottom: 0,
-      },
-    },
-    actions: {
-      padding: theme.spacing(1),
-      justifyContent: 'flex-end',
-    },
-  });
 
   state = {
     isEdited: false,
@@ -105,10 +110,8 @@ class CommentEditor extends Component {
     const { onSubmit, onEditComment, comment } = this.props;
     this.setState({ selectedTab: isEdited ? 'preview' : 'write' });
     if (isEdited) {
-      // console.log('calling submit')
       onSubmit(value, comment.id);
     } else {
-      // console.log('calling handle edit clicked')
       onEditComment(comment.id);
     }
     this.setState({ isEdited: !isEdited });
@@ -116,7 +119,6 @@ class CommentEditor extends Component {
 
   onComDelete = (id) => {
     const { onDeleteComment } = this.props;
-    // console.log('comment to be deleted', id);
     onDeleteComment(id);
   };
 
@@ -175,7 +177,7 @@ class CommentEditor extends Component {
 
   render() {
     const { selectedTab, value, isEdited } = this.state;
-    const { classes } = this.props;
+    const { classes, t } = this.props;
     return (
       <Card
         className={classes.root}
@@ -190,7 +192,7 @@ class CommentEditor extends Component {
               value={value}
               onChange={(v) => this.setState({ value: v })}
               selectedTab={selectedTab}
-              onTabChange={(t) => this.setState({ selectedTab: t })}
+              onTabChange={(tab) => this.setState({ selectedTab: tab })}
               generateMarkdownPreview={(markdown) =>
                 Promise.resolve(this.converter.makeHtml(markdown))
               }
@@ -206,8 +208,7 @@ class CommentEditor extends Component {
           ) : (
             <Grid
               container
-              className="mde-preview standalone"
-              style={{ paddingLeft: '38px' }}
+              className={`mde-preview standalone ${classes.commentText}`}
             >
               <Grid
                 item
@@ -227,10 +228,10 @@ class CommentEditor extends Component {
               color="secondary"
               onClick={this.onCancel}
             >
-              Cancel
+              {t('Cancel')}
             </Button>
             <Button variant="contained" color="primary" onClick={this.onEdit}>
-              Finish
+              {t('Finish')}
             </Button>
           </CardActions>
         ) : null}
@@ -239,6 +240,6 @@ class CommentEditor extends Component {
   }
 }
 
-const StyledCommentEditor = withStyles(CommentEditor.styles)(CommentEditor);
+const StyledCommentEditor = withStyles(styles)(CommentEditor);
 
-export default StyledCommentEditor;
+export default withTranslation()(StyledCommentEditor);
