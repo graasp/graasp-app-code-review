@@ -15,11 +15,20 @@ import {
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
 import ConfirmDialog from './ConfirmDialog';
 
 class CommentEditor extends Component {
   static propTypes = {
-    comment: PropTypes.arrayOf().isRequired,
+    comment: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string.isRequired,
+        line: PropTypes.number.isRequired,
+        author: PropTypes.string,
+        date: PropTypes.string,
+        content: PropTypes.string.isRequired,
+      }),
+    ).isRequired,
     focused: PropTypes.bool.isRequired,
     onEditComment: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
@@ -29,11 +38,6 @@ class CommentEditor extends Component {
       header: PropTypes.string,
       content: PropTypes.string,
       actions: PropTypes.string,
-      table: PropTypes.string,
-      main: PropTypes.string,
-      button: PropTypes.string,
-      message: PropTypes.string,
-      fab: PropTypes.string,
     }).isRequired,
   };
 
@@ -48,28 +52,14 @@ class CommentEditor extends Component {
       padding: theme.spacing(1),
     },
     content: {
-      padding: theme.spacing(1),
-    },
-    button: {
-      padding: theme.spacing(5),
+      paddingTop: 0,
+      '&:last-child': {
+        paddingBottom: 0,
+      },
     },
     actions: {
+      padding: theme.spacing(1),
       justifyContent: 'flex-end',
-    },
-    table: {
-      minWidth: 700,
-    },
-    message: {
-      padding: theme.spacing(),
-      backgroundColor: theme.status.danger.background[500],
-      color: theme.status.danger.color,
-      marginBottom: theme.spacing(2),
-    },
-    fab: {
-      margin: theme.spacing(),
-      position: 'fixed',
-      bottom: theme.spacing(2),
-      right: theme.spacing(2),
     },
   });
 
@@ -99,7 +89,6 @@ class CommentEditor extends Component {
 
   onCancel = () => {
     const { comment, onDeleteComment } = this.props;
-    // console.log(comment)
     if (!comment.content) {
       onDeleteComment(comment.id);
       return;
@@ -115,7 +104,6 @@ class CommentEditor extends Component {
     const { isEdited, value } = this.state;
     const { onSubmit, onEditComment, comment } = this.props;
     this.setState({ selectedTab: isEdited ? 'preview' : 'write' });
-    // console.log('Edit clicked', comment.id, isEdited)
     if (isEdited) {
       // console.log('calling submit')
       onSubmit(value, comment.id);
@@ -128,11 +116,12 @@ class CommentEditor extends Component {
 
   onComDelete = (id) => {
     const { onDeleteComment } = this.props;
-    // console.log('saving it to be deleted', id);
+    // console.log('comment to be deleted', id);
     onDeleteComment(id);
   };
 
   renderCardHeader() {
+    /* eslint-disable react/prop-types */
     const { comment, classes } = this.props;
     const { author, date } = comment;
     const { isEdited, showDelete, open } = this.state;
@@ -152,12 +141,22 @@ class CommentEditor extends Component {
         action={
           <>
             {showDelete ? (
-              <IconButton
-                aria-label="delete"
-                onClick={() => this.setState({ open: true })}
-              >
-                <DeleteIcon />
-              </IconButton>
+              <>
+                <IconButton
+                  aria-label="edit"
+                  color="primary"
+                  onClick={this.onEdit}
+                >
+                  <EditIcon />
+                </IconButton>
+                <IconButton
+                  aria-label="delete"
+                  color="secondary"
+                  onClick={() => this.setState({ open: true })}
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </>
             ) : null}
             <ConfirmDialog
               open={open}
@@ -205,7 +204,11 @@ class CommentEditor extends Component {
               }}
             />
           ) : (
-            <Grid container className="mde-preview standalone">
+            <Grid
+              container
+              className="mde-preview standalone"
+              style={{ paddingLeft: '38px' }}
+            >
               <Grid
                 item
                 xs={12}
@@ -217,8 +220,8 @@ class CommentEditor extends Component {
             </Grid>
           )}
         </CardContent>
-        <CardActions className={classes.actions}>
-          {isEdited ? (
+        {isEdited ? (
+          <CardActions className={classes.actions}>
             <Button
               variant="outlined"
               color="secondary"
@@ -226,11 +229,11 @@ class CommentEditor extends Component {
             >
               Cancel
             </Button>
-          ) : null}
-          <Button variant="contained" color="primary" onClick={this.onEdit}>
-            {isEdited ? 'Finish' : 'Edit'}
-          </Button>
-        </CardActions>
+            <Button variant="contained" color="primary" onClick={this.onEdit}>
+              Finish
+            </Button>
+          </CardActions>
+        ) : null}
       </Card>
     );
   }

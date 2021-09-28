@@ -13,16 +13,26 @@
   vertical-align: top;
 }
 
-.code-line {
-  position: relative;
-  padding-right: 10px;
-  padding-left: 10px;
-  line-height: 20px;
-  vertical-align: top;
+/*.code-line {*/
+/*  !*position: relative;*!*/
+/*  !*padding-right: 10px;*!*/
+/*  !*padding-left: 10px;*!*/
+/*  !*line-height: 20px;*!*/
+/*  !*vertical-align: top;*!*/
+/*  !*background-color: aliceblue;*!*/
+/*}*/
+
+.code-line,
+.token.operator,
+.token.entity,
+.token.url,
+.language-css.token.string,
+.style.token.string {
+  background-color: aliceblue !important;
 }
 
 .container {
-  border: 1px solid red;
+  border-spacing: 0;
   max-width: 800px;
   width: 90%;
   margin: 20px auto auto;

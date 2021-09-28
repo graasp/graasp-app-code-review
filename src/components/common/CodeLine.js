@@ -2,17 +2,18 @@ import React, { useState } from 'react';
 import { createStyles, IconButton, makeStyles } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import PropTypes from 'prop-types';
+import 'prismjs/themes/prism.css';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
     root: {
-      // backgroundColor: theme.palette.secondary.light,
-      spacing: theme.spacing(0),
+      marginRight: theme.spacing(1),
     },
   }),
 );
 
-const CodeLine = ({ line, lineNumber, onClickAdd }) => {
+const CodeLine = ({ htmlLine, lineNumber, onClickAdd }) => {
+  /* eslint-disable react/no-danger */
   const [showAdd, setShowAdd] = useState(false);
   const classes = useStyles();
   return (
@@ -22,11 +23,11 @@ const CodeLine = ({ line, lineNumber, onClickAdd }) => {
       onMouseOut={() => setShowAdd(false)}
       onBlur={() => setShowAdd(false)}
     >
-      <td className="line-number">{lineNumber}</td>
-      <td className="code-line">
+      <td className="line-number">
+        {lineNumber}
         <IconButton
           className={classes.root}
-          // color="primary"
+          color="primary"
           aria-label="add"
           size="small"
           disabled={!showAdd}
@@ -34,14 +35,23 @@ const CodeLine = ({ line, lineNumber, onClickAdd }) => {
         >
           <AddIcon fontSize="inherit" />
         </IconButton>
-        {line}
+      </td>
+      <td className="code-line">
+        <pre
+          style={{
+            display: 'inline',
+            whiteSpace: 'pre-wrap',
+            wordWrap: 'break-word',
+          }}
+          dangerouslySetInnerHTML={{ __html: htmlLine }}
+        />
       </td>
     </tr>
   );
 };
 
 CodeLine.propTypes = {
-  line: PropTypes.string.isRequired,
+  htmlLine: PropTypes.string.isRequired,
   lineNumber: PropTypes.number.isRequired,
   onClickAdd: PropTypes.func.isRequired,
 };
