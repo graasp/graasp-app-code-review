@@ -12,12 +12,11 @@ const ConfirmDialog = ({ open, setOpen, onClose, t }) => {
   return (
     <Dialog
       open={open}
-      // onClose={handleClose('maybe')}
       aria-labelledby="alert-dialog-title"
       aria-describedby="alert-dialog-description"
     >
       <DialogTitle id="alert-dialog-title">
-        {t('Are you sure you want to delete this comment ?')}
+        {t('Are you sure you want to delete this comment?')}
       </DialogTitle>
       <DialogActions>
         <Button onClick={() => handleClose(false)} color="primary">
