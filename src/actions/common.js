@@ -88,6 +88,7 @@ const postMessage = (data) => {
   if (window.parent.postMessage) {
     window.parent.postMessage(message, '*');
   } else {
+    // eslint-disable-next-line no-console
     console.error('unable to find postMessage');
   }
 };
@@ -112,6 +113,7 @@ const receiveMessage = (dispatch) => (event) => {
         return false;
     }
   } catch (err) {
+    // eslint-disable-next-line no-console
     console.error(err);
     return false;
   }
