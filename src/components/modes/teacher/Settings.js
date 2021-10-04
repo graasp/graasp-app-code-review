@@ -1,14 +1,29 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import _ from 'lodash';
+import {
+  Divider,
+  FormControlLabel,
+  Modal,
+  Switch,
+  TextField,
+  Button,
+} from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
-import Modal from '@material-ui/core/Modal';
-import Switch from '@material-ui/core/Switch';
 import { connect } from 'react-redux';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
+import Select from '@material-ui/core/Select';
+import MenuItem from '@material-ui/core/MenuItem';
 import { withTranslation } from 'react-i18next';
 import { closeSettings, patchAppInstance } from '../../../actions';
 import Loader from '../../common/Loader';
+import { JAVASCRIPT, PYTHON } from '../../../config/settings';
+import {
+  HEADER_VISIBILITY_SWITCH_CYPRESS,
+  SAVE_SETTINGS_BUTTON_CYPRESS,
+  SETTINGS_MODAL_CYPRESS,
+} from '../../../config/selectors';
+import { DEFAULT_SETTINGS } from '../../../reducers/appInstance';
 
 function getModalStyle() {
   const top = 50;
@@ -29,21 +44,61 @@ const styles = (theme) => ({
     padding: theme.spacing(4),
     outline: 'none',
   },
+  fullScreen: {
+    position: 'absolute',
+    // 64px is the height of the header
+    marginTop: '64px',
+    height: 'calc(100% - 64px)',
+    width: 'calc(100% - 32px)',
+    backgroundColor: theme.palette.background.paper,
+    outline: 'none',
+  },
   button: {
     margin: theme.spacing(),
   },
+  right: {
+    position: 'absolute',
+    right: theme.spacing(),
+  },
+  formControlSpace: {
+    left: theme.spacing(2),
+  },
+  noMaxWidth: {
+    maxWidth: 'none',
+  },
+  formControl: {
+    minWidth: 180,
+  },
+  fab: {
+    margin: theme.spacing(),
+    position: 'fixed',
+    bottom: theme.spacing(2),
+    right: theme.spacing(2),
+  },
+  textField: {},
 });
 
 class Settings extends Component {
   static propTypes = {
     classes: PropTypes.shape({
+      divider: PropTypes.string,
+      formControl: PropTypes.string,
+      right: PropTypes.string,
+      noMaxWidth: PropTypes.string,
+      formControlSpace: PropTypes.string,
+      appBar: PropTypes.string,
+      fullScreen: PropTypes.string,
+      fab: PropTypes.string,
+      button: PropTypes.string,
+      textField: PropTypes.string,
       paper: PropTypes.string,
     }).isRequired,
     open: PropTypes.bool.isRequired,
     activity: PropTypes.bool.isRequired,
     settings: PropTypes.shape({
-      headerVisible: PropTypes.bool.isRequired,
-      studentsOnly: PropTypes.bool.isRequired,
+      programmingLanguage: PropTypes.string.isRequired,
+      headerVisible: PropTypes.string.isRequired,
+      code: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,
     dispatchCloseSettings: PropTypes.func.isRequired,
@@ -53,54 +108,156 @@ class Settings extends Component {
     }).isRequired,
   };
 
-  saveSettings = (settingsToChange) => {
-    const { settings, dispatchPatchAppInstance } = this.props;
-    const newSettings = {
-      ...settings,
-      ...settingsToChange,
+  state = (() => {
+    const { settings } = this.props;
+
+    return {
+      settings,
     };
+  })();
+
+  handleSave = () => {
+    const { dispatchPatchAppInstance, dispatchCloseSettings } = this.props;
+    const { settings } = this.state;
+
+    // todo: trim string values on save
     dispatchPatchAppInstance({
-      data: newSettings,
+      data: settings,
     });
+    dispatchCloseSettings();
   };
 
-  handleChangeHeaderVisibility = () => {
-    const {
-      settings: { headerVisible },
-    } = this.props;
-    const settingsToChange = {
-      headerVisible: !headerVisible,
+  handleChangeSwitch =
+    (key) =>
+    ({ target: { checked } }) => {
+      this.setState((prevState) => ({
+        settings: {
+          ...prevState.settings,
+          [key]: checked,
+        },
+      }));
     };
-    this.saveSettings(settingsToChange);
-  };
+
+  handleChangeTextField =
+    (key) =>
+    ({ target: { value } }) => {
+      this.setState((prevState) => {
+        // get the previous state's settings
+        const settings = { ...prevState.settings };
+        // use lodash to be able to use dot and array notation
+        _.set(settings, key, value);
+        return { settings };
+      });
+    };
+
+  handleChangeIntegerField =
+    (key) =>
+    ({ target: { value } }) => {
+      this.setState((prevState) => {
+        // get the previous state's settings
+        const settings = { ...prevState.settings };
+        // parse integer and fall back to default if not a number
+        const parsedValue = parseInt(value, 10) || DEFAULT_SETTINGS[key];
+        // use lodash to be able to use dot and array notation
+        _.set(settings, key, parsedValue);
+        return { settings };
+      });
+    };
+
+  handleChangeSelect =
+    (key) =>
+    ({ target: { value } }) => {
+      this.setState((prevState) => {
+        // get the previous state's settings
+        const settings = { ...prevState.settings };
+        // use lodash to be able to use dot and array notation
+        _.set(settings, key, value);
+        return { settings };
+      });
+    };
 
   handleClose = () => {
-    const { dispatchCloseSettings } = this.props;
+    const { dispatchCloseSettings, settings } = this.props;
+    this.setState({ ...DEFAULT_SETTINGS, ...settings });
     dispatchCloseSettings();
   };
 
   renderModalContent() {
-    const { t, settings, activity } = this.props;
-    const { headerVisible } = settings;
+    const { t, activity, classes, settings: settingsProp } = this.props;
+    const { settings } = this.state;
+    const { headerVisible, code, programmingLanguage } = settings;
+
+    const hasChanged = !_.isEqual(settingsProp, settings);
 
     if (activity) {
       return <Loader />;
     }
 
-    const switchControl = (
+    const headerVisibleSwitchControl = (
       <Switch
+        data-cy={HEADER_VISIBILITY_SWITCH_CYPRESS}
         color="primary"
         checked={headerVisible}
-        onChange={this.handleChangeHeaderVisibility}
+        onChange={this.handleChangeSwitch('headerVisible')}
         value="headerVisibility"
       />
     );
 
+    const programmingLanguageSelectControl = (
+      <Select
+        className={classes.formControl}
+        value={programmingLanguage}
+        onChange={this.handleChangeSelect('programmingLanguage')}
+        inputProps={{
+          name: 'programmingLanguage',
+          id: 'programmingLanguageSelect',
+        }}
+      >
+        <MenuItem value={JAVASCRIPT}>JavaScript</MenuItem>
+        <MenuItem value={PYTHON}>Python</MenuItem>
+      </Select>
+    );
+
     return (
-      <FormControlLabel
-        control={switchControl}
-        label={t('Show Header to Students')}
-      />
+      <>
+        <FormControlLabel
+          control={headerVisibleSwitchControl}
+          label={t('Show Header to Students')}
+        />
+        <FormControlLabel
+          control={programmingLanguageSelectControl}
+          label={t('Programming Language')}
+        />
+        <TextField
+          id="code"
+          label={t('Code')}
+          value={code}
+          onChange={this.handleChangeTextField('code')}
+          className={classes.textField}
+          variant="outlined"
+          multiline
+          fullWidth
+        />
+        <Divider className={classes.divider} />
+        <Button
+          variant="contained"
+          color="primary"
+          className={classes.button}
+          onClick={this.handleSave}
+          disabled={!hasChanged}
+          data-cy={SAVE_SETTINGS_BUTTON_CYPRESS}
+        >
+          {t('Save')}
+        </Button>
+        <Button
+          variant="contained"
+          color="secondary"
+          className={classes.button}
+          onClick={this.handleClose}
+        >
+          {t('Cancel')}
+        </Button>
+      </>
     );
   }
 
@@ -110,13 +267,14 @@ class Settings extends Component {
     return (
       <div>
         <Modal
-          aria-labelledby="simple-modal-title"
-          aria-describedby="simple-modal-description"
+          data-cy={SETTINGS_MODAL_CYPRESS}
+          aria-labelledby="settings-modal"
+          aria-describedby="settings-modal-description"
           open={open}
           onClose={this.handleClose}
         >
           <div style={getModalStyle()} className={classes.paper}>
-            <Typography variant="h5" id="modal-title">
+            <Typography variant="h5" id="settings-modal-title">
               {t('Settings')}
             </Typography>
             {this.renderModalContent()}
@@ -130,7 +288,7 @@ class Settings extends Component {
 const mapStateToProps = ({ layout, appInstance }) => ({
   open: layout.settings.open,
   settings: appInstance.content.settings,
-  activity: Boolean(appInstance.activity.length),
+  activity: appInstance.activity.length,
 });
 
 const mapDispatchToProps = {

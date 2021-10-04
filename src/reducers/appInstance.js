@@ -8,9 +8,12 @@ import {
   FLAG_GETTING_APP_INSTANCE,
 } from '../types';
 import { showErrorToast } from '../utils/toasts';
+import { DEFAULT_PROGRAMMING_LANGUAGE } from '../config/settings';
 
-const DEFAULT_SETTINGS = {
+export const DEFAULT_SETTINGS = {
   headerVisible: false,
+  code: '',
+  programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
 };
 
 const INITIAL_STATE = {

@@ -1,71 +1,13 @@
 import './CodeReview.css';
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
+import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Prism from 'prismjs';
 import CodeLine from './CodeLine';
 import CommentEditor from './CommentEditor';
 
 Prism.manual = true;
-
-const codeSnippet =
-  'import discord\n' +
-  'from discord.ext import commands\n' +
-  '\n' +
-  'import random\n' +
-  'import res.courses_messages as course_msg\n' +
-  'import utils.messages as u_msg\n' +
-  'import config.config as cfg\n' +
-  '\n' +
-  '\n' +
-  'class Course(commands.Cog):\n' +
-  '    def __init__(self, bot):\n' +
-  '        self.bot = bot\n' +
-  '\n' +
-  "    @commands.group(name='course', aliases=['crs', 'c', 'cours', 'courses'],\n" +
-  "                    help='Manage Course channels', invoke_without_command=True)\n" +
-  '    async def course(self, ctx):\n' +
-  "        await ctx.channel.send('This command lets you manage the channels for courses')\n" +
-  '\n' +
-  "    @course.command(name='create', aliases=['creer', '+'], help='Create a channel for a course.')\n" +
-  '    async def create_course(self, ctx, course_name):\n' +
-  '        # create role:\n' +
-  "        role_name = 'sub2:' + course_name.lower()\n" +
-  '        try:\n' +
-  "            role = await ctx.guild.create_role(name=role_name, reason='New course channel')\n" +
-  '            # get category\n' +
-  '            course_category = discord.utils.get(ctx.guild.categories, id=cfg.COURSE_CHANNEL_ID)\n' +
-  '            overwrite_rules = {role: discord.PermissionOverwrite(read_messages=True),\n' +
-  '                               ctx.guild.default_role: discord.PermissionOverwrite(read_messages=False)}\n' +
-  '            await ctx.guild.create_text_channel(name=course_name, category=course_category, overwrites=overwrite_rules)\n' +
-  '            await ctx.message.author.add_roles(role)\n' +
-  '        except (discord.Forbidden, discord.HTTPException):\n' +
-  "            await u_msg.send_error(ctx, f'Woops something went wrong, contacting <@!{cfg.DEV_ID}>')\n" +
-  '        else:\n' +
-  "            await ctx.message.add_reaction('✅')\n" +
-  '\n' +
-  "    @course.command(name='sub', aliases=['join', 'rejoindre'], help='Subscribe to a course channel')\n" +
-  '    async def sub_course(self, ctx, course_name):\n' +
-  '        # Check if role is authorized\n' +
-  '        member = ctx.message.author\n' +
-  "        new_role = discord.utils.get(member.guild.roles, name='sub2:' + course_name)\n" +
-  '        if new_role:\n' +
-  '            try:\n' +
-  '                await member.add_roles(new_role)\n' +
-  '            except (discord.Forbidden, discord.HTTPException):\n' +
-  "                await u_msg.send_error(ctx, f'Woops something went wrong, contacting <@!{cfg.DEV_ID}>')\n" +
-  '            else:\n' +
-  "                await ctx.message.add_reaction('✅')\n" +
-  '        else:\n' +
-  "            await ctx.send(f'There is no course named : {course_name}.')\n" +
-  '\n' +
-  "    '''\n" +
-  '    # not quite\n' +
-  '    @delete_course.error\n' +
-  '    async def del_course_error(error, ctx):\n' +
-  '        if isinstance(error, discord.ext.commands.MissingPermissions):\n' +
-  "            await msg_error(ctx, 'You are lacking the necessary permissions. Sorry.')\n" +
-  "    '''\n";
 
 const styles = {
   container: {
@@ -82,6 +24,7 @@ class CodeReview extends Component {
     classes: PropTypes.shape({
       container: PropTypes.string,
     }).isRequired,
+    code: PropTypes.string.isRequired,
   };
 
   static defaultProps = {};
@@ -191,17 +134,26 @@ class CodeReview extends Component {
   }
 
   render() {
-    const { classes } = this.props;
+    const { classes, code } = this.props;
+
     return (
       <table className={classes.container}>
         <tbody className="code-area">
-          {this.renderCodeReview(codeSnippet, this.comments)}
+          {this.renderCodeReview(code, this.comments)}
         </tbody>
       </table>
     );
   }
 }
 
-const StyledCodeReview = withStyles(styles, { withTheme: true })(CodeReview);
+const mapStateToProps = ({ appInstance }) => ({
+  code: appInstance.content.settings.code,
+});
+
+const ConnectedCodeReview = connect(mapStateToProps)(CodeReview);
+
+const StyledCodeReview = withStyles(styles, { withTheme: true })(
+  ConnectedCodeReview,
+);
 
 export default StyledCodeReview;

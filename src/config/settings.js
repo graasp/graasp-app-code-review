@@ -20,5 +20,10 @@ export const DEFAULT_API_HOST = defaultApiHost;
 export const TEACHER_MODES = ['teacher', 'producer', 'educator', 'admin'];
 export const STUDENT_MODES = ['student', 'consumer', 'learner'];
 
-export const DEFAULT_VISIBILITY = 'private';
 export const PUBLIC_VISIBILITY = 'public';
+export const PRIVATE_VISIBILITY = 'private';
+export const DEFAULT_VISIBILITY = PRIVATE_VISIBILITY;
+
+export const JAVASCRIPT = 'javascript';
+export const PYTHON = 'python';
+export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
