@@ -10,7 +10,7 @@ class StudentMode extends Component {
   static propTypes = {
     appInstanceId: PropTypes.string,
     view: PropTypes.string,
-    activity: PropTypes.number,
+    ready: PropTypes.bool.isRequired,
     dispatchGetAppInstanceResources: PropTypes.func.isRequired,
     dispatchGetActions: PropTypes.func.isRequired,
     userId: PropTypes.string,
@@ -19,16 +19,12 @@ class StudentMode extends Component {
   static defaultProps = {
     view: 'normal',
     appInstanceId: null,
-    activity: 0,
     userId: null,
   };
 
   componentDidMount() {
-    const {
-      userId,
-      dispatchGetAppInstanceResources,
-      dispatchGetActions,
-    } = this.props;
+    const { userId, dispatchGetAppInstanceResources, dispatchGetActions } =
+      this.props;
 
     // by default get the resources for this user
     dispatchGetAppInstanceResources({ userId });
@@ -37,11 +33,8 @@ class StudentMode extends Component {
   }
 
   componentDidUpdate({ appInstanceId: prevAppInstanceId }) {
-    const {
-      appInstanceId,
-      dispatchGetAppInstanceResources,
-      userId,
-    } = this.props;
+    const { appInstanceId, dispatchGetAppInstanceResources, userId } =
+      this.props;
     // handle receiving the app instance id
     if (appInstanceId !== prevAppInstanceId) {
       dispatchGetAppInstanceResources({ userId });
@@ -49,8 +42,8 @@ class StudentMode extends Component {
   }
 
   render() {
-    const { view, activity } = this.props;
-    if (activity) {
+    const { view, ready } = this.props;
+    if (!ready) {
       return <Loader />;
     }
     switch (view) {
@@ -66,7 +59,7 @@ const mapStateToProps = ({ context, appInstanceResources }) => {
   return {
     userId,
     appInstanceId,
-    activity: appInstanceResources.activity.length,
+    ready: appInstanceResources.ready,
   };
 };
 

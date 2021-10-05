@@ -6,6 +6,13 @@ import { withStyles } from '@material-ui/core/styles';
 import Prism from 'prismjs';
 import CodeLine from './CodeLine';
 import CommentEditor from './CommentEditor';
+import {
+  patchAppInstanceResource,
+  postAppInstanceResource,
+  deleteAppInstanceResource,
+  getUsers,
+} from '../../actions';
+import { COMMENT } from '../../config/appInstanceResourceTypes';
 
 Prism.manual = true;
 
@@ -25,88 +32,122 @@ class CodeReview extends Component {
       container: PropTypes.string,
     }).isRequired,
     code: PropTypes.string.isRequired,
+    userId: PropTypes.string,
+    comments: PropTypes.string.isRequired,
+    dispatchPostAppInstanceResource: PropTypes.func.isRequired,
+    dispatchPatchAppInstanceResource: PropTypes.func.isRequired,
+    dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
+    dispatchGetUsers: PropTypes.func.isRequired,
   };
 
-  static defaultProps = {};
+  static defaultProps = {
+    userId: null,
+  };
 
   static highlightCode(code, syntax) {
     return Prism.highlight(code, Prism.languages[syntax], syntax);
   }
 
-  state = {
-    focusedId: null,
-  };
+  state = (() => {
+    const { comments } = this.props;
 
-  // id and date to be removed when hooked to the api
-  comments = [
-    {
-      id: '1',
-      line: 2,
-      author: 'Foo Bar Elo The Great',
-      date: 'Today at 5pm',
-      content: 'a little comment about the `print`',
-    },
-    {
-      id: '2',
-      line: 2,
-      author: 'Hannibal',
-      date: 'Yesterday',
-      content: 'a little comment about the print but oh nooo!',
-    },
-    {
-      id: '3',
-      line: 7,
-      author: 'Foo Bar',
-      date: '16 days ago',
-      content: 'No empty line',
-    },
-  ];
+    return {
+      focusedId: null,
+      comments,
+    };
+  })();
 
-  handleDelete = (id) => {
-    this.comments = this.comments.filter((com) => com.id !== id);
+  componentDidMount() {
+    const { dispatchGetUsers } = this.props;
+    dispatchGetUsers();
+  }
+
+  handleDelete = (_id) => {
+    const { dispatchDeleteAppInstanceResource } = this.props;
+    dispatchDeleteAppInstanceResource(_id);
     this.setState({ focusedId: null });
   };
 
-  handleEdit = (id) => {
-    this.setState({ focusedId: id });
+  handleCancel = () => {
+    const { focusedId } = this.state;
+    if (focusedId === '') {
+      this.setState((prevState) => {
+        const prevComments = prevState.comments;
+        const newComments = prevComments.filter(
+          (comment) => comment._id !== focusedId,
+        );
+        return {
+          focusedId: null,
+          comments: newComments,
+        };
+      });
+    }
   };
 
-  handleSubmit = (text, id) => {
-    this.comments = this.comments.map((com) => {
-      if (com.id === id) {
-        return { ...com, content: text };
-      }
-      return com;
-    });
+  handleEdit = (_id) => {
+    this.setState({ focusedId: _id });
+  };
+
+  handleSubmit = (_id, line, content) => {
+    const {
+      dispatchPostAppInstanceResource,
+      dispatchPatchAppInstanceResource,
+      userId,
+    } = this.props;
+
+    if (_id) {
+      dispatchPatchAppInstanceResource({
+        id: _id,
+        data: {
+          line,
+          content,
+        },
+      });
+    } else {
+      dispatchPostAppInstanceResource({
+        data: {
+          line,
+          content,
+        },
+        type: COMMENT,
+        userId,
+      });
+    }
     this.setState({ focusedId: null });
   };
 
   handleAddComment(lineNum) {
-    const id = `changeToUnique${lineNum}`;
-    this.comments = [
-      ...this.comments,
+    const { comments } = this.props;
+    const newComments = [
+      ...comments,
       {
-        id,
-        line: lineNum,
-        author: 'Current Author',
-        date: 'Yesterday',
-        content: '',
+        _id: '',
+        data: {
+          line: lineNum,
+          content: '',
+        },
       },
     ];
-    this.setState({ focusedId: id });
+    this.setState({
+      comments: newComments,
+      focusedId: '',
+    });
   }
 
   renderCommentList(commentList) {
     const { focusedId } = this.state;
-    return commentList.map((com) => (
-      <tr key={com.id} className="comment">
+    return commentList.map((comment) => (
+      <tr key={comment._id} className="comment">
         <td className="comment editor" colSpan={2}>
           <CommentEditor
-            comment={com}
-            focused={focusedId === com.id}
-            onEditComment={(id) => this.handleEdit(id)}
-            onDeleteComment={(id) => this.handleDelete(id)}
-            onSubmit={(text, comId) => this.handleSubmit(text, comId)}
+            comment={comment}
+            focused={focusedId === comment._id}
+            onEditComment={(_id) => this.handleEdit(_id)}
+            onDeleteComment={(_id) => this.handleDelete(_id)}
+            onCancel={this.handleCancel}
+            onSubmit={(_id, line, content) =>
+              this.handleSubmit(_id, line, content)
+            }
           />
         </td>
       </tr>
@@ -118,7 +159,9 @@ class CodeReview extends Component {
       '\n',
     );
     return highlightedCode.map((line, i) => {
-      const lineComments = commentList.filter((el) => el.line === i + 1);
+      const lineComments = commentList.filter(
+        (comment) => comment.data.line === i + 1,
+      );
       const renderedComments = this.renderCommentList(lineComments);
       return (
         <>
@@ -135,22 +178,42 @@ class CodeReview extends Component {
 
   render() {
     const { classes, code } = this.props;
+    const { comments } = this.state;
 
     return (
       <table className={classes.container}>
         <tbody className="code-area">
-          {this.renderCodeReview(code, this.comments)}
+          {this.renderCodeReview(code, comments)}
         </tbody>
       </table>
     );
   }
 }
 
-const mapStateToProps = ({ appInstance }) => ({
+const mapStateToProps = ({
+  context,
+  users,
+  appInstance,
+  appInstanceResources,
+}) => ({
+  userId: context.userId,
+  users: users.content,
   code: appInstance.content.settings.code,
+  // filter resources that are comments
+  comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
 });
 
-const ConnectedCodeReview = connect(mapStateToProps)(CodeReview);
+const mapDispatchToProps = {
+  dispatchPostAppInstanceResource: postAppInstanceResource,
+  dispatchPatchAppInstanceResource: patchAppInstanceResource,
+  dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
+  dispatchGetUsers: getUsers,
+};
+
+const ConnectedCodeReview = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(CodeReview);
 
 const StyledCodeReview = withStyles(styles, { withTheme: true })(
   ConnectedCodeReview,
