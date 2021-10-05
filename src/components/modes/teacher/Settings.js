@@ -4,10 +4,11 @@ import _ from 'lodash';
 import {
   Divider,
   FormControlLabel,
-  Modal,
   Switch,
-  TextField,
   Button,
+  Modal,
+  Grid,
+  FormLabel,
 } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -15,6 +16,7 @@ import { connect } from 'react-redux';
 import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import { withTranslation } from 'react-i18next';
+import Editor from '@monaco-editor/react';
 import { closeSettings, patchAppInstance } from '../../../actions';
 import Loader from '../../common/Loader';
 import { JAVASCRIPT, PYTHON } from '../../../config/settings';
@@ -38,7 +40,7 @@ function getModalStyle() {
 const styles = (theme) => ({
   paper: {
     position: 'absolute',
-    width: theme.spacing(50),
+    width: theme.spacing(80),
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing(4),
@@ -75,7 +77,10 @@ const styles = (theme) => ({
     bottom: theme.spacing(2),
     right: theme.spacing(2),
   },
-  textField: {},
+  divider: {
+    marginTop: '10px',
+  },
+  editor: {},
 });
 
 class Settings extends Component {
@@ -90,7 +95,7 @@ class Settings extends Component {
       fullScreen: PropTypes.string,
       fab: PropTypes.string,
       button: PropTypes.string,
-      textField: PropTypes.string,
+      editor: PropTypes.string,
       paper: PropTypes.string,
     }).isRequired,
     open: PropTypes.bool.isRequired,
@@ -149,6 +154,16 @@ class Settings extends Component {
         return { settings };
       });
     };
+
+  handleChangeEditor = (key) => (value) => {
+    this.setState((prevState) => {
+      // get the previous state's settings
+      const settings = { ...prevState.settings };
+      // use lodash to be able to use dot and array notation
+      _.set(settings, key, value);
+      return { settings };
+    });
+  };
 
   handleChangeIntegerField =
     (key) =>
@@ -220,24 +235,31 @@ class Settings extends Component {
 
     return (
       <>
-        <FormControlLabel
-          control={headerVisibleSwitchControl}
-          label={t('Show Header to Students')}
-        />
-        <FormControlLabel
-          control={programmingLanguageSelectControl}
-          label={t('Programming Language')}
-        />
-        <TextField
-          id="code"
-          label={t('Code')}
-          value={code}
-          onChange={this.handleChangeTextField('code')}
-          className={classes.textField}
-          variant="outlined"
-          multiline
-          fullWidth
-        />
+        <Grid container direction="column" spacing={2} alignItems="stretch">
+          <Grid item>
+            <FormControlLabel
+              control={headerVisibleSwitchControl}
+              label={t('Show Header to Students')}
+            />
+          </Grid>
+          <Grid item>
+            <FormControlLabel
+              control={programmingLanguageSelectControl}
+              label={t('Programming Language')}
+            />
+          </Grid>
+          <Grid item className={classes.editor}>
+            <FormLabel>{t('Code')}</FormLabel>
+            <Editor
+              height="50vh"
+              defaultLanguage={programmingLanguage}
+              language={programmingLanguage}
+              value={code}
+              onChange={this.handleChangeEditor('code')}
+              options={{ scrollBeyondLastLine: false }}
+            />
+          </Grid>
+        </Grid>
         <Divider className={classes.divider} />
         <Button
           variant="contained"
