@@ -1,5 +1,6 @@
 import React, { Component } from 'react';
 import * as Showdown from 'showdown';
+import { connect } from 'react-redux';
 import ReactMde from 'react-mde';
 import 'react-mde/lib/styles/css/react-mde-all.css';
 import PropTypes from 'prop-types';
@@ -18,6 +19,8 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import { withTranslation } from 'react-i18next';
 import ConfirmDialog from './ConfirmDialog';
+import { DEFAULT_USER } from '../../config/settings';
+import Loader from './Loader';
 
 const styles = (theme) => ({
   root: {
@@ -45,28 +48,43 @@ const styles = (theme) => ({
 class CommentEditor extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
-    comment: PropTypes.arrayOf(
-      PropTypes.shape({
-        id: PropTypes.string.isRequired,
+    comment: PropTypes.shape({
+      _id: PropTypes.string,
+      data: {
         line: PropTypes.number.isRequired,
-        author: PropTypes.string,
-        date: PropTypes.string,
         content: PropTypes.string.isRequired,
-      }),
-    ).isRequired,
+      },
+      user: PropTypes.string,
+      updatedAt: PropTypes.string,
+    }),
     focused: PropTypes.bool.isRequired,
     onEditComment: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
+    onCancel: PropTypes.func.isRequired,
     classes: PropTypes.shape({
       root: PropTypes.string,
       header: PropTypes.string,
       content: PropTypes.string,
       actions: PropTypes.string,
     }).isRequired,
+    users: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.string,
+        name: PropTypes.string,
+      }),
+    ),
+    activity: PropTypes.number,
   };
 
-  static defaultProps = {};
+  static defaultProps = {
+    comment: {
+      user: '',
+      updatedAt: '',
+    },
+    activity: 0,
+    users: [],
+  };
 
   state = {
     isEdited: false,
@@ -86,60 +104,67 @@ class CommentEditor extends Component {
   componentDidMount() {
     const { comment, focused } = this.props;
     this.setState({
-      value: comment.content,
+      value: comment.data.content,
       isEdited: focused,
       selectedTab: focused ? 'write' : 'preview',
     });
   }
 
-  onCancel = () => {
-    const { comment, onDeleteComment } = this.props;
-    if (!comment.content) {
-      onDeleteComment(comment.id);
-      return;
-    }
+  handleOnCancel = () => {
+    const { comment, onCancel } = this.props;
     this.setState({
       selectedTab: 'write',
-      value: comment.content,
+      value: comment.data.content,
       isEdited: false,
     });
+    onCancel();
   };
 
   onEdit = () => {
-    const { isEdited, value } = this.state;
-    const { onSubmit, onEditComment, comment } = this.props;
+    const { isEdited } = this.state;
+    const { onEditComment, comment } = this.props;
     this.setState({ selectedTab: isEdited ? 'preview' : 'write' });
-    if (isEdited) {
-      onSubmit(value, comment.id);
-    } else {
-      onEditComment(comment.id);
-    }
+    onEditComment(comment._id);
     this.setState({ isEdited: !isEdited });
   };
 
-  onComDelete = (id) => {
+  handleOnSubmit = () => {
+    const { value } = this.state;
+    const { onSubmit, comment } = this.props;
+    this.setState({
+      isEdited: false,
+    });
+    onSubmit(comment._id, comment.data.line, value);
+  };
+
+  handleDelete = (id) => {
     const { onDeleteComment } = this.props;
     onDeleteComment(id);
   };
 
   renderCardHeader() {
     /* eslint-disable react/prop-types */
-    const { comment, classes } = this.props;
-    const { author, date } = comment;
+    const { comment, classes, users } = this.props;
+    const { updatedAt = new Date().toISOString() } = comment;
+
     const { isEdited, showDelete, open } = this.state;
+
+    const user =
+      users.find((u) => u._id === comment.user)?.name || DEFAULT_USER;
+
     return isEdited ? null : (
       <CardHeader
         className={classes.header}
         avatar={
           <Avatar>
-            {author
+            {user
               .match(/\b(\w)/g)
               .slice(0, 2)
               .join('')}
           </Avatar>
         }
-        title={author}
-        subheader={date}
+        title={user}
+        subheader={updatedAt}
         action={
           <>
             {showDelete ? (
@@ -165,7 +190,7 @@ class CommentEditor extends Component {
               setOpen={(v) => this.setState({ open: v })}
               onClose={(m) => {
                 if (m) {
-                  this.onComDelete(comment.id);
+                  this.handleDelete(comment._id);
                 }
               }}
             />
@@ -177,7 +202,12 @@ class CommentEditor extends Component {
 
   render() {
     const { selectedTab, value, isEdited } = this.state;
-    const { classes, t } = this.props;
+    const { classes, t, activity } = this.props;
+
+    if (activity) {
+      return <Loader />;
+    }
+
     return (
       <Card
         className={classes.root}
@@ -226,12 +256,16 @@ class CommentEditor extends Component {
             <Button
               variant="outlined"
               color="secondary"
-              onClick={this.onCancel}
+              onClick={this.handleOnCancel}
             >
               {t('Cancel')}
             </Button>
-            <Button variant="contained" color="primary" onClick={this.onEdit}>
-              {t('Finish')}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={this.handleOnSubmit}
+            >
+              {t('Save')}
             </Button>
           </CardActions>
         ) : null}
@@ -240,6 +274,13 @@ class CommentEditor extends Component {
   }
 }
 
-const StyledCommentEditor = withStyles(styles)(CommentEditor);
+const mapStateToProps = ({ users, appInstanceResources }) => ({
+  users: users.content,
+  activity: appInstanceResources.activity.length,
+});
+
+const ConnectedCommentEditor = connect(mapStateToProps)(CommentEditor);
+
+const StyledCommentEditor = withStyles(styles)(ConnectedCommentEditor);
 
 export default withTranslation()(StyledCommentEditor);
