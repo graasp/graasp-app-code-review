@@ -226,6 +226,10 @@ class CommentEditor extends Component {
               generateMarkdownPreview={(markdown) =>
                 Promise.resolve(this.converter.makeHtml(markdown))
               }
+              l18n={{
+                write: t('Write'),
+                preview: t('Preview'),
+              }}
               childProps={{
                 writeButton: {
                   tabIndex: -1,

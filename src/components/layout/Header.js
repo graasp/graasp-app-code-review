@@ -6,37 +6,54 @@ import Typography from '@material-ui/core/Typography';
 import Toolbar from '@material-ui/core/Toolbar';
 import { withStyles } from '@material-ui/core/styles';
 import { withTranslation } from 'react-i18next';
+import {
+  AssignmentInd as AccountIcon,
+  Code,
+  TableChart as TableIcon,
+} from '@material-ui/icons';
+import IconButton from '@material-ui/core/IconButton';
 import { ReactComponent as Logo } from '../../resources/logo.svg';
 import './Header.css';
 import { addQueryParamsToUrl } from '../../utils/url';
+import { AVATAR_VIEW, DEFAULT_VIEW, FEEDBACK_VIEW } from '../../config/views';
+
+const styles = (theme) => ({
+  root: {
+    flexGrow: 1,
+  },
+  grow: {
+    flexGrow: 1,
+  },
+  logo: {
+    height: '48px',
+    marginRight: theme.spacing(2),
+  },
+  button: {
+    '&:disabled': {
+      backgroundColor: 'red!important',
+    },
+  },
+});
 
 class Header extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
     classes: PropTypes.shape({
+      root: PropTypes.string,
       logo: PropTypes.string,
       grow: PropTypes.string,
+      button: PropTypes.string,
+      disabled: PropTypes.string,
     }).isRequired,
     appInstanceId: PropTypes.string,
     spaceId: PropTypes.string,
+    view: PropTypes.string,
   };
-
-  static styles = (theme) => ({
-    root: {
-      flexGrow: 1,
-    },
-    grow: {
-      flexGrow: 1,
-    },
-    logo: {
-      height: '48px',
-      marginRight: theme.spacing(2),
-    },
-  });
 
   static defaultProps = {
     appInstanceId: null,
     spaceId: null,
+    view: DEFAULT_VIEW,
   };
 
   renderAppInstanceLink = () => {
@@ -71,6 +88,36 @@ class Header extends Component {
     return <div />;
   };
 
+  renderTeacherButtons = () => {
+    const { view, classes } = this.props;
+    return [
+      <IconButton
+        key="table"
+        disabled={view === DEFAULT_VIEW}
+        className={classes.button}
+        href={`index.html${addQueryParamsToUrl({ view: DEFAULT_VIEW })}`}
+      >
+        <TableIcon />
+      </IconButton>,
+      <IconButton
+        key="avatar"
+        disabled={view === AVATAR_VIEW}
+        className={classes.button}
+        href={`index.html${addQueryParamsToUrl({ view: AVATAR_VIEW })}`}
+      >
+        <AccountIcon />
+      </IconButton>,
+      <IconButton
+        key="table"
+        disabled={view === FEEDBACK_VIEW}
+        className={classes.button}
+        href={`index.html${addQueryParamsToUrl({ view: FEEDBACK_VIEW })}`}
+      >
+        <Code />
+      </IconButton>,
+    ];
+  };
+
   render() {
     const { t, classes } = this.props;
     return (
@@ -83,6 +130,7 @@ class Header extends Component {
             </Typography>
             {this.renderSpaceLink()}
             {this.renderAppInstanceLink()}
+            {this.renderTeacherButtons()}
           </Toolbar>
         </AppBar>
       </header>
@@ -93,9 +141,10 @@ class Header extends Component {
 const mapStateToProps = ({ context }) => ({
   appInstanceId: context.appInstanceId,
   spaceId: context.spaceId,
+  view: context.view,
 });
 
 const ConnectedComponent = connect(mapStateToProps)(Header);
 const TranslatedComponent = withTranslation()(ConnectedComponent);
 
-export default withStyles(Header.styles)(TranslatedComponent);
+export default withStyles(styles)(TranslatedComponent);

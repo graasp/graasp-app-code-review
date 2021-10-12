@@ -14,6 +14,7 @@ export const DEFAULT_SETTINGS = {
   headerVisible: false,
   code: '',
   programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
+  selectedBot: null,
 };
 
 const INITIAL_STATE = {

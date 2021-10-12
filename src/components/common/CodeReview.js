@@ -4,6 +4,7 @@ import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Prism from 'prismjs';
+import _ from 'lodash';
 import CodeLine from './CodeLine';
 import CommentEditor from './CommentEditor';
 import {
@@ -12,7 +13,8 @@ import {
   deleteAppInstanceResource,
   getUsers,
 } from '../../actions';
-import { COMMENT } from '../../config/appInstanceResourceTypes';
+import { BOT_COMMENT, COMMENT } from '../../config/appInstanceResourceTypes';
+import { PRIVATE_VISIBILITY, PUBLIC_VISIBILITY } from '../../config/settings';
 
 Prism.manual = true;
 
@@ -31,6 +33,14 @@ class CodeReview extends Component {
     classes: PropTypes.shape({
       container: PropTypes.string,
     }).isRequired,
+    botUser: PropTypes.string,
+    botComments: PropTypes.arrayOf(
+      PropTypes.shape({
+        _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        appInstanceId: PropTypes.string,
+        data: PropTypes.shape({}),
+      }),
+    ),
     code: PropTypes.string.isRequired,
     userId: PropTypes.string,
     comments: PropTypes.string.isRequired,
@@ -42,6 +52,8 @@ class CodeReview extends Component {
 
   static defaultProps = {
     userId: null,
+    botUser: null,
+    botComments: [],
   };
 
   static highlightCode(code, syntax) {
@@ -60,6 +72,21 @@ class CodeReview extends Component {
   componentDidMount() {
     const { dispatchGetUsers } = this.props;
     dispatchGetUsers();
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { comments: prevPropsComments } = prevProps;
+    const { comments: prevStateComments } = prevState;
+    const { comments } = this.props;
+    if (
+      !(
+        _.isEqual(comments, prevPropsComments) ||
+        _.isEqual(comments, prevStateComments)
+      )
+    ) {
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({ comments });
+    }
   }
 
   handleDelete = (_id) => {
@@ -93,6 +120,7 @@ class CodeReview extends Component {
       dispatchPostAppInstanceResource,
       dispatchPatchAppInstanceResource,
       userId,
+      botUser,
     } = this.props;
 
     if (_id) {
@@ -109,8 +137,10 @@ class CodeReview extends Component {
           line,
           content,
         },
-        type: COMMENT,
-        userId,
+        type: botUser ? BOT_COMMENT : COMMENT,
+        visibility: botUser ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY,
+        // when bot, not able to set the user property ...
+        userId: botUser ? botUser.label : userId,
       });
     }
     this.setState({ focusedId: null });
@@ -155,13 +185,15 @@ class CodeReview extends Component {
   }
 
   renderCodeReview(code, commentList) {
+    const { botComments } = this.props;
     const highlightedCode = CodeReview.highlightCode(code, 'python').split(
       '\n',
     );
     return highlightedCode.map((line, i) => {
-      const lineComments = commentList.filter(
-        (comment) => comment.data.line === i + 1,
-      );
+      const lineComments = [
+        ...commentList.filter((comment) => comment.data.line === i + 1),
+        ...botComments.filter((comment) => comment.data.line === i + 1),
+      ];
       const renderedComments = this.renderCommentList(lineComments);
       return (
         <>
@@ -201,6 +233,9 @@ const mapStateToProps = ({
   code: appInstance.content.settings.code,
   // filter resources that are comments
   comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
+  botComments: appInstanceResources.content.filter(
+    (r) => r.type === BOT_COMMENT,
+  ),
 });
 
 const mapDispatchToProps = {
