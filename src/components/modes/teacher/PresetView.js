@@ -2,27 +2,30 @@ import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Grid from '@material-ui/core/Grid';
+import Fab from '@material-ui/core/Fab';
+import SettingsIcon from '@material-ui/icons/Settings';
 import Typography from '@material-ui/core/Typography';
+import Paper from '@material-ui/core/Paper';
+import Select from 'react-select';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import './TeacherView.css';
-import { Close } from '@material-ui/icons';
-import { IconButton } from '@material-ui/core';
 import {
   patchAppInstanceResource,
   postAppInstanceResource,
   deleteAppInstanceResource,
+  openSettings,
   patchAppInstance,
   getUsers,
 } from '../../../actions';
+import Settings from './Settings';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
 import CodeReview from '../../common/CodeReview';
-import { addQueryParamsToUrl } from '../../../utils/url';
-import { DEFAULT_VIEW } from '../../../config/views';
 
-export class FeedbackView extends Component {
+export class PresetView extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
+    dispatchOpenSettings: PropTypes.func.isRequired,
     classes: PropTypes.shape({
       root: PropTypes.string,
       select: PropTypes.string,
@@ -36,14 +39,17 @@ export class FeedbackView extends Component {
     dispatchGetUsers: PropTypes.func.isRequired,
     dispatchPatchAppInstance: PropTypes.func.isRequired,
     settings: PropTypes.shape({
-      selectedStudent: PropTypes.string.isRequired,
+      selectedBot: PropTypes.string,
     }).isRequired,
-    studentName: PropTypes.string,
+    botOptions: PropTypes.arrayOf(
+      PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.string,
+      }),
+    ).isRequired,
   };
 
-  static defaultProps = {
-    studentName: '',
-  };
+  static defaultProps = {};
 
   static styles = (theme) => ({
     root: {
@@ -64,8 +70,7 @@ export class FeedbackView extends Component {
       maxWidth: 300,
     },
     button: {
-      marginTop: theme.spacing(1),
-      marginRight: theme.spacing(2),
+      marginTop: theme.spacing(3),
     },
     table: {
       minWidth: 700,
@@ -79,7 +84,7 @@ export class FeedbackView extends Component {
     fab: {
       margin: theme.spacing(),
       position: 'fixed',
-      top: theme.spacing(2),
+      bottom: theme.spacing(2),
       right: theme.spacing(2),
     },
   });
@@ -108,63 +113,65 @@ export class FeedbackView extends Component {
       t,
       // these properties are injected by the redux mapStateToProps method
       // appInstanceResources,
+      botOptions,
+      dispatchOpenSettings,
       settings,
-      studentName,
-      dispatchPatchAppInstance,
     } = this.props;
-    const { selectedStudent } = settings;
+    const { selectedBot } = settings;
 
     return (
       <>
-        <IconButton
-          color="primary"
-          aria-label={t('Close')}
-          className={classes.button}
-          onClick={() => {
-            dispatchPatchAppInstance({
-              data: {
-                ...settings,
-                selectedStudent: null,
-              },
-            });
-          }}
-          href={`index.html${addQueryParamsToUrl({ view: DEFAULT_VIEW })}`}
-        >
-          <Close />
-        </IconButton>
         <Grid container spacing={1} direction="column">
           <Grid item xs={12} className={classes.main}>
             <Typography variant="h6" color="inherit">
-              {t('Viewing comments from ') + studentName}
+              {t('Select a bot to impersonate')}
             </Typography>
+            <Select
+              className={classes.select}
+              value={selectedBot}
+              options={botOptions}
+              onChange={this.handleChangeBot}
+              isClearable
+            />
           </Grid>
-          <CodeReview isFeedbackView selectedStudent={selectedStudent} />
+          <Grid item className={classes.main}>
+            {selectedBot ? (
+              <Paper className={classes.message}>
+                {t(
+                  'Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.',
+                )}
+              </Paper>
+            ) : null}
+          </Grid>
+          <CodeReview isTeacherView />
         </Grid>
+        <Settings />
+        <Fab
+          color="primary"
+          aria-label={t('Settings')}
+          className={classes.fab}
+          onClick={dispatchOpenSettings}
+        >
+          <SettingsIcon />
+        </Fab>
       </>
     );
   }
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ users, appInstance, appInstanceResources }) => {
-  const { settings } = appInstance.content;
-  const studentName = users.content.find(
-    (u) => u._id === settings.selectedStudent,
-  )?.name;
-  return {
-    // we transform the list of students in the database
-    // to the shape needed by the select component
-    botOptions: appInstanceResources.content
-      .filter((res) => res.type === BOT_USER)
-      .map(({ _id, data }) => ({
-        value: _id,
-        label: data.name,
-      })),
-    settings,
-    studentName,
-    appInstanceResources: appInstanceResources.content,
-  };
-};
+const mapStateToProps = ({ appInstance, appInstanceResources }) => ({
+  // we transform the list of students in the database
+  // to the shape needed by the select component
+  botOptions: appInstanceResources.content
+    .filter((res) => res.type === BOT_USER)
+    .map(({ _id, data }) => ({
+      value: _id,
+      label: data.name,
+    })),
+  settings: appInstance.content.settings,
+  appInstanceResources: appInstanceResources.content,
+});
 
 // allow this component to dispatch a post
 // request to create an app instance resource
@@ -174,13 +181,14 @@ const mapDispatchToProps = {
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
   dispatchPatchAppInstance: patchAppInstance,
+  dispatchOpenSettings: openSettings,
 };
 
 const ConnectedComponent = connect(
   mapStateToProps,
   mapDispatchToProps,
-)(FeedbackView);
+)(PresetView);
 
-const StyledComponent = withStyles(FeedbackView.styles)(ConnectedComponent);
+const StyledComponent = withStyles(PresetView.styles)(ConnectedComponent);
 
 export default withTranslation()(StyledComponent);

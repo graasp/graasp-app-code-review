@@ -21,6 +21,7 @@ import { withTranslation } from 'react-i18next';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
+import { BOT_USER } from '../../config/appInstanceResourceTypes';
 
 const styles = (theme) => ({
   root: {
@@ -58,6 +59,7 @@ class CommentEditor extends Component {
       updatedAt: PropTypes.string,
     }),
     focused: PropTypes.bool.isRequired,
+    readOnly: PropTypes.bool,
     onEditComment: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
@@ -84,6 +86,7 @@ class CommentEditor extends Component {
     },
     activity: 0,
     users: [],
+    readOnly: false,
   };
 
   state = {
@@ -144,13 +147,15 @@ class CommentEditor extends Component {
 
   renderCardHeader() {
     /* eslint-disable react/prop-types */
-    const { comment, classes, users } = this.props;
+    const { comment, classes, users, botUsers, readOnly } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
 
     const { isEdited, showDelete, open } = this.state;
 
     const user =
-      users.find((u) => u._id === comment.user)?.name || DEFAULT_USER;
+      users.find((u) => u._id === comment.user)?.name ||
+      botUsers.find((u) => u._id === comment.user)?.name ||
+      DEFAULT_USER;
 
     return isEdited ? null : (
       <CardHeader
@@ -167,7 +172,7 @@ class CommentEditor extends Component {
         subheader={updatedAt}
         action={
           <>
-            {showDelete ? (
+            {showDelete && !readOnly ? (
               <>
                 <IconButton
                   aria-label="edit"
@@ -280,6 +285,12 @@ class CommentEditor extends Component {
 
 const mapStateToProps = ({ users, appInstanceResources }) => ({
   users: users.content,
+  botUsers: appInstanceResources.content
+    .filter((res) => res.type === BOT_USER)
+    .map(({ _id, data }) => ({
+      _id,
+      name: data.name,
+    })),
   activity: appInstanceResources.activity.length,
 });
 

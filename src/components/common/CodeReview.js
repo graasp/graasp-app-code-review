@@ -13,7 +13,11 @@ import {
   deleteAppInstanceResource,
   getUsers,
 } from '../../actions';
-import { BOT_COMMENT, COMMENT } from '../../config/appInstanceResourceTypes';
+import {
+  BOT_COMMENT,
+  COMMENT,
+  TEACHER_COMMENT,
+} from '../../config/appInstanceResourceTypes';
 import { PRIVATE_VISIBILITY, PUBLIC_VISIBILITY } from '../../config/settings';
 
 Prism.manual = true;
@@ -28,13 +32,25 @@ const styles = {
   },
 };
 
+const NEW_COMMENT_ID = '';
+
 class CodeReview extends Component {
   static propTypes = {
     classes: PropTypes.shape({
       container: PropTypes.string,
     }).isRequired,
-    botUser: PropTypes.string,
+    isTeacherView: PropTypes.bool,
+    isFeedbackView: PropTypes.bool,
+    selectedBot: PropTypes.string,
+    // selectedStudent: PropTypes.string,
     botComments: PropTypes.arrayOf(
+      PropTypes.shape({
+        _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        appInstanceId: PropTypes.string,
+        data: PropTypes.shape({}),
+      }),
+    ),
+    teacherComments: PropTypes.arrayOf(
       PropTypes.shape({
         _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         appInstanceId: PropTypes.string,
@@ -51,9 +67,13 @@ class CodeReview extends Component {
   };
 
   static defaultProps = {
+    isTeacherView: false,
+    isFeedbackView: false,
     userId: null,
-    botUser: null,
+    selectedBot: null,
+    // selectedStudent: null,
     botComments: [],
+    teacherComments: [],
   };
 
   static highlightCode(code, syntax) {
@@ -97,7 +117,7 @@ class CodeReview extends Component {
 
   handleCancel = () => {
     const { focusedId } = this.state;
-    if (focusedId === '') {
+    if (focusedId === NEW_COMMENT_ID) {
       this.setState((prevState) => {
         const prevComments = prevState.comments;
         const newComments = prevComments.filter(
@@ -120,7 +140,8 @@ class CodeReview extends Component {
       dispatchPostAppInstanceResource,
       dispatchPatchAppInstanceResource,
       userId,
-      botUser,
+      selectedBot,
+      isTeacherView,
     } = this.props;
 
     if (_id) {
@@ -131,16 +152,25 @@ class CodeReview extends Component {
           content,
         },
       });
+    } else if (isTeacherView) {
+      dispatchPostAppInstanceResource({
+        data: {
+          line,
+          content,
+        },
+        type: selectedBot ? BOT_COMMENT : TEACHER_COMMENT,
+        visibility: PUBLIC_VISIBILITY,
+        userId: selectedBot ? selectedBot.value : userId,
+      });
     } else {
       dispatchPostAppInstanceResource({
         data: {
           line,
           content,
         },
-        type: botUser ? BOT_COMMENT : COMMENT,
-        visibility: botUser ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY,
-        // when bot, not able to set the user property ...
-        userId: botUser ? botUser.label : userId,
+        type: COMMENT,
+        visibility: PRIVATE_VISIBILITY,
+        userId,
       });
     }
     this.setState({ focusedId: null });
@@ -151,7 +181,7 @@ class CodeReview extends Component {
     const newComments = [
       ...comments,
       {
-        _id: '',
+        _id: NEW_COMMENT_ID,
         data: {
           line: lineNum,
           content: '',
@@ -160,8 +190,21 @@ class CodeReview extends Component {
     ];
     this.setState({
       comments: newComments,
-      focusedId: '',
+      focusedId: NEW_COMMENT_ID,
     });
+  }
+
+  getReadOnlyProperty(comment) {
+    const { isTeacherView, isFeedbackView } = this.props;
+    if (isTeacherView) {
+      // teacher can edit all comments
+      return false;
+    }
+    if (isFeedbackView) {
+      return true;
+    }
+    // readOnly just for comments that are not from users
+    return comment.type !== COMMENT;
   }
 
   renderCommentList(commentList) {
@@ -171,6 +214,7 @@ class CodeReview extends Component {
         <td className="comment editor" colSpan={2}>
           <CommentEditor
             comment={comment}
+            readOnly={this.getReadOnlyProperty(comment)}
             focused={focusedId === comment._id}
             onEditComment={(_id) => this.handleEdit(_id)}
             onDeleteComment={(_id) => this.handleDelete(_id)}
@@ -185,15 +229,23 @@ class CodeReview extends Component {
   }
 
   renderCodeReview(code, commentList) {
-    const { botComments } = this.props;
+    const { isFeedbackView, isTeacherView, botComments, teacherComments } =
+      this.props;
+    const { focusedId } = this.state;
     const highlightedCode = CodeReview.highlightCode(code, 'python').split(
       '\n',
     );
     return highlightedCode.map((line, i) => {
+      const filteredComments = commentList.filter(
+        (comment) =>
+          (isTeacherView && comment._id === focusedId) || !isTeacherView,
+      );
       const lineComments = [
-        ...commentList.filter((comment) => comment.data.line === i + 1),
+        ...teacherComments.filter((comment) => comment.data.line === i + 1),
         ...botComments.filter((comment) => comment.data.line === i + 1),
+        ...filteredComments.filter((comment) => comment.data.line === i + 1),
       ];
+
       const renderedComments = this.renderCommentList(lineComments);
       return (
         <>
@@ -201,6 +253,7 @@ class CodeReview extends Component {
             htmlLine={line}
             lineNumber={i + 1}
             onClickAdd={(lineNum) => this.handleAddComment(lineNum)}
+            disableButton={isFeedbackView}
           />
           {renderedComments}
         </>
@@ -222,21 +275,30 @@ class CodeReview extends Component {
   }
 }
 
-const mapStateToProps = ({
-  context,
-  users,
-  appInstance,
-  appInstanceResources,
-}) => ({
-  userId: context.userId,
-  users: users.content,
-  code: appInstance.content.settings.code,
-  // filter resources that are comments
-  comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
-  botComments: appInstanceResources.content.filter(
-    (r) => r.type === BOT_COMMENT,
-  ),
-});
+const mapStateToProps = (
+  { context, users, appInstance, appInstanceResources },
+  { isFeedbackView, selectedStudent },
+) => {
+  const comments = appInstanceResources.content.filter(
+    (r) =>
+      r.type === COMMENT &&
+      ((isFeedbackView && r.user === selectedStudent) || !isFeedbackView),
+  );
+  return {
+    userId: context.userId,
+    users: users.content,
+    code: appInstance.content.settings.code,
+    // filter resources that are comments
+    comments,
+    botComments: appInstanceResources.content.filter(
+      (r) => r.type === BOT_COMMENT,
+    ),
+    teacherComments: appInstanceResources.content.filter(
+      (r) => r.type === TEACHER_COMMENT,
+    ),
+    selectedBot: appInstance.content.settings.selectedBot,
+  };
+};
 
 const mapDispatchToProps = {
   dispatchPostAppInstanceResource: postAppInstanceResource,

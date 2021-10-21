@@ -15,7 +15,7 @@ import IconButton from '@material-ui/core/IconButton';
 import { ReactComponent as Logo } from '../../resources/logo.svg';
 import './Header.css';
 import { addQueryParamsToUrl } from '../../utils/url';
-import { AVATAR_VIEW, DEFAULT_VIEW, FEEDBACK_VIEW } from '../../config/views';
+import { AVATAR_VIEW, DEFAULT_VIEW, PRESET_VIEW } from '../../config/views';
 
 const styles = (theme) => ({
   root: {
@@ -109,9 +109,9 @@ class Header extends Component {
       </IconButton>,
       <IconButton
         key="table"
-        disabled={view === FEEDBACK_VIEW}
+        disabled={view === PRESET_VIEW}
         className={classes.button}
-        href={`index.html${addQueryParamsToUrl({ view: FEEDBACK_VIEW })}`}
+        href={`index.html${addQueryParamsToUrl({ view: PRESET_VIEW })}`}
       >
         <Code />
       </IconButton>,

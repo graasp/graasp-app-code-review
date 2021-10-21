@@ -11,30 +11,23 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import TableRow from '@material-ui/core/TableRow';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import './TeacherView.css';
-import { Star } from '@material-ui/icons';
+import { Input } from '@material-ui/icons';
 import {
   patchAppInstanceResource,
   postAppInstanceResource,
   deleteAppInstanceResource,
   openSettings,
   getUsers,
+  patchAppInstance,
 } from '../../../actions';
 import { addQueryParamsToUrl } from '../../../utils/url';
 import Settings from './Settings';
 import { COMMENT } from '../../../config/appInstanceResourceTypes';
-
-const generateRandomAppInstanceResource = ({
-  dispatchPostAppInstanceResource,
-}) => {
-  dispatchPostAppInstanceResource({
-    data: { value: Math.random() },
-  });
-};
+import { FEEDBACK_VIEW } from '../../../config/views';
 
 export class TeacherView extends Component {
   static propTypes = {
@@ -49,6 +42,10 @@ export class TeacherView extends Component {
       fab: PropTypes.string,
     }).isRequired,
     dispatchGetUsers: PropTypes.func.isRequired,
+    dispatchPatchAppInstance: PropTypes.func.isRequired,
+    settings: PropTypes.shape({
+      selectedStudent: PropTypes.string.isRequired,
+    }).isRequired,
     // inside the shape method you should put the shape
     // that the resources your app uses will have
     comments: PropTypes.arrayOf(
@@ -118,7 +115,8 @@ export class TeacherView extends Component {
   }
 
   renderStudentList = () => {
-    const { students, comments } = this.props;
+    const { students, comments, dispatchPatchAppInstance, settings } =
+      this.props;
     const { selectedStudent } = this.state;
     // if there are no resources, show an empty table
     if (!comments.length) {
@@ -142,10 +140,19 @@ export class TeacherView extends Component {
               color="primary"
               disabled={_id === selectedStudent}
               onClick={() => {
-                this.setState({ selectedStudent: _id });
+                // dispatch to settings the selected student
+                dispatchPatchAppInstance({
+                  data: {
+                    ...settings,
+                    selectedStudent: _id,
+                  },
+                });
+                // this.setState({selectedStudent: _id});
               }}
+              // change to be the
+              href={`index.html${addQueryParamsToUrl({ view: FEEDBACK_VIEW })}`}
             >
-              <Star />
+              <Input />
             </IconButton>
           </TableCell>
         </TableRow>
@@ -167,33 +174,14 @@ export class TeacherView extends Component {
       // this property allows us to do translations and is injected by i18next
       t,
       dispatchOpenSettings,
-      students,
     } = this.props;
-    const { selectedStudent } = this.state;
-    const selectedStudentName = students.find(
-      (s) => s._id === selectedStudent,
-    )?.name;
+
     return (
       <>
         <Grid container spacing={0}>
           <Grid item xs={12} className={classes.main}>
-            <Paper className={classes.message}>
-              {t(
-                'This is the teacher view. Switch to the student view by clicking on the URL below.',
-              )}
-              <a href={addQueryParamsToUrl({ mode: 'student' })}>
-                <pre>
-                  {`${window.location.host}/${addQueryParamsToUrl({
-                    mode: 'student',
-                  })}`}
-                </pre>
-              </a>
-            </Paper>
-            <hr />
             <Typography variant="h6" color="inherit">
-              {selectedStudentName
-                ? `${t('Selected Student is:')} ${selectedStudentName}`
-                : t('No student selected')}
+              {t('Student comments')}
             </Typography>
             <Paper className={classes.root}>
               <Table className={classes.table}>
@@ -202,20 +190,12 @@ export class TeacherView extends Component {
                     <TableCell>ID</TableCell>
                     <TableCell>Name</TableCell>
                     <TableCell>Number of comments</TableCell>
-                    <TableCell>Select Student</TableCell>
+                    <TableCell>View Student comments</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>{this.renderStudentList()}</TableBody>
               </Table>
             </Paper>
-            <Button
-              color="primary"
-              className={classes.button}
-              variant="contained"
-              onClick={() => generateRandomAppInstanceResource(this.props)}
-            >
-              {t('Save a Random App Instance Resource via the API')}
-            </Button>
           </Grid>
         </Grid>
         <Settings />
@@ -233,7 +213,7 @@ export class TeacherView extends Component {
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ users, appInstanceResources }) => ({
+const mapStateToProps = ({ users, appInstance, appInstanceResources }) => ({
   // we transform the list of students in the database
   // to the shape needed by the select component
   students: users.content.map(({ _id, name }) => ({
@@ -241,6 +221,7 @@ const mapStateToProps = ({ users, appInstanceResources }) => ({
     name,
   })),
   comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
+  settings: appInstance.content.settings,
 });
 
 // allow this component to dispatch a post
@@ -251,6 +232,7 @@ const mapDispatchToProps = {
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
   dispatchOpenSettings: openSettings,
+  dispatchPatchAppInstance: patchAppInstance,
 };
 
 const ConnectedComponent = connect(

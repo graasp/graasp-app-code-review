@@ -6,11 +6,13 @@ import {
   DEFAULT_VIEW,
   DASHBOARD_VIEW,
   AVATAR_VIEW,
+  PRESET_VIEW,
   FEEDBACK_VIEW,
 } from '../../../config/views';
 import { getActions, getAppInstanceResources } from '../../../actions';
 import Loader from '../../common/Loader';
 import AvatarView from './AvatarView';
+import PresetView from './PresetView';
 import FeedbackView from './FeedbackView';
 
 class TeacherMode extends Component {
@@ -52,6 +54,8 @@ class TeacherMode extends Component {
     switch (view) {
       case AVATAR_VIEW:
         return <AvatarView />;
+      case PRESET_VIEW:
+        return <PresetView />;
       case FEEDBACK_VIEW:
         return <FeedbackView />;
       case DASHBOARD_VIEW:

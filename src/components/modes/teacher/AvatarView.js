@@ -2,14 +2,13 @@ import { connect } from 'react-redux';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
-import Select from 'react-select';
 import Table from '@material-ui/core/Table';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import TableCell from '@material-ui/core/TableCell';
 import TableBody from '@material-ui/core/TableBody';
 import Button from '@material-ui/core/Button';
-import React, { useState } from 'react';
+import React from 'react';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import { Avatar, makeStyles } from '@material-ui/core';
@@ -22,9 +21,11 @@ import {
   patchAppInstanceResource,
   postAppInstanceResource,
   deleteAppInstanceResource,
+  openAvatarDialog,
 } from '../../../actions';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
 import { PUBLIC_VISIBILITY } from '../../../config/settings';
+// import AvatarSettings from "./AvatarSettings";
 
 const generateRandomUserName = () => Math.random().toString(35).substr(2, 8);
 
@@ -37,7 +38,7 @@ const generateRandomUserName = () => Math.random().toString(35).substr(2, 8);
  */
 const renderAppInstanceResources = (
   appInstanceResources,
-  { dispatchPatchAppInstanceResource, dispatchDeleteAppInstanceResource },
+  { dispatchDeleteAppInstanceResource, dispatchOpenAvatarDialog },
 ) => {
   // if there are no resources, show an empty table
   if (!appInstanceResources.length) {
@@ -61,13 +62,7 @@ const renderAppInstanceResources = (
           color="primary"
           onClick={() => {
             // change to open a modal to edit the name and properties of the fake user
-            dispatchPatchAppInstanceResource({
-              id: _id,
-              data: {
-                ...data,
-                name: generateRandomUserName(),
-              },
-            });
+            dispatchOpenAvatarDialog();
           }}
         >
           <EditIcon />
@@ -114,53 +109,44 @@ const useStyles = makeStyles((theme) => ({
 
 const AvatarView = (props) => {
   const classes = useStyles();
-  const [selectedUser, setSelectedUser] = useState('');
 
-  const { t, botUsers, userOptions } = props;
+  const { t, botUsers } = props;
 
   return (
-    <Grid container spacing={0}>
-      <Grid item xs={12} className={classes.main}>
-        <Typography variant="h5" color="inherit">
-          {t('View the Users in the Sample Space')}
-        </Typography>
-        <Select
-          className="StudentSelect"
-          value={selectedUser}
-          options={userOptions}
-          onChange={(v) => setSelectedUser(v)}
-          isClearable
-        />
-        <hr />
-        <Typography variant="h6" color="inherit">
-          {t(
-            'This table illustrates how an app can save resources on the server.',
-          )}
-        </Typography>
-        <Paper className={classes.root}>
-          <Table className={classes.table}>
-            <TableHead>
-              <TableRow>
-                <TableCell>ID</TableCell>
-                <TableCell>Avatar</TableCell>
-                <TableCell>Name</TableCell>
-                <TableCell>App Instance</TableCell>
-                <TableCell>Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>{renderAppInstanceResources(botUsers, props)}</TableBody>
-          </Table>
-        </Paper>
-        <Button
-          color="primary"
-          className={classes.button}
-          variant="contained"
-          onClick={() => generateNewBotUser(props)}
-        >
-          {t('Add a new bot user')}
-        </Button>
+    <>
+      <Grid container spacing={0}>
+        <Grid item xs={12} className={classes.main}>
+          <Typography variant="h6" color="inherit">
+            {t('Bot users')}
+          </Typography>
+          <Paper className={classes.root}>
+            <Table className={classes.table}>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Avatar</TableCell>
+                  <TableCell>Name</TableCell>
+                  <TableCell>App Instance</TableCell>
+                  <TableCell>Actions</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {renderAppInstanceResources(botUsers, props)}
+              </TableBody>
+            </Table>
+          </Paper>
+          <Button
+            color="primary"
+            className={classes.button}
+            variant="contained"
+            onClick={() => generateNewBotUser(props)}
+          >
+            {t('Add a new bot user')}
+          </Button>
+        </Grid>
       </Grid>
-    </Grid>
+      {/* <AvatarSettings/> */}
+    </>
   );
 };
 
@@ -174,13 +160,6 @@ AvatarView.propTypes = {
       data: PropTypes.shape({}),
     }),
   ),
-  userOptions: PropTypes.arrayOf(
-    PropTypes.shape({
-      // we need to specify number to avoid warnings with local server
-      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-      label: PropTypes.string,
-    }),
-  ).isRequired,
 };
 
 AvatarView.defaultProps = {
@@ -208,6 +187,7 @@ const mapDispatchToProps = {
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
+  dispatchOpenAvatarDialog: openAvatarDialog,
 };
 
 const ConnectedComponent = connect(
