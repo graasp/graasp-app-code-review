@@ -9,6 +9,9 @@ const INITIAL_STATE = {
   settings: {
     open: false,
   },
+  avatarSettings: {
+    open: false,
+  },
 };
 
 export default (state = INITIAL_STATE, { type }) => {

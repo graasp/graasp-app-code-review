@@ -59,7 +59,13 @@ class CodeReview extends Component {
     ),
     code: PropTypes.string.isRequired,
     userId: PropTypes.string,
-    comments: PropTypes.string.isRequired,
+    comments: PropTypes.arrayOf(
+      PropTypes.shape({
+        _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        appInstanceId: PropTypes.string,
+        data: PropTypes.shape({}),
+      }),
+    ),
     dispatchPostAppInstanceResource: PropTypes.func.isRequired,
     dispatchPatchAppInstanceResource: PropTypes.func.isRequired,
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
@@ -74,6 +80,7 @@ class CodeReview extends Component {
     // selectedStudent: null,
     botComments: [],
     teacherComments: [],
+    comments: [],
   };
 
   static highlightCode(code, syntax) {

@@ -16,18 +16,15 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import {
-  getActions,
   getAppInstanceResources,
   patchAppInstanceResource,
   postAppInstanceResource,
   deleteAppInstanceResource,
   openAvatarDialog,
+  patchAppInstance,
 } from '../../../actions';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
-import { PUBLIC_VISIBILITY } from '../../../config/settings';
-// import AvatarSettings from "./AvatarSettings";
-
-const generateRandomUserName = () => Math.random().toString(35).substr(2, 8);
+import AvatarSettings from './AvatarSettings';
 
 /**
  * helper method to render the rows of the app instance resource table
@@ -38,7 +35,12 @@ const generateRandomUserName = () => Math.random().toString(35).substr(2, 8);
  */
 const renderAppInstanceResources = (
   appInstanceResources,
-  { dispatchDeleteAppInstanceResource, dispatchOpenAvatarDialog },
+  {
+    dispatchDeleteAppInstanceResource,
+    dispatchOpenAvatarDialog,
+    dispatchPatchAppInstance,
+    settings,
+  },
 ) => {
   // if there are no resources, show an empty table
   if (!appInstanceResources.length) {
@@ -62,6 +64,12 @@ const renderAppInstanceResources = (
           color="primary"
           onClick={() => {
             // change to open a modal to edit the name and properties of the fake user
+            dispatchPatchAppInstance({
+              data: {
+                ...settings,
+                avatarId: _id,
+              },
+            });
             dispatchOpenAvatarDialog();
           }}
         >
@@ -76,17 +84,6 @@ const renderAppInstanceResources = (
       </TableCell>
     </TableRow>
   ));
-};
-
-const generateNewBotUser = ({ dispatchPostAppInstanceResource }) => {
-  dispatchPostAppInstanceResource({
-    data: {
-      uri: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/35/Tux.svg/249px-Tux.svg.png',
-      name: generateRandomUserName(),
-    },
-    type: BOT_USER,
-    visibility: PUBLIC_VISIBILITY,
-  });
 };
 
 const useStyles = makeStyles((theme) => ({
@@ -110,7 +107,20 @@ const useStyles = makeStyles((theme) => ({
 const AvatarView = (props) => {
   const classes = useStyles();
 
-  const { t, botUsers } = props;
+  const { t, botUsers, dispatchOpenAvatarDialog, dispatchPatchAppInstance } =
+    props;
+
+  const handleNewBot = () => {
+    const { settings } = props;
+
+    dispatchPatchAppInstance({
+      data: {
+        ...settings,
+        avatarId: '',
+      },
+    });
+    dispatchOpenAvatarDialog();
+  };
 
   return (
     <>
@@ -139,13 +149,13 @@ const AvatarView = (props) => {
             color="primary"
             className={classes.button}
             variant="contained"
-            onClick={() => generateNewBotUser(props)}
+            onClick={() => handleNewBot()}
           >
             {t('Add a new bot user')}
           </Button>
         </Grid>
       </Grid>
-      {/* <AvatarSettings/> */}
+      <AvatarSettings />
     </>
   );
 };
@@ -160,13 +170,20 @@ AvatarView.propTypes = {
       data: PropTypes.shape({}),
     }),
   ),
+  settings: PropTypes.shape({
+    avatarId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+      .isRequired,
+  }).isRequired,
+
+  dispatchOpenAvatarDialog: PropTypes.func.isRequired,
+  dispatchPatchAppInstance: PropTypes.func.isRequired,
 };
 
 AvatarView.defaultProps = {
   botUsers: [],
 };
 
-const mapStateToProps = ({ appInstanceResources }) => {
+const mapStateToProps = ({ appInstance, appInstanceResources }) => {
   const botUsers = appInstanceResources.content.filter(
     (r) => r.type === BOT_USER,
   );
@@ -174,6 +191,7 @@ const mapStateToProps = ({ appInstanceResources }) => {
   return {
     // only give bot users resources
     botUsers,
+    settings: appInstance.content.settings,
     userOptions: botUsers.map(({ _id, data }) => ({
       value: _id,
       label: data.name,
@@ -183,10 +201,10 @@ const mapStateToProps = ({ appInstanceResources }) => {
 
 const mapDispatchToProps = {
   dispatchGetAppInstanceResources: getAppInstanceResources,
-  dispatchGetActions: getActions,
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
+  dispatchPatchAppInstance: patchAppInstance,
   dispatchOpenAvatarDialog: openAvatarDialog,
 };
 

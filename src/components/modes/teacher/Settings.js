@@ -99,10 +99,10 @@ class Settings extends Component {
       paper: PropTypes.string,
     }).isRequired,
     open: PropTypes.bool.isRequired,
-    activity: PropTypes.bool.isRequired,
+    activity: PropTypes.number.isRequired,
     settings: PropTypes.shape({
       programmingLanguage: PropTypes.string.isRequired,
-      headerVisible: PropTypes.string.isRequired,
+      headerVisible: PropTypes.bool.isRequired,
       code: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,

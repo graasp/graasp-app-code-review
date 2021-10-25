@@ -44,7 +44,7 @@ export class TeacherView extends Component {
     dispatchGetUsers: PropTypes.func.isRequired,
     dispatchPatchAppInstance: PropTypes.func.isRequired,
     settings: PropTypes.shape({
-      selectedStudent: PropTypes.string.isRequired,
+      selectedStudent: PropTypes.string,
     }).isRequired,
     // inside the shape method you should put the shape
     // that the resources your app uses will have
@@ -188,9 +188,9 @@ export class TeacherView extends Component {
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Number of comments</TableCell>
-                    <TableCell>View Student comments</TableCell>
+                    <TableCell>{t('Name')}</TableCell>
+                    <TableCell>{t('Number of comments')}</TableCell>
+                    <TableCell>{t('View Student comments')}</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>{this.renderStudentList()}</TableBody>

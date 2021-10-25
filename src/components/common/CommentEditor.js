@@ -21,7 +21,7 @@ import { withTranslation } from 'react-i18next';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
-import { BOT_USER } from '../../config/appInstanceResourceTypes';
+import { BOT_COMMENT, BOT_USER } from '../../config/appInstanceResourceTypes';
 
 const styles = (theme) => ({
   root: {
@@ -50,7 +50,7 @@ class CommentEditor extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
     comment: PropTypes.shape({
-      _id: PropTypes.string,
+      _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       data: {
         line: PropTypes.number.isRequired,
         content: PropTypes.string.isRequired,
@@ -152,22 +152,26 @@ class CommentEditor extends Component {
 
     const { isEdited, showDelete, open } = this.state;
 
+    const bot = botUsers.find((u) => u._id === comment.user);
     const user =
       users.find((u) => u._id === comment.user)?.name ||
       botUsers.find((u) => u._id === comment.user)?.name ||
       DEFAULT_USER;
+    const userInitials = user
+      .match(/\b(\w)/g)
+      .slice(0, 2)
+      .join('');
+    const userAvatar =
+      comment.type === BOT_COMMENT ? (
+        <Avatar alt={userInitials} src={bot.uri} />
+      ) : (
+        <Avatar>{userInitials}</Avatar>
+      );
 
     return isEdited ? null : (
       <CardHeader
         className={classes.header}
-        avatar={
-          <Avatar>
-            {user
-              .match(/\b(\w)/g)
-              .slice(0, 2)
-              .join('')}
-          </Avatar>
-        }
+        avatar={userAvatar}
         title={user}
         subheader={updatedAt}
         action={
@@ -290,6 +294,7 @@ const mapStateToProps = ({ users, appInstanceResources }) => ({
     .map(({ _id, data }) => ({
       _id,
       name: data.name,
+      uri: data.uri,
     })),
   activity: appInstanceResources.activity.length,
 });

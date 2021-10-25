@@ -10,12 +10,15 @@ import {
   AssignmentInd as AccountIcon,
   Code,
   TableChart as TableIcon,
+  Refresh as RefreshIcon,
 } from '@material-ui/icons';
 import IconButton from '@material-ui/core/IconButton';
 import { ReactComponent as Logo } from '../../resources/logo.svg';
 import './Header.css';
 import { addQueryParamsToUrl } from '../../utils/url';
 import { AVATAR_VIEW, DEFAULT_VIEW, PRESET_VIEW } from '../../config/views';
+import { DEFAULT_MODE, TEACHER_MODES } from '../../config/settings';
+import { getAppInstanceResources, getUsers } from '../../actions';
 
 const styles = (theme) => ({
   root: {
@@ -48,12 +51,23 @@ class Header extends Component {
     appInstanceId: PropTypes.string,
     spaceId: PropTypes.string,
     view: PropTypes.string,
+    mode: PropTypes.string,
+    dispatchGetAppInstanceResources: PropTypes.func.isRequired,
+    dispatchGetUsers: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
     appInstanceId: null,
     spaceId: null,
     view: DEFAULT_VIEW,
+    mode: DEFAULT_MODE,
+  };
+
+  handleRefresh = () => {
+    const { dispatchGetAppInstanceResources, dispatchGetUsers } = this.props;
+
+    dispatchGetAppInstanceResources();
+    dispatchGetUsers();
   };
 
   renderAppInstanceLink = () => {
@@ -89,33 +103,49 @@ class Header extends Component {
   };
 
   renderTeacherButtons = () => {
-    const { view, classes } = this.props;
-    return [
-      <IconButton
-        key="table"
-        disabled={view === DEFAULT_VIEW}
-        className={classes.button}
-        href={`index.html${addQueryParamsToUrl({ view: DEFAULT_VIEW })}`}
-      >
-        <TableIcon />
-      </IconButton>,
-      <IconButton
-        key="avatar"
-        disabled={view === AVATAR_VIEW}
-        className={classes.button}
-        href={`index.html${addQueryParamsToUrl({ view: AVATAR_VIEW })}`}
-      >
-        <AccountIcon />
-      </IconButton>,
-      <IconButton
-        key="table"
-        disabled={view === PRESET_VIEW}
-        className={classes.button}
-        href={`index.html${addQueryParamsToUrl({ view: PRESET_VIEW })}`}
-      >
-        <Code />
-      </IconButton>,
-    ];
+    const { view, classes, mode } = this.props;
+    if (TEACHER_MODES.includes(mode)) {
+      return [
+        <IconButton
+          key="table"
+          disabled={view === DEFAULT_VIEW}
+          className={classes.button}
+          href={`index.html${addQueryParamsToUrl({ view: DEFAULT_VIEW })}`}
+        >
+          <TableIcon />
+        </IconButton>,
+        <IconButton
+          key="avatar"
+          disabled={view === AVATAR_VIEW}
+          className={classes.button}
+          href={`index.html${addQueryParamsToUrl({ view: AVATAR_VIEW })}`}
+        >
+          <AccountIcon />
+        </IconButton>,
+        <IconButton
+          key="preset"
+          disabled={view === PRESET_VIEW}
+          className={classes.button}
+          href={`index.html${addQueryParamsToUrl({ view: PRESET_VIEW })}`}
+        >
+          <Code />
+        </IconButton>,
+      ];
+    }
+    return null;
+  };
+
+  renderReloadButton = () => {
+    const { mode } = this.props;
+
+    if (TEACHER_MODES.includes(mode)) {
+      return [
+        <IconButton onClick={this.handleRefresh} key="refresh">
+          <RefreshIcon />
+        </IconButton>,
+      ];
+    }
+    return null;
   };
 
   render() {
@@ -126,11 +156,12 @@ class Header extends Component {
           <Toolbar>
             <Logo className={classes.logo} />
             <Typography variant="h6" color="inherit" className={classes.grow}>
-              {t('Graasp App Starter')}
+              {t('Graasp Code Review App')}
             </Typography>
             {this.renderSpaceLink()}
             {this.renderAppInstanceLink()}
             {this.renderTeacherButtons()}
+            {this.renderReloadButton()}
           </Toolbar>
         </AppBar>
       </header>
@@ -142,9 +173,15 @@ const mapStateToProps = ({ context }) => ({
   appInstanceId: context.appInstanceId,
   spaceId: context.spaceId,
   view: context.view,
+  mode: context.mode,
 });
 
-const ConnectedComponent = connect(mapStateToProps)(Header);
+const mapDispatchToProps = {
+  dispatchGetAppInstanceResources: getAppInstanceResources,
+  dispatchGetUsers: getUsers,
+};
+
+const ConnectedComponent = connect(mapStateToProps, mapDispatchToProps)(Header);
 const TranslatedComponent = withTranslation()(ConnectedComponent);
 
 export default withStyles(styles)(TranslatedComponent);
