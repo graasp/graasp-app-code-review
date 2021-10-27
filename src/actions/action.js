@@ -20,128 +20,138 @@ import {
 const flagPostingAction = flag(FLAG_POSTING_ACTION);
 const flagGettingActions = flag(FLAG_GETTING_ACTIONS);
 
-const getActions = async (
-  params = {
-    spaceId: [],
-    userId: [],
-    visibility: undefined,
-  },
-) => async (dispatch, getState) => {
-  dispatch(flagGettingActions(true));
-  try {
-    const { apiHost, spaceId: currentSpaceId } = getApiContext(getState);
+const getActions =
+  async (
+    params = {
+      spaceId: [],
+      userId: [],
+      visibility: undefined,
+    },
+  ) =>
+  async (dispatch, getState) => {
+    dispatch(flagGettingActions(true));
+    try {
+      const { apiHost, spaceId: currentSpaceId } = getApiContext(getState);
+      // by default include current space id
+      let { spaces = [] } = params;
 
-    // by default include current space id
-    const { spaceId = [] } = params;
-    if (!spaceId.length) {
-      spaceId.push(currentSpaceId);
-    }
+      if (!spaces) {
+        spaces = [currentSpaceId];
+      }
 
-    // create url from params
-    const url = `//${apiHost + ACTIONS_ENDPOINT}?${Qs.stringify(params)}`;
+      if (!spaces.length) {
+        return dispatch({
+          type: GET_ACTIONS_SUCCEEDED,
+          payload: [],
+        });
+      }
 
-    const response = await fetch(url, DEFAULT_GET_REQUEST);
+      // create url from params
+      const url = `//${apiHost + ACTIONS_ENDPOINT}?${Qs.stringify({
+        ...params,
+        spaceId: spaces,
+      })}`;
 
-    // throws if it is an error
-    await isErrorResponse(response);
+      const response = await fetch(url, DEFAULT_GET_REQUEST);
 
-    const actions = await response.json();
+      // throws if it is an error
+      await isErrorResponse(response);
 
-    // tell redux that we have the actions
-    dispatch({
-      type: GET_ACTIONS_SUCCEEDED,
-      payload: actions,
-    });
-  } catch (err) {
-    // tell redux that we encountered an error
-    dispatch({
-      type: GET_ACTIONS_FAILED,
-      payload: err,
-    });
-  } finally {
-    dispatch(flagGettingActions(false));
-  }
-};
+      const actions = await response.json();
 
-const postAction = async ({
-  data,
-  verb,
-  visibility = DEFAULT_VISIBILITY,
-} = {}) => async (dispatch, getState) => {
-  dispatch(flagPostingAction(true));
-  try {
-    const {
-      userId,
-      appInstanceId,
-      apiHost,
-      offline,
-      spaceId,
-      subSpaceId,
-      standalone,
-      analytics,
-    } = getApiContext(getState);
-
-    // if analytics is not turned on, abort
-    // todo: post message analytics + ensure that desktop keeps analytics
-    if (!analytics) {
-      return false;
-    }
-
-    // if standalone, you cannot connect to api
-    if (standalone) {
-      return false;
-    }
-
-    // if offline send message to parent requesting to create a resource
-    if (offline) {
-      return postMessage({
-        type: POST_ACTION,
-        payload: {
-          data,
-          verb,
-          spaceId,
-          subSpaceId,
-          format: ACTION_FORMAT,
-          appInstanceId,
-          userId,
-          visibility,
-        },
+      // tell redux that we have the actions
+      return dispatch({
+        type: GET_ACTIONS_SUCCEEDED,
+        payload: actions,
       });
+    } catch (err) {
+      // tell redux that we encountered an error
+      return dispatch({
+        type: GET_ACTIONS_FAILED,
+        payload: err,
+      });
+    } finally {
+      dispatch(flagGettingActions(false));
     }
+  };
 
-    const url = `//${apiHost + ACTIONS_ENDPOINT}`;
+const postAction =
+  async ({ data, verb, visibility = DEFAULT_VISIBILITY } = {}) =>
+  async (dispatch, getState) => {
+    dispatch(flagPostingAction(true));
+    try {
+      const {
+        userId,
+        appInstanceId,
+        apiHost,
+        offline,
+        spaceId,
+        subSpaceId,
+        standalone,
+        analytics,
+      } = getApiContext(getState);
 
-    const body = {
-      data,
-      verb,
-      space: spaceId,
-      format: ACTION_FORMAT,
-      appInstance: appInstanceId,
-      visibility,
-    };
+      // if analytics is not turned on, abort
+      // todo: post message analytics + ensure that desktop keeps analytics
+      if (!analytics) {
+        return false;
+      }
 
-    const response = await fetch(url, {
-      ...DEFAULT_POST_REQUEST,
-      body: JSON.stringify(body),
-    });
+      // if standalone, you cannot connect to api
+      if (standalone) {
+        return false;
+      }
 
-    // throws if it is an error
-    await isErrorResponse(response);
+      // if offline send message to parent requesting to create a resource
+      if (offline) {
+        return postMessage({
+          type: POST_ACTION,
+          payload: {
+            data,
+            verb,
+            spaceId,
+            subSpaceId,
+            format: ACTION_FORMAT,
+            appInstanceId,
+            userId,
+            visibility,
+          },
+        });
+      }
 
-    const action = await response.json();
+      const url = `//${apiHost + ACTIONS_ENDPOINT}`;
 
-    return dispatch({
-      type: POST_ACTION_SUCCEEDED,
-      payload: action,
-    });
-  } catch (err) {
-    return dispatch({
-      type: POST_ACTION_FAILED,
-      payload: err,
-    });
-  } finally {
-    dispatch(flagPostingAction(false));
-  }
-};
+      const body = {
+        data,
+        verb,
+        space: spaceId,
+        format: ACTION_FORMAT,
+        appInstance: appInstanceId,
+        visibility,
+      };
+
+      const response = await fetch(url, {
+        ...DEFAULT_POST_REQUEST,
+        body: JSON.stringify(body),
+      });
+
+      // throws if it is an error
+      await isErrorResponse(response);
+
+      const action = await response.json();
+
+      return dispatch({
+        type: POST_ACTION_SUCCEEDED,
+        payload: action,
+      });
+    } catch (err) {
+      return dispatch({
+        type: POST_ACTION_FAILED,
+        payload: err,
+      });
+    } finally {
+      dispatch(flagPostingAction(false));
+    }
+  };
 
 export { postAction, getActions };
