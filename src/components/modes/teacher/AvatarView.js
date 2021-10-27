@@ -11,10 +11,11 @@ import Button from '@material-ui/core/Button';
 import React from 'react';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
-import { Avatar, makeStyles } from '@material-ui/core';
+import { Avatar, makeStyles, Tooltip } from '@material-ui/core';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
+import { DeleteForever } from '@material-ui/icons';
 import {
   getAppInstanceResources,
   patchAppInstanceResource,
@@ -23,68 +24,11 @@ import {
   openAvatarDialog,
   patchAppInstance,
 } from '../../../actions';
-import { BOT_USER } from '../../../config/appInstanceResourceTypes';
+import {
+  BOT_COMMENT,
+  BOT_USER,
+} from '../../../config/appInstanceResourceTypes';
 import AvatarSettings from './AvatarSettings';
-
-/**
- * helper method to render the rows of the app instance resource table
- * @param appInstanceResources
- * @param dispatchPatchAppInstanceResource
- * @param dispatchDeleteAppInstanceResource
- * @returns {*}
- */
-const renderAppInstanceResources = (
-  appInstanceResources,
-  {
-    dispatchDeleteAppInstanceResource,
-    dispatchOpenAvatarDialog,
-    dispatchPatchAppInstance,
-    settings,
-  },
-) => {
-  // if there are no resources, show an empty table
-  if (!appInstanceResources.length) {
-    return (
-      <TableRow>
-        <TableCell colSpan={4}>No App Instance Resources</TableCell>
-      </TableRow>
-    );
-  }
-  // map each app instance resource to a row in the table
-  return appInstanceResources.map(({ _id, appInstance, data }) => (
-    <TableRow key={_id}>
-      <TableCell scope="row">{_id}</TableCell>
-      <TableCell>
-        <Avatar alt={data.name} src={data.uri} />
-      </TableCell>
-      <TableCell>{data.name}</TableCell>
-      <TableCell>{appInstance}</TableCell>
-      <TableCell>
-        <IconButton
-          color="primary"
-          onClick={() => {
-            // change to open a modal to edit the name and properties of the fake user
-            dispatchPatchAppInstance({
-              data: {
-                ...settings,
-                avatarId: _id,
-              },
-            });
-            dispatchOpenAvatarDialog();
-          }}
-        >
-          <EditIcon />
-        </IconButton>
-        <IconButton
-          color="primary"
-          onClick={() => dispatchDeleteAppInstanceResource(_id)}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </TableCell>
-    </TableRow>
-  ));
-};
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -107,12 +51,29 @@ const useStyles = makeStyles((theme) => ({
 const AvatarView = (props) => {
   const classes = useStyles();
 
-  const { t, botUsers, dispatchOpenAvatarDialog, dispatchPatchAppInstance } =
-    props;
+  const {
+    t,
+    botUsers,
+    botComments,
+    dispatchOpenAvatarDialog,
+    dispatchPatchAppInstance,
+    dispatchDeleteAppInstanceResource,
+    settings,
+  } = props;
+
+  const handleDeleteBot = (_id) => {
+    dispatchDeleteAppInstanceResource(_id);
+  };
+
+  const handleDeleteAllBotComments = (_id) => {
+    botComments
+      .filter((r) => r.botId === _id)
+      .forEach(({ resourceId }) =>
+        dispatchDeleteAppInstanceResource(resourceId),
+      );
+  };
 
   const handleNewBot = () => {
-    const { settings } = props;
-
     dispatchPatchAppInstance({
       data: {
         ...settings,
@@ -120,6 +81,63 @@ const AvatarView = (props) => {
       },
     });
     dispatchOpenAvatarDialog();
+  };
+
+  const renderBotUsers = () => {
+    // if there are no resources, show an empty table
+    if (!botUsers.length) {
+      return (
+        <TableRow>
+          <TableCell colSpan={4}>No App Instance Resources</TableCell>
+        </TableRow>
+      );
+    }
+    // map each app instance resource to a row in the table
+    return botUsers.map(({ _id, appInstance, data }) => (
+      <TableRow key={_id}>
+        <TableCell scope="row">{_id}</TableCell>
+        <TableCell>
+          <Avatar alt={data.name} src={data.uri} />
+        </TableCell>
+        <TableCell>{data.name}</TableCell>
+        <TableCell>{appInstance}</TableCell>
+        <TableCell>
+          <IconButton
+            color="primary"
+            onClick={() => {
+              // sending the avatarId that is being edited to the modal through settings
+              dispatchPatchAppInstance({
+                data: {
+                  ...settings,
+                  avatarId: _id,
+                },
+              });
+              dispatchOpenAvatarDialog();
+            }}
+          >
+            <EditIcon />
+          </IconButton>
+          <Tooltip title={t('Delete bot')}>
+            <IconButton
+              color="primary"
+              // remove the bot
+              onClick={() => handleDeleteBot(_id)}
+            >
+              <DeleteIcon />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title={t('Delete all comments for bot')}>
+            <IconButton
+              color="primary"
+              // remove all the comments linked to this bot
+              onClick={() => handleDeleteAllBotComments(_id)}
+            >
+              <DeleteForever />
+            </IconButton>
+          </Tooltip>
+        </TableCell>
+      </TableRow>
+    ));
   };
 
   return (
@@ -140,9 +158,7 @@ const AvatarView = (props) => {
                   <TableCell>Actions</TableCell>
                 </TableRow>
               </TableHead>
-              <TableBody>
-                {renderAppInstanceResources(botUsers, props)}
-              </TableBody>
+              <TableBody>{renderBotUsers()}</TableBody>
             </Table>
           </Paper>
           <Button
@@ -170,6 +186,12 @@ AvatarView.propTypes = {
       data: PropTypes.shape({}),
     }),
   ),
+  botComments: PropTypes.arrayOf(
+    PropTypes.shape({
+      botId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      resourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+    }),
+  ),
   settings: PropTypes.shape({
     avatarId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
       .isRequired,
@@ -177,20 +199,30 @@ AvatarView.propTypes = {
 
   dispatchOpenAvatarDialog: PropTypes.func.isRequired,
   dispatchPatchAppInstance: PropTypes.func.isRequired,
+  dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
 };
 
 AvatarView.defaultProps = {
   botUsers: [],
+  botComments: [],
 };
 
 const mapStateToProps = ({ appInstance, appInstanceResources }) => {
   const botUsers = appInstanceResources.content.filter(
     (r) => r.type === BOT_USER,
   );
-
+  // filter bot comments and map to bot ids and resource id
+  const botComments = appInstanceResources.content
+    .filter((r) => r.type === BOT_COMMENT)
+    .map(({ _id, data }) => ({
+      botId: data.botId,
+      resourceId: _id,
+    }));
   return {
     // only give bot users resources
     botUsers,
+    // array of botIds and resource ids corresponding to bot comments
+    botComments,
     settings: appInstance.content.settings,
     userOptions: botUsers.map(({ _id, data }) => ({
       value: _id,

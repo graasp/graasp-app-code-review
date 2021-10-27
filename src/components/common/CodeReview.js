@@ -41,8 +41,10 @@ class CodeReview extends Component {
     }).isRequired,
     isTeacherView: PropTypes.bool,
     isFeedbackView: PropTypes.bool,
-    selectedBot: PropTypes.string,
-    // selectedStudent: PropTypes.string,
+    selectedBot: PropTypes.shape({
+      value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+      label: PropTypes.string,
+    }),
     botComments: PropTypes.arrayOf(
       PropTypes.shape({
         _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -164,10 +166,12 @@ class CodeReview extends Component {
         data: {
           line,
           content,
+          // only add the botId property when the comment is from a bot
+          ...(selectedBot && { botId: selectedBot.value }),
         },
         type: selectedBot ? BOT_COMMENT : TEACHER_COMMENT,
         visibility: PUBLIC_VISIBILITY,
-        userId: selectedBot ? selectedBot.value : userId,
+        userId,
       });
     } else {
       dispatchPostAppInstanceResource({
@@ -255,6 +259,7 @@ class CodeReview extends Component {
 
       const renderedComments = this.renderCommentList(lineComments);
       return (
+        // add a key for each line ...
         <>
           <CodeLine
             htmlLine={line}
@@ -283,23 +288,26 @@ class CodeReview extends Component {
 }
 
 const mapStateToProps = (
-  { context, users, appInstance, appInstanceResources },
+  { context, appInstance, appInstanceResources },
   { isFeedbackView, selectedStudent },
 ) => {
+  // filter resources that are comments
   const comments = appInstanceResources.content.filter(
     (r) =>
       r.type === COMMENT &&
+      // select only comments from the selected user when in FeedbackView
       ((isFeedbackView && r.user === selectedStudent) || !isFeedbackView),
   );
   return {
     userId: context.userId,
-    users: users.content,
     code: appInstance.content.settings.code,
-    // filter resources that are comments
     comments,
-    botComments: appInstanceResources.content.filter(
-      (r) => r.type === BOT_COMMENT,
-    ),
+    botComments: appInstanceResources.content
+      .filter((r) => r.type === BOT_COMMENT)
+      .map((r) => ({
+        ...r,
+        _id: r.data.botId,
+      })),
     teacherComments: appInstanceResources.content.filter(
       (r) => r.type === TEACHER_COMMENT,
     ),

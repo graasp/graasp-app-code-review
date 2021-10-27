@@ -23,6 +23,13 @@ import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
 import { BOT_COMMENT, BOT_USER } from '../../config/appInstanceResourceTypes';
 
+// helper method
+const getInitials = (name) =>
+  name
+    .match(/\b(\w)/g)
+    .slice(0, 2)
+    .join('');
+
 const styles = (theme) => ({
   root: {
     padding: theme.spacing(1),
@@ -55,6 +62,7 @@ class CommentEditor extends Component {
         line: PropTypes.number.isRequired,
         content: PropTypes.string.isRequired,
       },
+      type: PropTypes.string,
       user: PropTypes.string,
       updatedAt: PropTypes.string,
     }),
@@ -76,6 +84,13 @@ class CommentEditor extends Component {
         name: PropTypes.string,
       }),
     ),
+    botUsers: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        name: PropTypes.string,
+        initials: PropTypes.string,
+      }),
+    ),
     activity: PropTypes.number,
   };
 
@@ -86,6 +101,7 @@ class CommentEditor extends Component {
     },
     activity: 0,
     users: [],
+    botUsers: [],
     readOnly: false,
   };
 
@@ -145,34 +161,33 @@ class CommentEditor extends Component {
     onDeleteComment(id);
   };
 
+  renderAvatar(userName) {
+    const { comment, botUsers } = this.props;
+    if (comment.type === BOT_COMMENT) {
+      const user = botUsers.find((u) => u.id === comment.data.botId);
+      if (user) {
+        return <Avatar alt={user.initials} src={user.uri} />;
+      }
+    }
+    return <Avatar>{getInitials(userName)}</Avatar>;
+  }
+
   renderCardHeader() {
     /* eslint-disable react/prop-types */
-    const { comment, classes, users, botUsers, readOnly } = this.props;
+    const { comment, classes, readOnly, users, botUsers } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
 
     const { isEdited, showDelete, open } = this.state;
-
-    const bot = botUsers.find((u) => u._id === comment.user);
-    const user =
-      users.find((u) => u._id === comment.user)?.name ||
-      botUsers.find((u) => u._id === comment.user)?.name ||
-      DEFAULT_USER;
-    const userInitials = user
-      .match(/\b(\w)/g)
-      .slice(0, 2)
-      .join('');
-    const userAvatar =
-      comment.type === BOT_COMMENT ? (
-        <Avatar alt={userInitials} src={bot.uri} />
-      ) : (
-        <Avatar>{userInitials}</Avatar>
-      );
+    const userName =
+      (comment.type === BOT_COMMENT
+        ? botUsers.find((u) => u.id === comment.data.botId)?.name
+        : users.find((u) => u.id === comment.user)?.name) || DEFAULT_USER;
 
     return isEdited ? null : (
       <CardHeader
         className={classes.header}
-        avatar={userAvatar}
-        title={user}
+        avatar={this.renderAvatar(userName)}
+        title={userName}
         subheader={updatedAt}
         action={
           <>
@@ -292,8 +307,12 @@ const mapStateToProps = ({ users, appInstanceResources }) => ({
   botUsers: appInstanceResources.content
     .filter((res) => res.type === BOT_USER)
     .map(({ _id, data }) => ({
-      _id,
+      id: _id,
       name: data.name,
+      initials: data.name
+        .match(/\b(\w)/g)
+        .slice(0, 2)
+        .join(''),
       uri: data.uri,
     })),
   activity: appInstanceResources.activity.length,

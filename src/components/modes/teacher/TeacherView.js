@@ -62,7 +62,7 @@ export class TeacherView extends Component {
     students: PropTypes.arrayOf(
       PropTypes.shape({
         // we need to specify number to avoid warnings with local server
-        _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         name: PropTypes.string,
         spaceId: PropTypes.string,
       }),
@@ -127,24 +127,24 @@ export class TeacherView extends Component {
       );
     }
     // map each app instance resource to a row in the table
-    return students.map(({ _id, name }) => {
+    return students.map(({ id, name }) => {
       const numberOfComments =
-        comments.filter((r) => r.user === _id)?.length || 0;
+        comments.filter((r) => r.user === id)?.length || 0;
       return numberOfComments ? (
-        <TableRow key={_id}>
-          <TableCell scope="row">{_id}</TableCell>
+        <TableRow key={id}>
+          <TableCell scope="row">{id}</TableCell>
           <TableCell>{name}</TableCell>
           <TableCell>{numberOfComments}</TableCell>
           <TableCell>
             <IconButton
               color="primary"
-              disabled={_id === selectedStudent}
+              disabled={id === selectedStudent}
               onClick={() => {
                 // dispatch to settings the selected student
                 dispatchPatchAppInstance({
                   data: {
                     ...settings,
-                    selectedStudent: _id,
+                    selectedStudent: id,
                   },
                 });
                 // this.setState({selectedStudent: _id});
@@ -216,8 +216,8 @@ export class TeacherView extends Component {
 const mapStateToProps = ({ users, appInstance, appInstanceResources }) => ({
   // we transform the list of students in the database
   // to the shape needed by the select component
-  students: users.content.map(({ _id, name }) => ({
-    _id,
+  students: users.content.map(({ id, name }) => ({
+    id,
     name,
   })),
   comments: appInstanceResources.content.filter((r) => r.type === COMMENT),

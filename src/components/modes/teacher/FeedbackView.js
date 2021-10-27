@@ -149,7 +149,7 @@ export class FeedbackView extends Component {
 const mapStateToProps = ({ users, appInstance, appInstanceResources }) => {
   const { settings } = appInstance.content;
   const studentName = users.content.find(
-    (u) => u._id === settings.selectedStudent,
+    (u) => u.id === settings.selectedStudent,
   )?.name;
   return {
     // we transform the list of students in the database

@@ -25,51 +25,61 @@
   "users": [
     {
       "_id": "5b56e70ab253020033364416",
+      "id": "5b56e70ab253020033364416",
       "name": "juan carlos",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad8",
+      "id": "5c055c1083d22e0211c24ad8",
       "name": "pamela",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad9",
+      "id": "5c055c1083d22e0211c24ad9",
       "name": "joana",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad6",
+      "id": "5c055c1083d22e0211c24ad6",
       "name": "maria",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad1",
+      "id": "5c055c1083d22e0211c24ad1",
       "name": "andré",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad2",
+      "id": "5c055c1083d22e0211c24ad2",
       "name": "mashkour",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad3",
+      "id": "5c055c1083d22e0211c24ad3",
       "name": "ezequiel",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083d22e0211c24ad4",
+      "id": "5c055c1083d22e0211c24ad4",
       "name": "denis",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083f33e0211c24ad4",
+      "id": "5c055c1083f33e0211c24ad4",
       "name": "hadi",
       "spaceId": "5b56e70ab253020033364411"
     },
     {
       "_id": "5c055c1083e11e0211c24ad4",
+      "id": "5c055c1083e11e0211c24ad4",
       "name": "roland",
       "spaceId": "5b56e70ab253020033364411"
     }

@@ -27,6 +27,7 @@
     "Close": "Fermer",
     "Viewing comments from ": "Affichage des commentaires de ",
     "Bot users": "Utilisateurs robots",
-    "Add a new bot user": "Ajouter un nouvel utilisateur robot"
+    "Add a new bot user": "Ajouter un nouvel utilisateur robot",
+    "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.": "Attention ! Vous endossez la personnalité d'un robot. Videz le champ ci-dessus pour comment avec votre profile"
   }
 }
