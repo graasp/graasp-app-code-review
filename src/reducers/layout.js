@@ -1,8 +1,8 @@
 import {
   OPEN_SETTINGS,
   CLOSE_SETTINGS,
-  CLOSE_AVATAR_SETTINGS,
-  OPEN_AVATAR_SETTINGS,
+  CLOSE_AVATAR_DIALOG,
+  OPEN_AVATAR_DIALOG,
 } from '../types';
 
 const INITIAL_STATE = {
@@ -32,7 +32,7 @@ export default (state = INITIAL_STATE, { type }) => {
           open: false,
         },
       };
-    case OPEN_AVATAR_SETTINGS:
+    case OPEN_AVATAR_DIALOG:
       return {
         ...state,
         avatarSettings: {
@@ -40,7 +40,7 @@ export default (state = INITIAL_STATE, { type }) => {
           open: true,
         },
       };
-    case CLOSE_AVATAR_SETTINGS:
+    case CLOSE_AVATAR_DIALOG:
       return {
         ...state,
         avatarSettings: {

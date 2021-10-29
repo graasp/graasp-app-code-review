@@ -79,7 +79,6 @@ class CodeReview extends Component {
     isFeedbackView: false,
     userId: null,
     selectedBot: null,
-    // selectedStudent: null,
     botComments: [],
     teacherComments: [],
     comments: [],

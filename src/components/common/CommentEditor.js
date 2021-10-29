@@ -77,6 +77,7 @@ class CommentEditor extends Component {
       header: PropTypes.string,
       content: PropTypes.string,
       actions: PropTypes.string,
+      commentText: PropTypes.string,
     }).isRequired,
     users: PropTypes.arrayOf(
       PropTypes.shape({
@@ -173,7 +174,6 @@ class CommentEditor extends Component {
   }
 
   renderCardHeader() {
-    /* eslint-disable react/prop-types */
     const { comment, classes, readOnly, users, botUsers } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
 
@@ -309,10 +309,7 @@ const mapStateToProps = ({ users, appInstanceResources }) => ({
     .map(({ _id, data }) => ({
       id: _id,
       name: data.name,
-      initials: data.name
-        .match(/\b(\w)/g)
-        .slice(0, 2)
-        .join(''),
+      initials: getInitials(data.name),
       uri: data.uri,
     })),
   activity: appInstanceResources.activity.length,

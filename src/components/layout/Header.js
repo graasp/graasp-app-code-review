@@ -48,8 +48,6 @@ class Header extends Component {
       button: PropTypes.string,
       disabled: PropTypes.string,
     }).isRequired,
-    appInstanceId: PropTypes.string,
-    spaceId: PropTypes.string,
     view: PropTypes.string,
     mode: PropTypes.string,
     dispatchGetAppInstanceResources: PropTypes.func.isRequired,
@@ -57,8 +55,6 @@ class Header extends Component {
   };
 
   static defaultProps = {
-    appInstanceId: null,
-    spaceId: null,
     view: DEFAULT_VIEW,
     mode: DEFAULT_MODE,
   };
@@ -68,38 +64,6 @@ class Header extends Component {
 
     dispatchGetAppInstanceResources();
     dispatchGetUsers();
-  };
-
-  renderAppInstanceLink = () => {
-    const { appInstanceId, t } = this.props;
-    if (!appInstanceId) {
-      return (
-        <a
-          href={addQueryParamsToUrl({
-            appInstanceId: '6156e70ab253020033364411',
-          })}
-          className="HeaderLink"
-        >
-          {t('Use Sample App Instance')}
-        </a>
-      );
-    }
-    return <div />;
-  };
-
-  renderSpaceLink = () => {
-    const { spaceId, t } = this.props;
-    if (!spaceId) {
-      return (
-        <a
-          href={addQueryParamsToUrl({ spaceId: '5b56e70ab253020033364411' })}
-          className="HeaderLink"
-        >
-          {t('Use Sample Space')}
-        </a>
-      );
-    }
-    return <div />;
   };
 
   renderTeacherButtons = () => {
@@ -156,10 +120,8 @@ class Header extends Component {
           <Toolbar>
             <Logo className={classes.logo} />
             <Typography variant="h6" color="inherit" className={classes.grow}>
-              {t('Graasp Code Review App')}
+              {t('Code Review')}
             </Typography>
-            {this.renderSpaceLink()}
-            {this.renderAppInstanceLink()}
             {this.renderTeacherButtons()}
             {this.renderReloadButton()}
           </Toolbar>
@@ -170,8 +132,6 @@ class Header extends Component {
 }
 
 const mapStateToProps = ({ context }) => ({
-  appInstanceId: context.appInstanceId,
-  spaceId: context.spaceId,
   view: context.view,
   mode: context.mode,
 });

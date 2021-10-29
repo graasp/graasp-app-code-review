@@ -147,9 +147,7 @@ export class TeacherView extends Component {
                     selectedStudent: id,
                   },
                 });
-                // this.setState({selectedStudent: _id});
               }}
-              // change to be the
               href={`index.html${addQueryParamsToUrl({ view: FEEDBACK_VIEW })}`}
             >
               <Input />
