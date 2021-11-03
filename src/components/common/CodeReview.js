@@ -320,7 +320,6 @@ class CodeReview extends Component {
       ) : null;
 
       return (
-        // add a key for each line ...
         <Fragment
           // eslint-disable-next-line react/no-array-index-key
           key={`$KEY${line}ID${i}`}
