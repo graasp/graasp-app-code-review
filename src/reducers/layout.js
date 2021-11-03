@@ -1,7 +1,15 @@
-import { OPEN_SETTINGS, CLOSE_SETTINGS } from '../types';
+import {
+  OPEN_SETTINGS,
+  CLOSE_SETTINGS,
+  CLOSE_AVATAR_DIALOG,
+  OPEN_AVATAR_DIALOG,
+} from '../types';
 
 const INITIAL_STATE = {
   settings: {
+    open: false,
+  },
+  avatarDialog: {
     open: false,
   },
 };
@@ -21,6 +29,22 @@ export default (state = INITIAL_STATE, { type }) => {
         ...state,
         settings: {
           ...state.settings,
+          open: false,
+        },
+      };
+    case OPEN_AVATAR_DIALOG:
+      return {
+        ...state,
+        avatarDialog: {
+          ...state.avatarDialog,
+          open: true,
+        },
+      };
+    case CLOSE_AVATAR_DIALOG:
+      return {
+        ...state,
+        avatarDialog: {
+          ...state.avatarDialog,
           open: false,
         },
       };

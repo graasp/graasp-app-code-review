@@ -1,3 +1,5 @@
 // settings
 export const OPEN_SETTINGS = 'OPEN_SETTINGS';
 export const CLOSE_SETTINGS = 'CLOSE_SETTINGS';
+export const OPEN_AVATAR_DIALOG = 'OPEN_AVATAR_DIALOG';
+export const CLOSE_AVATAR_DIALOG = 'CLOSE_AVATAR_DIALOG';

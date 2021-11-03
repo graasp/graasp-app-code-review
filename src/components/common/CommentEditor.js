@@ -21,6 +21,14 @@ import { withTranslation } from 'react-i18next';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
+import { BOT_COMMENT, BOT_USER } from '../../config/appInstanceResourceTypes';
+
+// helper method
+const getInitials = (name) =>
+  name
+    .match(/\b(\w)/g)
+    .slice(0, 2)
+    .join('');
 
 const styles = (theme) => ({
   root: {
@@ -49,15 +57,17 @@ class CommentEditor extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
     comment: PropTypes.shape({
-      _id: PropTypes.string,
+      _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
       data: {
         line: PropTypes.number.isRequired,
         content: PropTypes.string.isRequired,
       },
+      type: PropTypes.string,
       user: PropTypes.string,
       updatedAt: PropTypes.string,
     }),
     focused: PropTypes.bool.isRequired,
+    readOnly: PropTypes.bool,
     onEditComment: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
@@ -67,11 +77,19 @@ class CommentEditor extends Component {
       header: PropTypes.string,
       content: PropTypes.string,
       actions: PropTypes.string,
+      commentText: PropTypes.string,
     }).isRequired,
     users: PropTypes.arrayOf(
       PropTypes.shape({
         id: PropTypes.string,
         name: PropTypes.string,
+      }),
+    ),
+    botUsers: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        name: PropTypes.string,
+        initials: PropTypes.string,
       }),
     ),
     activity: PropTypes.number,
@@ -84,6 +102,8 @@ class CommentEditor extends Component {
     },
     activity: 0,
     users: [],
+    botUsers: [],
+    readOnly: false,
   };
 
   state = {
@@ -142,32 +162,36 @@ class CommentEditor extends Component {
     onDeleteComment(id);
   };
 
+  renderAvatar(userName) {
+    const { comment, botUsers } = this.props;
+    if (comment.type === BOT_COMMENT) {
+      const user = botUsers.find((u) => u.id === comment.data.botId);
+      if (user) {
+        return <Avatar alt={user.initials} src={user.uri} />;
+      }
+    }
+    return <Avatar>{getInitials(userName)}</Avatar>;
+  }
+
   renderCardHeader() {
-    /* eslint-disable react/prop-types */
-    const { comment, classes, users } = this.props;
+    const { comment, classes, readOnly, users, botUsers } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
 
     const { isEdited, showDelete, open } = this.state;
-
-    const user =
-      users.find((u) => u._id === comment.user)?.name || DEFAULT_USER;
+    const userName =
+      (comment.type === BOT_COMMENT
+        ? botUsers.find((u) => u.id === comment.data.botId)?.name
+        : users.find((u) => u.id === comment.user)?.name) || DEFAULT_USER;
 
     return isEdited ? null : (
       <CardHeader
         className={classes.header}
-        avatar={
-          <Avatar>
-            {user
-              .match(/\b(\w)/g)
-              .slice(0, 2)
-              .join('')}
-          </Avatar>
-        }
-        title={user}
+        avatar={this.renderAvatar(userName)}
+        title={userName}
         subheader={updatedAt}
         action={
           <>
-            {showDelete ? (
+            {showDelete && !readOnly ? (
               <>
                 <IconButton
                   aria-label="edit"
@@ -226,6 +250,10 @@ class CommentEditor extends Component {
               generateMarkdownPreview={(markdown) =>
                 Promise.resolve(this.converter.makeHtml(markdown))
               }
+              l18n={{
+                write: t('Write'),
+                preview: t('Preview'),
+              }}
               childProps={{
                 writeButton: {
                   tabIndex: -1,
@@ -276,6 +304,14 @@ class CommentEditor extends Component {
 
 const mapStateToProps = ({ users, appInstanceResources }) => ({
   users: users.content,
+  botUsers: appInstanceResources.content
+    .filter((res) => res.type === BOT_USER)
+    .map(({ _id, data }) => ({
+      id: _id,
+      name: data.name,
+      initials: getInitials(data.name),
+      uri: data.uri,
+    })),
   activity: appInstanceResources.activity.length,
 });
 

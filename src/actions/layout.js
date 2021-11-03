@@ -1,4 +1,9 @@
-import { CLOSE_SETTINGS, OPEN_SETTINGS } from '../types';
+import {
+  CLOSE_AVATAR_DIALOG,
+  CLOSE_SETTINGS,
+  OPEN_AVATAR_DIALOG,
+  OPEN_SETTINGS,
+} from '../types';
 
 const openSettings = () => (dispatch) =>
   dispatch({
@@ -10,4 +15,14 @@ const closeSettings = () => (dispatch) =>
     type: CLOSE_SETTINGS,
   });
 
-export { openSettings, closeSettings };
+const openAvatarDialog = () => (dispatch) =>
+  dispatch({
+    type: OPEN_AVATAR_DIALOG,
+  });
+
+const closeAvatarDialog = () => (dispatch) =>
+  dispatch({
+    type: CLOSE_AVATAR_DIALOG,
+  });
+
+export { openSettings, closeSettings, openAvatarDialog, closeAvatarDialog };

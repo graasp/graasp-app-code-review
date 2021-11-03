@@ -11,79 +11,23 @@ import SettingsIcon from '@material-ui/icons/Settings';
 import TableRow from '@material-ui/core/TableRow';
 import Typography from '@material-ui/core/Typography';
 import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
-import DeleteIcon from '@material-ui/icons/Delete';
-import RefreshIcon from '@material-ui/icons/Refresh';
-import Select from 'react-select';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import './TeacherView.css';
+import { Input } from '@material-ui/icons';
 import {
   patchAppInstanceResource,
   postAppInstanceResource,
   deleteAppInstanceResource,
   openSettings,
+  getUsers,
+  patchAppInstance,
 } from '../../../actions';
-import { getUsers } from '../../../actions/users';
 import { addQueryParamsToUrl } from '../../../utils/url';
 import Settings from './Settings';
-
-/**
- * helper method to render the rows of the app instance resource table
- * @param appInstanceResources
- * @param dispatchPatchAppInstanceResource
- * @param dispatchDeleteAppInstanceResource
- * @returns {*}
- */
-const renderAppInstanceResources = (
-  appInstanceResources,
-  { dispatchPatchAppInstanceResource, dispatchDeleteAppInstanceResource },
-) => {
-  // if there are no resources, show an empty table
-  if (!appInstanceResources.length) {
-    return (
-      <TableRow>
-        <TableCell colSpan={4}>No App Instance Resources</TableCell>
-      </TableRow>
-    );
-  }
-  // map each app instance resource to a row in the table
-  return appInstanceResources.map(({ _id, appInstance, data }) => (
-    <TableRow key={_id}>
-      <TableCell scope="row">{_id}</TableCell>
-      <TableCell>{appInstance}</TableCell>
-      <TableCell>{data.value}</TableCell>
-      <TableCell>
-        <IconButton
-          color="primary"
-          onClick={() => {
-            dispatchPatchAppInstanceResource({
-              id: _id,
-              data: { value: Math.random() },
-            });
-          }}
-        >
-          <RefreshIcon />
-        </IconButton>
-        <IconButton
-          color="primary"
-          onClick={() => dispatchDeleteAppInstanceResource(_id)}
-        >
-          <DeleteIcon />
-        </IconButton>
-      </TableCell>
-    </TableRow>
-  ));
-};
-
-const generateRandomAppInstanceResource = ({
-  dispatchPostAppInstanceResource,
-}) => {
-  dispatchPostAppInstanceResource({
-    data: { value: Math.random() },
-  });
-};
+import { COMMENT } from '../../../config/appInstanceResourceTypes';
+import { FEEDBACK_VIEW } from '../../../config/views';
 
 export class TeacherView extends Component {
   static propTypes = {
@@ -98,27 +42,36 @@ export class TeacherView extends Component {
       fab: PropTypes.string,
     }).isRequired,
     dispatchGetUsers: PropTypes.func.isRequired,
+    dispatchPatchAppInstance: PropTypes.func.isRequired,
+    settings: PropTypes.shape({
+      selectedStudent: PropTypes.string,
+    }).isRequired,
     // inside the shape method you should put the shape
     // that the resources your app uses will have
-    appInstanceResources: PropTypes.arrayOf(
+    comments: PropTypes.arrayOf(
       PropTypes.shape({
         // we need to specify number to avoid warnings with local server
         _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         appInstanceId: PropTypes.string,
-        data: PropTypes.shape({}),
+        data: PropTypes.shape({
+          line: PropTypes.number,
+          content: PropTypes.string,
+        }),
       }),
     ),
-    // this is the shape of the select options for students
-    studentOptions: PropTypes.arrayOf(
+    students: PropTypes.arrayOf(
       PropTypes.shape({
-        label: PropTypes.string,
-        value: PropTypes.string,
+        // we need to specify number to avoid warnings with local server
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        name: PropTypes.string,
+        spaceId: PropTypes.string,
       }),
-    ).isRequired,
+    ),
   };
 
   static defaultProps = {
-    appInstanceResources: [],
+    comments: [],
+    students: [],
   };
 
   static styles = (theme) => ({
@@ -161,6 +114,50 @@ export class TeacherView extends Component {
     dispatchGetUsers();
   }
 
+  renderStudentList = () => {
+    const { students, comments, dispatchPatchAppInstance, settings } =
+      this.props;
+    const { selectedStudent } = this.state;
+    // if there are no resources, show an empty table
+    if (!comments.length) {
+      return (
+        <TableRow>
+          <TableCell colSpan={4}>No App Instance Resources</TableCell>
+        </TableRow>
+      );
+    }
+    // map each app instance resource to a row in the table
+    return students.map(({ id, name }) => {
+      const numberOfComments =
+        comments.filter((r) => r.user === id)?.length || 0;
+      return numberOfComments ? (
+        <TableRow key={id}>
+          <TableCell scope="row">{id}</TableCell>
+          <TableCell>{name}</TableCell>
+          <TableCell>{numberOfComments}</TableCell>
+          <TableCell>
+            <IconButton
+              color="primary"
+              disabled={id === selectedStudent}
+              onClick={() => {
+                // dispatch to settings the selected student
+                dispatchPatchAppInstance({
+                  data: {
+                    ...settings,
+                    selectedStudent: id,
+                  },
+                });
+              }}
+              href={`index.html${addQueryParamsToUrl({ view: FEEDBACK_VIEW })}`}
+            >
+              <Input />
+            </IconButton>
+          </TableCell>
+        </TableRow>
+      ) : null;
+    });
+  };
+
   handleChangeStudent = (value) => {
     this.setState({
       selectedStudent: value,
@@ -174,67 +171,29 @@ export class TeacherView extends Component {
       classes,
       // this property allows us to do translations and is injected by i18next
       t,
-      // these properties are injected by the redux mapStateToProps method
-      appInstanceResources,
-      studentOptions,
       dispatchOpenSettings,
     } = this.props;
-    const { selectedStudent } = this.state;
+
     return (
       <>
         <Grid container spacing={0}>
           <Grid item xs={12} className={classes.main}>
-            <Paper className={classes.message}>
-              {t(
-                'This is the teacher view. Switch to the student view by clicking on the URL below.',
-              )}
-              <a href={addQueryParamsToUrl({ mode: 'student' })}>
-                <pre>
-                  {`${window.location.host}/${addQueryParamsToUrl({
-                    mode: 'student',
-                  })}`}
-                </pre>
-              </a>
-            </Paper>
-            <Typography variant="h5" color="inherit">
-              {t('View the Students in the Sample Space')}
-            </Typography>
-            <Select
-              className="StudentSelect"
-              value={selectedStudent}
-              options={studentOptions}
-              onChange={this.handleChangeStudent}
-              isClearable
-            />
-            <hr />
             <Typography variant="h6" color="inherit">
-              {t(
-                'This table illustrates how an app can save resources on the server.',
-              )}
+              {t('Student comments')}
             </Typography>
             <Paper className={classes.root}>
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
                     <TableCell>ID</TableCell>
-                    <TableCell>App Instance</TableCell>
-                    <TableCell>Value</TableCell>
-                    <TableCell>Actions</TableCell>
+                    <TableCell>{t('Name')}</TableCell>
+                    <TableCell>{t('Number of comments')}</TableCell>
+                    <TableCell>{t('View Student comments')}</TableCell>
                   </TableRow>
                 </TableHead>
-                <TableBody>
-                  {renderAppInstanceResources(appInstanceResources, this.props)}
-                </TableBody>
+                <TableBody>{this.renderStudentList()}</TableBody>
               </Table>
             </Paper>
-            <Button
-              color="primary"
-              className={classes.button}
-              variant="contained"
-              onClick={() => generateRandomAppInstanceResource(this.props)}
-            >
-              {t('Save a Random App Instance Resource via the API')}
-            </Button>
           </Grid>
         </Grid>
         <Settings />
@@ -252,14 +211,15 @@ export class TeacherView extends Component {
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ users, appInstanceResources }) => ({
+const mapStateToProps = ({ users, appInstance, appInstanceResources }) => ({
   // we transform the list of students in the database
   // to the shape needed by the select component
-  studentOptions: users.content.map(({ id, name }) => ({
-    value: id,
-    label: name,
+  students: users.content.map(({ id, name }) => ({
+    id,
+    name,
   })),
-  appInstanceResources: appInstanceResources.content,
+  comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
+  settings: appInstance.content.settings,
 });
 
 // allow this component to dispatch a post
@@ -270,6 +230,7 @@ const mapDispatchToProps = {
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
   dispatchOpenSettings: openSettings,
+  dispatchPatchAppInstance: patchAppInstance,
 };
 
 const ConnectedComponent = connect(

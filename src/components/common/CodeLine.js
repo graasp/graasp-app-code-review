@@ -31,7 +31,7 @@ const useStyles = makeStyles((theme) =>
   }),
 );
 
-const CodeLine = ({ htmlLine, lineNumber, onClickAdd }) => {
+const CodeLine = ({ htmlLine, lineNumber, onClickAdd, disableButton }) => {
   /* eslint-disable react/no-danger */
   const [showAdd, setShowAdd] = useState(false);
   const classes = useStyles();
@@ -44,16 +44,18 @@ const CodeLine = ({ htmlLine, lineNumber, onClickAdd }) => {
     >
       <td className={classes.lineNumber}>
         {lineNumber}
-        <IconButton
-          className={classes.root}
-          color="primary"
-          aria-label="add"
-          size="small"
-          disabled={!showAdd}
-          onClick={() => onClickAdd(lineNumber)}
-        >
-          <AddIcon fontSize="inherit" />
-        </IconButton>
+        {disableButton ? null : (
+          <IconButton
+            className={classes.root}
+            color="primary"
+            aria-label="add"
+            size="small"
+            disabled={!showAdd}
+            onClick={() => onClickAdd(lineNumber)}
+          >
+            <AddIcon fontSize="inherit" />
+          </IconButton>
+        )}
       </td>
       <td className="code-line">
         <pre
@@ -69,6 +71,11 @@ CodeLine.propTypes = {
   htmlLine: PropTypes.string.isRequired,
   lineNumber: PropTypes.number.isRequired,
   onClickAdd: PropTypes.func.isRequired,
+  disableButton: PropTypes.bool,
+};
+
+CodeLine.defaultProps = {
+  disableButton: false,
 };
 
 export default CodeLine;

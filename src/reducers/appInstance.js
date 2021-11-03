@@ -14,6 +14,8 @@ export const DEFAULT_SETTINGS = {
   headerVisible: false,
   code: '',
   programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
+  selectedBot: null,
+  selectedStudent: null,
 };
 
 const INITIAL_STATE = {
