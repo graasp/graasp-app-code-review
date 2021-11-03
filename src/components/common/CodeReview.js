@@ -32,6 +32,7 @@ class CodeReview extends Component {
       container: PropTypes.string,
     }).isRequired,
     code: PropTypes.string.isRequired,
+    programmingLanguage: PropTypes.string.isRequired,
     userId: PropTypes.string,
     comments: PropTypes.string.isRequired,
     dispatchPostAppInstanceResource: PropTypes.func.isRequired,
@@ -155,9 +156,11 @@ class CodeReview extends Component {
   }
 
   renderCodeReview(code, commentList) {
-    const highlightedCode = CodeReview.highlightCode(code, 'python').split(
-      '\n',
-    );
+    const { programmingLanguage } = this.props;
+    const highlightedCode = CodeReview.highlightCode(
+      code,
+      programmingLanguage,
+    ).split('\n');
     return highlightedCode.map((line, i) => {
       const lineComments = commentList.filter(
         (comment) => comment.data.line === i + 1,
@@ -199,6 +202,7 @@ const mapStateToProps = ({
   userId: context.userId,
   users: users.content,
   code: appInstance.content.settings.code,
+  programmingLanguage: appInstance.content.settings.programmingLanguage,
   // filter resources that are comments
   comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
 });

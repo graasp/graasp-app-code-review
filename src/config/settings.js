@@ -26,6 +26,7 @@ export const DEFAULT_VISIBILITY = PRIVATE_VISIBILITY;
 
 export const JAVASCRIPT = 'javascript';
 export const PYTHON = 'python';
+export const MATLAB = 'matlab';
 export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
 
 export const DEFAULT_USER = 'Anonymous';

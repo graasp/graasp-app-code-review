@@ -19,7 +19,7 @@ import { withTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
 import { closeSettings, patchAppInstance } from '../../../actions';
 import Loader from '../../common/Loader';
-import { JAVASCRIPT, PYTHON } from '../../../config/settings';
+import { JAVASCRIPT, MATLAB, PYTHON } from '../../../config/settings';
 import {
   HEADER_VISIBILITY_SWITCH_CYPRESS,
   SAVE_SETTINGS_BUTTON_CYPRESS,
@@ -230,6 +230,7 @@ class Settings extends Component {
       >
         <MenuItem value={JAVASCRIPT}>JavaScript</MenuItem>
         <MenuItem value={PYTHON}>Python</MenuItem>
+        <MenuItem value={MATLAB}>Matlab</MenuItem>
       </Select>
     );
 
