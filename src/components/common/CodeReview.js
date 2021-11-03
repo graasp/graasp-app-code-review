@@ -38,6 +38,7 @@ const styles = {
 };
 
 const NEW_COMMENT_ID = '';
+const DELETED_COMMENT = '[DELETED]';
 
 class CodeReview extends Component {
   static propTypes = {
@@ -125,8 +126,30 @@ class CodeReview extends Component {
   }
 
   handleDelete = (_id) => {
-    const { dispatchDeleteAppInstanceResource } = this.props;
-    dispatchDeleteAppInstanceResource(_id);
+    const {
+      dispatchDeleteAppInstanceResource,
+      dispatchPatchAppInstanceResource,
+      teacherComments,
+      comments,
+      botComments,
+    } = this.props;
+    const allComments = [...teacherComments, ...comments, ...botComments];
+    const allChildComments = allComments.filter(
+      (comment) => comment.data.parent === _id,
+    );
+    if (allChildComments.length) {
+      const comment = allComments.find((c) => c._id === _id);
+      dispatchPatchAppInstanceResource({
+        id: _id,
+        data: {
+          ...comment.data,
+          content: DELETED_COMMENT,
+          deleted: true,
+        },
+      });
+    } else {
+      dispatchDeleteAppInstanceResource(_id);
+    }
     this.setState({ focusedId: null });
   };
 
@@ -245,7 +268,8 @@ class CodeReview extends Component {
       >
         <CommentEditor
           comment={comment}
-          readOnly={this.getReadOnlyProperty(comment)}
+          // if a comment has the deleted flag it should not be editable
+          readOnly={this.getReadOnlyProperty(comment) || comment.data.deleted}
           showReply={!isFeedbackView}
           focused={focusedId === comment._id}
           onReply={() => this.handleAddComment(comment.data.line, comment._id)}
