@@ -9,7 +9,7 @@ const INITIAL_STATE = {
   settings: {
     open: false,
   },
-  avatarSettings: {
+  avatarDialog: {
     open: false,
   },
 };
@@ -35,16 +35,16 @@ export default (state = INITIAL_STATE, { type }) => {
     case OPEN_AVATAR_DIALOG:
       return {
         ...state,
-        avatarSettings: {
-          ...state.avatarSettings,
+        avatarDialog: {
+          ...state.avatarDialog,
           open: true,
         },
       };
     case CLOSE_AVATAR_DIALOG:
       return {
         ...state,
-        avatarSettings: {
-          ...state.avatarSettings,
+        avatarDialog: {
+          ...state.avatarDialog,
           open: false,
         },
       };

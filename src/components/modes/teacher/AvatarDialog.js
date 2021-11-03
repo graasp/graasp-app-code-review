@@ -78,7 +78,7 @@ const styles = (theme) => ({
   },
 });
 
-class AvatarSettings extends Component {
+class AvatarDialog extends Component {
   static propTypes = {
     classes: PropTypes.shape({
       title: PropTypes.string,
@@ -299,7 +299,7 @@ const mapDispatchToProps = {
 const ConnectedComponent = connect(
   mapStateToProps,
   mapDispatchToProps,
-)(AvatarSettings);
+)(AvatarDialog);
 const TranslatedComponent = withTranslation()(ConnectedComponent);
 
 export default withStyles(styles)(TranslatedComponent);

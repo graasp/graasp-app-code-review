@@ -28,7 +28,7 @@ import {
   BOT_COMMENT,
   BOT_USER,
 } from '../../../config/appInstanceResourceTypes';
-import AvatarSettings from './AvatarSettings';
+import AvatarDialog from './AvatarDialog';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -171,7 +171,7 @@ const AvatarView = (props) => {
           </Button>
         </Grid>
       </Grid>
-      <AvatarSettings />
+      <AvatarDialog />
     </>
   );
 };
