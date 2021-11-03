@@ -230,7 +230,7 @@ class Settings extends Component {
       >
         <MenuItem value={JAVASCRIPT}>JavaScript</MenuItem>
         <MenuItem value={PYTHON}>Python</MenuItem>
-        <MenuItem value={MATLAB}>Matlab</MenuItem>
+        <MenuItem value={MATLAB}>MATLAB</MenuItem>
       </Select>
     );
 
