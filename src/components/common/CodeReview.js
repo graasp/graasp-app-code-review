@@ -1,10 +1,11 @@
 import './CodeReview.css';
-import React, { Component } from 'react';
+import React, { Component, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
 import Prism from 'prismjs';
 import _ from 'lodash';
+import { Paper } from '@material-ui/core';
 import CodeLine from './CodeLine';
 import CommentEditor from './CommentEditor';
 import {
@@ -30,6 +31,10 @@ const styles = {
     margin: '20px auto auto',
     boxSizing: 'border-box',
   },
+  commentContainer: {
+    margin: '5px',
+    marginLeft: '20px',
+  },
 };
 
 const NEW_COMMENT_ID = '';
@@ -38,6 +43,7 @@ class CodeReview extends Component {
   static propTypes = {
     classes: PropTypes.shape({
       container: PropTypes.string,
+      commentContainer: PropTypes.string,
     }).isRequired,
     isTeacherView: PropTypes.bool,
     isFeedbackView: PropTypes.bool,
@@ -144,7 +150,7 @@ class CodeReview extends Component {
     this.setState({ focusedId: _id });
   };
 
-  handleSubmit = (_id, line, content) => {
+  handleSubmit = (_id, content) => {
     const {
       dispatchPostAppInstanceResource,
       dispatchPatchAppInstanceResource,
@@ -152,19 +158,21 @@ class CodeReview extends Component {
       selectedBot,
       isTeacherView,
     } = this.props;
+    const { comments } = this.state;
+    const comment = comments.find((c) => c._id === _id);
 
     if (_id) {
       dispatchPatchAppInstanceResource({
         id: _id,
         data: {
-          line,
+          ...comment.data,
           content,
         },
       });
     } else if (isTeacherView) {
       dispatchPostAppInstanceResource({
         data: {
-          line,
+          ...comment.data,
           content,
           // only add the botId property when the comment is from a bot
           ...(selectedBot && { botId: selectedBot.value }),
@@ -176,7 +184,7 @@ class CodeReview extends Component {
     } else {
       dispatchPostAppInstanceResource({
         data: {
-          line,
+          ...comment.data,
           content,
         },
         type: COMMENT,
@@ -187,7 +195,7 @@ class CodeReview extends Component {
     this.setState({ focusedId: null });
   };
 
-  handleAddComment(lineNum) {
+  handleAddComment(lineNum, parentId = null) {
     const { comments } = this.props;
     const newComments = [
       ...comments,
@@ -196,6 +204,7 @@ class CodeReview extends Component {
         data: {
           line: lineNum,
           content: '',
+          parent: parentId,
         },
       },
     ];
@@ -218,29 +227,46 @@ class CodeReview extends Component {
     return comment.type !== COMMENT;
   }
 
-  renderCommentList(commentList) {
+  renderCommentChild(comments, parentId) {
+    const { classes, isFeedbackView } = this.props;
     const { focusedId } = this.state;
-    return commentList.map((comment) => (
-      <tr key={comment._id} className="comment">
-        <td className="comment editor" colSpan={2}>
-          <CommentEditor
-            comment={comment}
-            readOnly={this.getReadOnlyProperty(comment)}
-            focused={focusedId === comment._id}
-            onEditComment={(_id) => this.handleEdit(_id)}
-            onDeleteComment={(_id) => this.handleDelete(_id)}
-            onCancel={this.handleCancel}
-            onSubmit={(_id, line, content) =>
-              this.handleSubmit(_id, line, content)
-            }
-          />
-        </td>
-      </tr>
+    const levelComments = comments
+      .filter((comment) => comment.data.parent === parentId)
+      .sort((comment) => comment.created_at);
+    if (levelComments.length === 0) {
+      return null;
+    }
+
+    return levelComments.map((comment) => (
+      <Paper
+        key={comment._id}
+        className={classes.commentContainer}
+        variant="outlined"
+      >
+        <CommentEditor
+          comment={comment}
+          readOnly={this.getReadOnlyProperty(comment)}
+          showReply={!isFeedbackView}
+          focused={focusedId === comment._id}
+          onReply={() => this.handleAddComment(comment.data.line, comment._id)}
+          onEditComment={(_id) => this.handleEdit(_id)}
+          onDeleteComment={(_id) => this.handleDelete(_id)}
+          onCancel={this.handleCancel}
+          onSubmit={(_id, content) => this.handleSubmit(_id, content)}
+        />
+        {this.renderCommentChild(comments, comment._id)}
+      </Paper>
     ));
   }
 
   renderCodeReview(code, commentList) {
-    const { isFeedbackView, isTeacherView, botComments, teacherComments, programmingLanguage } = this.props;
+    const {
+      isFeedbackView,
+      isTeacherView,
+      botComments,
+      teacherComments,
+      programmingLanguage,
+    } = this.props;
     const { focusedId } = this.state;
     const highlightedCode = CodeReview.highlightCode(
       code,
@@ -257,10 +283,24 @@ class CodeReview extends Component {
         ...filteredComments.filter((comment) => comment.data.line === i + 1),
       ];
 
-      const renderedComments = this.renderCommentList(lineComments);
+      // check if there are any first level comments
+      // if there are any, just do not render a row
+      const renderedComments = lineComments.filter(
+        (comment) => comment.data.parent === null,
+      ).length ? (
+        <tr className="comment">
+          <td className="comment editor" colSpan={2}>
+            {this.renderCommentChild(lineComments, null)}
+          </td>
+        </tr>
+      ) : null;
+
       return (
         // add a key for each line ...
-        <>
+        <Fragment
+          // eslint-disable-next-line react/no-array-index-key
+          key={`$KEY${line}ID${i}`}
+        >
           <CodeLine
             htmlLine={line}
             lineNumber={i + 1}
@@ -268,7 +308,7 @@ class CodeReview extends Component {
             disableButton={isFeedbackView}
           />
           {renderedComments}
-        </>
+        </Fragment>
       );
     });
   }
@@ -287,10 +327,9 @@ class CodeReview extends Component {
   }
 }
 
-
 const mapStateToProps = (
   { context, appInstance, appInstanceResources },
-  { isFeedbackView, selectedStudent }
+  { isFeedbackView, selectedStudent },
 ) => {
   // filter resources that are comments
   const comments = appInstanceResources.content.filter(
