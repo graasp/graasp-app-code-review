@@ -60,6 +60,7 @@ class CodeReview extends Component {
       }),
     ),
     code: PropTypes.string.isRequired,
+    programmingLanguage: PropTypes.string.isRequired,
     userId: PropTypes.string,
     comments: PropTypes.arrayOf(
       PropTypes.shape({
@@ -239,12 +240,12 @@ class CodeReview extends Component {
   }
 
   renderCodeReview(code, commentList) {
-    const { isFeedbackView, isTeacherView, botComments, teacherComments } =
-      this.props;
+    const { isFeedbackView, isTeacherView, botComments, teacherComments, programmingLanguage } = this.props;
     const { focusedId } = this.state;
-    const highlightedCode = CodeReview.highlightCode(code, 'python').split(
-      '\n',
-    );
+    const highlightedCode = CodeReview.highlightCode(
+      code,
+      programmingLanguage,
+    ).split('\n');
     return highlightedCode.map((line, i) => {
       const filteredComments = commentList.filter(
         (comment) =>
@@ -286,9 +287,10 @@ class CodeReview extends Component {
   }
 }
 
+
 const mapStateToProps = (
   { context, appInstance, appInstanceResources },
-  { isFeedbackView, selectedStudent },
+  { isFeedbackView, selectedStudent }
 ) => {
   // filter resources that are comments
   const comments = appInstanceResources.content.filter(
@@ -300,6 +302,7 @@ const mapStateToProps = (
   return {
     userId: context.userId,
     code: appInstance.content.settings.code,
+    programmingLanguage: appInstance.content.settings.programmingLanguage,
     comments,
     botComments: appInstanceResources.content
       .filter((r) => r.type === BOT_COMMENT)
