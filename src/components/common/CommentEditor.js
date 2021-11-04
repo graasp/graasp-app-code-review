@@ -18,6 +18,7 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import { withTranslation } from 'react-i18next';
+import { Reply } from '@material-ui/icons';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
@@ -33,7 +34,6 @@ const getInitials = (name) =>
 const styles = (theme) => ({
   root: {
     padding: theme.spacing(1),
-    margin: theme.spacing(1),
   },
   header: {
     padding: theme.spacing(1),
@@ -58,17 +58,21 @@ class CommentEditor extends Component {
     t: PropTypes.func.isRequired,
     comment: PropTypes.shape({
       _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
-      data: {
+      data: PropTypes.shape({
         line: PropTypes.number.isRequired,
         content: PropTypes.string.isRequired,
-      },
+        botId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        deleted: PropTypes.bool,
+      }),
       type: PropTypes.string,
       user: PropTypes.string,
       updatedAt: PropTypes.string,
     }),
     focused: PropTypes.bool.isRequired,
     readOnly: PropTypes.bool,
+    showReply: PropTypes.bool,
     onEditComment: PropTypes.func.isRequired,
+    onReply: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
@@ -104,13 +108,14 @@ class CommentEditor extends Component {
     users: [],
     botUsers: [],
     readOnly: false,
+    showReply: true,
   };
 
   state = {
     isEdited: false,
     value: '',
     selectedTab: 'preview',
-    showDelete: false,
+    isHovered: false,
     open: false,
   };
 
@@ -122,9 +127,12 @@ class CommentEditor extends Component {
   });
 
   componentDidMount() {
-    const { comment, focused } = this.props;
+    const { comment, focused, t } = this.props;
+    const value = comment.data.deleted
+      ? t(comment.data.content)
+      : comment.data.content;
     this.setState({
-      value: comment.data.content,
+      value,
       isEdited: focused,
       selectedTab: focused ? 'write' : 'preview',
     });
@@ -154,7 +162,7 @@ class CommentEditor extends Component {
     this.setState({
       isEdited: false,
     });
-    onSubmit(comment._id, comment.data.line, value);
+    onSubmit(comment._id, value);
   };
 
   handleDelete = (id) => {
@@ -174,10 +182,11 @@ class CommentEditor extends Component {
   }
 
   renderCardHeader() {
-    const { comment, classes, readOnly, users, botUsers } = this.props;
+    const { comment, classes, readOnly, users, botUsers, onReply, showReply } =
+      this.props;
     const { updatedAt = new Date().toISOString() } = comment;
 
-    const { isEdited, showDelete, open } = this.state;
+    const { isEdited, isHovered, open } = this.state;
     const userName =
       (comment.type === BOT_COMMENT
         ? botUsers.find((u) => u.id === comment.data.botId)?.name
@@ -191,7 +200,7 @@ class CommentEditor extends Component {
         subheader={updatedAt}
         action={
           <>
-            {showDelete && !readOnly ? (
+            {isHovered && !readOnly ? (
               <>
                 <IconButton
                   aria-label="edit"
@@ -208,6 +217,11 @@ class CommentEditor extends Component {
                   <DeleteIcon />
                 </IconButton>
               </>
+            ) : null}
+            {showReply ? (
+              <IconButton aria-label="reply" color="primary" onClick={onReply}>
+                <Reply />
+              </IconButton>
             ) : null}
             <ConfirmDialog
               open={open}
@@ -235,9 +249,9 @@ class CommentEditor extends Component {
     return (
       <Card
         className={classes.root}
-        onMouseEnter={() => this.setState({ showDelete: true })}
-        onMouseLeave={() => this.setState({ showDelete: false })}
-        variant="outlined"
+        onMouseEnter={() => this.setState({ isHovered: true })}
+        onMouseLeave={() => this.setState({ isHovered: false })}
+        elevation={0}
       >
         {this.renderCardHeader()}
         <CardContent className={classes.content}>
