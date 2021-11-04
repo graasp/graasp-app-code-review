@@ -19,6 +19,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import { withTranslation } from 'react-i18next';
 import { Reply } from '@material-ui/icons';
+import _ from 'lodash';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
@@ -136,6 +137,32 @@ class CommentEditor extends Component {
       isEdited: focused,
       selectedTab: focused ? 'write' : 'preview',
     });
+  }
+
+  componentDidUpdate(prevProps, prevState) {
+    const { comment: prevPropsComment, focused: prevPropsFocused } = prevProps;
+    const { content: prevPropsCommentValue } = prevPropsComment.data;
+    const { value: prevStateCommentValue, isEdited: prevStateFocused } =
+      prevState;
+    const { comment, focused, t } = this.props;
+    let { content: value } = comment.data;
+    if (
+      !(
+        _.isEqual(value, prevPropsCommentValue) ||
+        _.isEqual(value, prevStateCommentValue)
+      ) ||
+      !(
+        _.isEqual(focused, prevPropsFocused) ||
+        _.isEqual(focused, prevStateFocused)
+      )
+    ) {
+      // translate the text if the comment has the deleted flag
+      value = comment.data.deleted
+        ? t(comment.data.content)
+        : comment.data.content;
+      // eslint-disable-next-line react/no-did-update-set-state
+      this.setState({ value, isEdited: focused });
+    }
   }
 
   handleOnCancel = () => {
