@@ -62,6 +62,7 @@ class CommentEditor extends Component {
         line: PropTypes.number.isRequired,
         content: PropTypes.string.isRequired,
         botId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        deleted: PropTypes.bool,
       }),
       type: PropTypes.string,
       user: PropTypes.string,
@@ -126,9 +127,12 @@ class CommentEditor extends Component {
   });
 
   componentDidMount() {
-    const { comment, focused } = this.props;
+    const { comment, focused, t } = this.props;
+    const value = comment.data.deleted
+      ? t(comment.data.content)
+      : comment.data.content;
     this.setState({
-      value: comment.data.content,
+      value,
       isEdited: focused,
       selectedTab: focused ? 'write' : 'preview',
     });

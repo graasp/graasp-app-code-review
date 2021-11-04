@@ -250,17 +250,17 @@ class CodeReview extends Component {
     return comment.type !== COMMENT;
   }
 
-  renderCommentChild(comments, parentId) {
+  renderChildrenComments(comments, parentId) {
     const { classes, isFeedbackView } = this.props;
     const { focusedId } = this.state;
-    const levelComments = comments
+    const childrenComments = comments
       .filter((comment) => comment.data.parent === parentId)
-      .sort((comment) => comment.created_at);
-    if (levelComments.length === 0) {
+      .sort((comment) => comment.createdAt);
+    if (childrenComments.length === 0) {
       return null;
     }
 
-    return levelComments.map((comment) => (
+    return childrenComments.map((comment) => (
       <Paper
         key={comment._id}
         className={classes.commentContainer}
@@ -278,7 +278,7 @@ class CodeReview extends Component {
           onCancel={this.handleCancel}
           onSubmit={(_id, content) => this.handleSubmit(_id, content)}
         />
-        {this.renderCommentChild(comments, comment._id)}
+        {this.renderChildrenComments(comments, comment._id)}
       </Paper>
     ));
   }
@@ -314,7 +314,7 @@ class CodeReview extends Component {
       ).length ? (
         <tr className="comment">
           <td className="comment editor" colSpan={2}>
-            {this.renderCommentChild(lineComments, null)}
+            {this.renderChildrenComments(lineComments, null)}
           </td>
         </tr>
       ) : null;
