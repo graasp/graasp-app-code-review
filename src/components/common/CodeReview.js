@@ -182,8 +182,10 @@ class CodeReview extends Component {
       isTeacherView,
     } = this.props;
     const { comments } = this.state;
-    const comment = comments.find((c) => c._id === _id);
-
+    const { teacherComments, botComments } = this.props;
+    const comment = [...comments, ...teacherComments, ...botComments].find(
+      (c) => c._id === _id,
+    );
     if (_id) {
       dispatchPatchAppInstanceResource({
         id: _id,
@@ -366,12 +368,9 @@ const mapStateToProps = (
     code: appInstance.content.settings.code,
     programmingLanguage: appInstance.content.settings.programmingLanguage,
     comments,
-    botComments: appInstanceResources.content
-      .filter((r) => r.type === BOT_COMMENT)
-      .map((r) => ({
-        ...r,
-        _id: r.data.botId,
-      })),
+    botComments: appInstanceResources.content.filter(
+      (r) => r.type === BOT_COMMENT,
+    ),
     teacherComments: appInstanceResources.content.filter(
       (r) => r.type === TEACHER_COMMENT,
     ),
