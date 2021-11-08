@@ -16,7 +16,7 @@ const styles = (theme) => ({
   },
 });
 
-export const StudentView = () => <CodeReview />;
+export const StudentView = () => <CodeReview isStudentView />;
 
 StudentView.propTypes = {};
 
