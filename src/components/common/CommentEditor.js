@@ -231,8 +231,8 @@ class CommentEditor extends Component {
     const { updatedAt = new Date().toISOString() } = comment;
     // compare the date and format the distance to now
     const formattedUpdatedAt = formatDistance(
-      new Date(),
       Date.parse(updatedAt),
+      new Date(),
       {
         addSuffix: true, // adds "ago" at the end
         locale: locales[lang], // provides localization
