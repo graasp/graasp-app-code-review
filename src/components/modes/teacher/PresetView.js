@@ -39,7 +39,11 @@ export class PresetView extends Component {
     dispatchGetUsers: PropTypes.func.isRequired,
     dispatchPatchAppInstance: PropTypes.func.isRequired,
     settings: PropTypes.shape({
-      selectedBot: PropTypes.string,
+      selectedBot: PropTypes.shape({
+        label: PropTypes.string,
+        value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
+          .isRequired,
+      }),
     }).isRequired,
     botOptions: PropTypes.arrayOf(
       PropTypes.shape({
