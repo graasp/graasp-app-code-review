@@ -20,6 +20,8 @@ import EditIcon from '@material-ui/icons/Edit';
 import { withTranslation } from 'react-i18next';
 import { Reply } from '@material-ui/icons';
 import _ from 'lodash';
+import { formatDistance } from 'date-fns';
+import { fr, enGB } from 'date-fns/locale';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
@@ -31,6 +33,9 @@ const getInitials = (name) =>
     .match(/\b(\w)/g)
     .slice(0, 2)
     .join('');
+
+// to add a new language to the dates
+const locales = { fr, en: enGB };
 
 const styles = (theme) => ({
   root: {
@@ -98,6 +103,7 @@ class CommentEditor extends Component {
       }),
     ),
     activity: PropTypes.number,
+    lang: PropTypes.string.isRequired,
   };
 
   static defaultProps = {
@@ -209,9 +215,26 @@ class CommentEditor extends Component {
   }
 
   renderCardHeader() {
-    const { comment, classes, readOnly, users, botUsers, onReply, showReply } =
-      this.props;
+    const {
+      comment,
+      classes,
+      readOnly,
+      users,
+      botUsers,
+      onReply,
+      showReply,
+      lang,
+    } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
+    // compare the date and format the distance to now
+    const formattedUpdatedAt = formatDistance(
+      new Date(),
+      Date.parse(updatedAt),
+      {
+        addSuffix: true, // adds "ago" at the end
+        locale: locales[lang], // provides localization
+      },
+    );
 
     const { isEdited, isHovered, open } = this.state;
     const userName =
@@ -224,7 +247,7 @@ class CommentEditor extends Component {
         className={classes.header}
         avatar={this.renderAvatar(userName)}
         title={userName}
-        subheader={updatedAt}
+        subheader={formattedUpdatedAt}
         action={
           <>
             {isHovered && !readOnly ? (
@@ -343,7 +366,7 @@ class CommentEditor extends Component {
   }
 }
 
-const mapStateToProps = ({ users, appInstanceResources }) => ({
+const mapStateToProps = ({ context, users, appInstanceResources }) => ({
   users: users.content,
   botUsers: appInstanceResources.content
     .filter((res) => res.type === BOT_USER)
@@ -354,6 +377,7 @@ const mapStateToProps = ({ users, appInstanceResources }) => ({
       uri: data.uri,
     })),
   activity: appInstanceResources.activity.length,
+  lang: context.lang,
 });
 
 const ConnectedCommentEditor = connect(mapStateToProps)(CommentEditor);
