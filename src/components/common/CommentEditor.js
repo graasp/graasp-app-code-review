@@ -77,6 +77,7 @@ class CommentEditor extends Component {
     focused: PropTypes.bool.isRequired,
     readOnly: PropTypes.bool,
     showReply: PropTypes.bool,
+    showDelete: PropTypes.bool,
     onEditComment: PropTypes.func.isRequired,
     onReply: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
@@ -116,6 +117,7 @@ class CommentEditor extends Component {
     botUsers: [],
     readOnly: false,
     showReply: true,
+    showDelete: true,
   };
 
   state = {
@@ -223,6 +225,7 @@ class CommentEditor extends Component {
       botUsers,
       onReply,
       showReply,
+      showDelete,
       lang,
     } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
@@ -252,20 +255,24 @@ class CommentEditor extends Component {
           <>
             {isHovered && !readOnly ? (
               <>
-                <IconButton
-                  aria-label="edit"
-                  color="primary"
-                  onClick={this.onEdit}
-                >
-                  <EditIcon />
-                </IconButton>
-                <IconButton
-                  aria-label="delete"
-                  color="secondary"
-                  onClick={() => this.setState({ open: true })}
-                >
-                  <DeleteIcon />
-                </IconButton>
+                {!comment.data.deleted ? (
+                  <IconButton
+                    aria-label="edit"
+                    color="primary"
+                    onClick={this.onEdit}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                ) : null}
+                {showDelete ? (
+                  <IconButton
+                    aria-label="delete"
+                    color="secondary"
+                    onClick={() => this.setState({ open: true })}
+                  >
+                    <DeleteIcon />
+                  </IconButton>
+                ) : null}
               </>
             ) : null}
             {showReply ? (

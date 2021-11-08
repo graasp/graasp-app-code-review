@@ -262,27 +262,44 @@ class CodeReview extends Component {
       return null;
     }
 
-    return childrenComments.map((comment) => (
-      <Paper
-        key={comment._id}
-        className={classes.commentContainer}
-        variant="outlined"
-      >
-        <CommentEditor
-          comment={comment}
-          // if a comment has the deleted flag it should not be editable
-          readOnly={this.getReadOnlyProperty(comment) || comment.data.deleted}
-          showReply={!isFeedbackView}
-          focused={focusedId === comment._id}
-          onReply={() => this.handleAddComment(comment.data.line, comment._id)}
-          onEditComment={(_id) => this.handleEdit(_id)}
-          onDeleteComment={(_id) => this.handleDelete(_id)}
-          onCancel={this.handleCancel}
-          onSubmit={(_id, content) => this.handleSubmit(_id, content)}
-        />
-        {this.renderChildrenComments(comments, comment._id)}
-      </Paper>
-    ));
+    return childrenComments.map((comment) => {
+      // verify if the comment has children by
+      // checking the length of the array of first order children
+      const hasChildrenComments =
+        comments.filter(
+          (childComment) => childComment.data.parent === comment._id,
+        ).length !== 0;
+
+      // set to true if:
+      // - the comment is not delete
+      // - the comment is deleted but it is the last comment in the tree -> so it can be deleted
+      const showDelete =
+        (comment.data.deleted && !hasChildrenComments) || !comment.data.deleted;
+
+      return (
+        <Paper
+          key={comment._id}
+          className={classes.commentContainer}
+          variant="outlined"
+        >
+          <CommentEditor
+            comment={comment}
+            readOnly={this.getReadOnlyProperty(comment)}
+            showReply={!isFeedbackView}
+            showDelete={showDelete}
+            focused={focusedId === comment._id}
+            onReply={() =>
+              this.handleAddComment(comment.data.line, comment._id)
+            }
+            onEditComment={(_id) => this.handleEdit(_id)}
+            onDeleteComment={(_id) => this.handleDelete(_id)}
+            onCancel={this.handleCancel}
+            onSubmit={(_id, content) => this.handleSubmit(_id, content)}
+          />
+          {this.renderChildrenComments(comments, comment._id)}
+        </Paper>
+      );
+    });
   }
 
   renderCodeReview(code, commentList) {
