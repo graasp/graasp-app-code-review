@@ -262,26 +262,38 @@ class CodeReview extends Component {
       return null;
     }
 
-    return childrenComments.map((comment) => (
-      <Paper
-        key={comment._id}
-        className={classes.commentContainer}
-        variant="outlined"
-      >
-        <CommentEditor
-          comment={comment}
-          readOnly={this.getReadOnlyProperty(comment)}
-          showReply={!isFeedbackView}
-          focused={focusedId === comment._id}
-          onReply={() => this.handleAddComment(comment.data.line, comment._id)}
-          onEditComment={(_id) => this.handleEdit(_id)}
-          onDeleteComment={(_id) => this.handleDelete(_id)}
-          onCancel={this.handleCancel}
-          onSubmit={(_id, content) => this.handleSubmit(_id, content)}
-        />
-        {this.renderChildrenComments(comments, comment._id)}
-      </Paper>
-    ));
+    return childrenComments.map((comment) => {
+      const hasChildrenComments =
+        comments.filter(
+          (childComment) => childComment.data.parent === comment._id,
+        ).length !== 0;
+      const showDelete =
+        (comment.data.deleted && !hasChildrenComments) || !comment.data.deleted;
+
+      return (
+        <Paper
+          key={comment._id}
+          className={classes.commentContainer}
+          variant="outlined"
+        >
+          <CommentEditor
+            comment={comment}
+            readOnly={this.getReadOnlyProperty(comment)}
+            showReply={!isFeedbackView}
+            showDelete={showDelete}
+            focused={focusedId === comment._id}
+            onReply={() =>
+              this.handleAddComment(comment.data.line, comment._id)
+            }
+            onEditComment={(_id) => this.handleEdit(_id)}
+            onDeleteComment={(_id) => this.handleDelete(_id)}
+            onCancel={this.handleCancel}
+            onSubmit={(_id, content) => this.handleSubmit(_id, content)}
+          />
+          {this.renderChildrenComments(comments, comment._id)}
+        </Paper>
+      );
+    });
   }
 
   renderCodeReview(code, commentList) {
