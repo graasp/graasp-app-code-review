@@ -19,7 +19,14 @@ import {
   COMMENT,
   TEACHER_COMMENT,
 } from '../../config/appInstanceResourceTypes';
-import { PRIVATE_VISIBILITY, PUBLIC_VISIBILITY } from '../../config/settings';
+import {
+  ADAPT_HEIGHT_TIMEOUT,
+  DELETED_COMMENT,
+  NEW_COMMENT_ID,
+  PRIVATE_VISIBILITY,
+  PUBLIC_VISIBILITY,
+  STUDENT_MODES,
+} from '../../config/settings';
 
 Prism.manual = true;
 
@@ -36,9 +43,6 @@ const styles = {
     marginLeft: '20px',
   },
 };
-
-const NEW_COMMENT_ID = '';
-const DELETED_COMMENT = '[DELETED]';
 
 class CodeReview extends Component {
   static propTypes = {
@@ -279,7 +283,7 @@ class CodeReview extends Component {
           window.frameElement.style.height = `${actualHeight}px`;
         }
       }
-    }, 1);
+    }, ADAPT_HEIGHT_TIMEOUT);
   };
 
   renderChildrenComments(comments, parentId) {
@@ -423,6 +427,7 @@ const mapStateToProps = (
     ),
     selectedBot: appInstance.content.settings.selectedBot,
     standalone: context.standalone,
+    isStudentView: STUDENT_MODES.includes(context.mode),
   };
 };
 
