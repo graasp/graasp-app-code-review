@@ -252,13 +252,15 @@ class CommentEditor extends Component {
           <>
             {isHovered && !readOnly ? (
               <>
-                <IconButton
-                  aria-label="edit"
-                  color="primary"
-                  onClick={this.onEdit}
-                >
-                  <EditIcon />
-                </IconButton>
+                {!comment.data.deleted ? (
+                  <IconButton
+                    aria-label="edit"
+                    color="primary"
+                    onClick={this.onEdit}
+                  >
+                    <EditIcon />
+                  </IconButton>
+                ) : null}
                 <IconButton
                   aria-label="delete"
                   color="secondary"

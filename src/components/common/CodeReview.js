@@ -270,8 +270,7 @@ class CodeReview extends Component {
       >
         <CommentEditor
           comment={comment}
-          // if a comment has the deleted flag it should not be editable
-          readOnly={this.getReadOnlyProperty(comment) || comment.data.deleted}
+          readOnly={this.getReadOnlyProperty(comment)}
           showReply={!isFeedbackView}
           focused={focusedId === comment._id}
           onReply={() => this.handleAddComment(comment.data.line, comment._id)}
