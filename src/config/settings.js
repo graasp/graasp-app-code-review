@@ -30,3 +30,12 @@ export const MATLAB = 'matlab';
 export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
 
 export const DEFAULT_USER = 'Anonymous';
+
+// time to wait in ms
+export const ADAPT_HEIGHT_TIMEOUT = 50;
+
+// Special id for newly created comments
+export const NEW_COMMENT_ID = '';
+
+// Default text to display when comment is deleted but has active children
+export const DELETED_COMMENT = '[DELETED]';

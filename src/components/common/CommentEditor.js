@@ -83,6 +83,7 @@ class CommentEditor extends Component {
     onSubmit: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
+    adaptStyle: PropTypes.func.isRequired,
     classes: PropTypes.shape({
       root: PropTypes.string,
       header: PropTypes.string,
@@ -174,35 +175,39 @@ class CommentEditor extends Component {
   }
 
   handleOnCancel = () => {
-    const { comment, onCancel } = this.props;
+    const { comment, onCancel, adaptStyle } = this.props;
     this.setState({
       selectedTab: 'write',
       value: comment.data.content,
       isEdited: false,
     });
     onCancel();
+    adaptStyle();
   };
 
   onEdit = () => {
     const { isEdited } = this.state;
-    const { onEditComment, comment } = this.props;
+    const { onEditComment, comment, adaptStyle } = this.props;
     this.setState({ selectedTab: isEdited ? 'preview' : 'write' });
     onEditComment(comment._id);
     this.setState({ isEdited: !isEdited });
+    adaptStyle();
   };
 
   handleOnSubmit = () => {
     const { value } = this.state;
-    const { onSubmit, comment } = this.props;
+    const { onSubmit, comment, adaptStyle } = this.props;
     this.setState({
       isEdited: false,
     });
     onSubmit(comment._id, value);
+    adaptStyle();
   };
 
   handleDelete = (id) => {
-    const { onDeleteComment } = this.props;
+    const { onDeleteComment, adaptStyle } = this.props;
     onDeleteComment(id);
+    adaptStyle();
   };
 
   renderAvatar(userName) {

@@ -1,5 +1,5 @@
 import './CodeReview.css';
-import React, { Component, Fragment } from 'react';
+import React, { Component, createRef, Fragment } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
@@ -19,7 +19,14 @@ import {
   COMMENT,
   TEACHER_COMMENT,
 } from '../../config/appInstanceResourceTypes';
-import { PRIVATE_VISIBILITY, PUBLIC_VISIBILITY } from '../../config/settings';
+import {
+  ADAPT_HEIGHT_TIMEOUT,
+  DELETED_COMMENT,
+  NEW_COMMENT_ID,
+  PRIVATE_VISIBILITY,
+  PUBLIC_VISIBILITY,
+  STUDENT_MODES,
+} from '../../config/settings';
 
 Prism.manual = true;
 
@@ -37,9 +44,6 @@ const styles = {
   },
 };
 
-const NEW_COMMENT_ID = '';
-const DELETED_COMMENT = '[DELETED]';
-
 class CodeReview extends Component {
   static propTypes = {
     classes: PropTypes.shape({
@@ -47,6 +51,7 @@ class CodeReview extends Component {
       commentContainer: PropTypes.string,
     }).isRequired,
     isTeacherView: PropTypes.bool,
+    isStudentView: PropTypes.bool,
     isFeedbackView: PropTypes.bool,
     selectedBot: PropTypes.shape({
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -76,6 +81,7 @@ class CodeReview extends Component {
         data: PropTypes.shape({}),
       }),
     ),
+    standalone: PropTypes.bool.isRequired,
     dispatchPostAppInstanceResource: PropTypes.func.isRequired,
     dispatchPatchAppInstanceResource: PropTypes.func.isRequired,
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
@@ -84,6 +90,7 @@ class CodeReview extends Component {
 
   static defaultProps = {
     isTeacherView: false,
+    isStudentView: false,
     isFeedbackView: false,
     userId: null,
     selectedBot: null,
@@ -94,6 +101,12 @@ class CodeReview extends Component {
 
   static highlightCode(code, syntax) {
     return Prism.highlight(code, Prism.languages[syntax], syntax);
+  }
+
+  constructor(props) {
+    super(props);
+    // create ref to track the height of the component
+    this.rootRef = createRef();
   }
 
   state = (() => {
@@ -123,6 +136,7 @@ class CodeReview extends Component {
       // eslint-disable-next-line react/no-did-update-set-state
       this.setState({ comments });
     }
+    this.adaptHeight();
   }
 
   handleDelete = (_id) => {
@@ -252,6 +266,26 @@ class CodeReview extends Component {
     return comment.type !== COMMENT;
   }
 
+  adaptHeight = () => {
+    // set timeout to leave time for the height to be set
+    setTimeout(() => {
+      const { standalone, isStudentView } = this.props;
+      // adapt height when :
+      // - not in standalone (so when in an iframe)
+      // - is in studentView
+      if (!standalone && isStudentView) {
+        // get height from the root element and add a small margin
+        const actualHeight = this.rootRef.current.scrollHeight + 30;
+        if (window.frameElement) {
+          window.frameElement.style['min-height'] = `${actualHeight}px`;
+          window.frameElement.style.overflowY = 'hidden';
+          window.frameElement.scrolling = 'no';
+          window.frameElement.style.height = `${actualHeight}px`;
+        }
+      }
+    }, ADAPT_HEIGHT_TIMEOUT);
+  };
+
   renderChildrenComments(comments, parentId) {
     const { classes, isFeedbackView } = this.props;
     const { focusedId } = this.state;
@@ -360,7 +394,7 @@ class CodeReview extends Component {
     const { comments } = this.state;
 
     return (
-      <table className={classes.container}>
+      <table ref={this.rootRef} className={classes.container}>
         <tbody className="code-area">
           {this.renderCodeReview(code, comments)}
         </tbody>
@@ -392,6 +426,8 @@ const mapStateToProps = (
       (r) => r.type === TEACHER_COMMENT,
     ),
     selectedBot: appInstance.content.settings.selectedBot,
+    standalone: context.standalone,
+    isStudentView: STUDENT_MODES.includes(context.mode),
   };
 };
 
