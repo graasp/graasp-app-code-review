@@ -9,6 +9,8 @@ export const SPACES_ENDPOINT = '/spaces';
 // users endpoint is currently used in conjunction with spaces endpoint
 // e.g. `${SPACES_ENDPOINT}/${spaceId}/${USERS_ENDPOINT}`
 export const USERS_ENDPOINT = 'users';
+// same as for the users endpoint
+export const PICTURES_ENDPOINT = 'pictures';
 
 // request defaults
 const DEFAULT_REQUEST = {
@@ -30,4 +32,10 @@ export const DEFAULT_PATCH_REQUEST = {
 export const DEFAULT_DELETE_REQUEST = {
   ...DEFAULT_REQUEST,
   method: 'DELETE',
+};
+
+export const JSON_GET_REQUEST = {
+  ...DEFAULT_REQUEST,
+  headers: { accept: 'application/json' },
+  method: 'GET',
 };

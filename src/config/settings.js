@@ -39,3 +39,9 @@ export const NEW_COMMENT_ID = '';
 
 // Default text to display when comment is deleted but has active children
 export const DELETED_COMMENT = '[DELETED]';
+
+// user type
+export const GRAASP_USER_TYPE = 'graasp';
+
+// main domain
+export const GRAASP_MAIN_DOMAIN = 'https://graasp.eu/';
