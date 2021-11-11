@@ -150,7 +150,6 @@ class CommentEditor extends Component {
       isEdited: focused,
       selectedTab: focused ? 'write' : 'preview',
     });
-    // dispatchGetUsers();
   }
 
   componentDidUpdate(prevProps, prevState) {
