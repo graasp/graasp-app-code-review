@@ -25,7 +25,11 @@ import { fr, enGB } from 'date-fns/locale';
 import ConfirmDialog from './ConfirmDialog';
 import { DEFAULT_USER } from '../../config/settings';
 import Loader from './Loader';
-import { BOT_COMMENT, BOT_USER } from '../../config/appInstanceResourceTypes';
+import {
+  BOT_COMMENT,
+  BOT_USER,
+  USER_COMMENT_TYPES,
+} from '../../config/appInstanceResourceTypes';
 
 // helper method
 const getInitials = (name) =>
@@ -210,15 +214,26 @@ class CommentEditor extends Component {
     adaptStyle();
   };
 
-  renderAvatar(userName) {
-    const { comment, botUsers } = this.props;
+  renderAvatar() {
+    const { comment, botUsers, users } = this.props;
     if (comment.type === BOT_COMMENT) {
       const user = botUsers.find((u) => u.id === comment.data.botId);
       if (user) {
         return <Avatar alt={user.initials} src={user.uri} />;
       }
     }
-    return <Avatar>{getInitials(userName)}</Avatar>;
+    // for the other types of comments, we have to look
+    else if (USER_COMMENT_TYPES.includes(comment.type)) {
+      const user = users.find((u) => u.id === comment.user);
+      if (user) {
+        // user has a picture
+        if (user.picture) {
+          return <Avatar alt={user.initials} src={user.picture} />;
+        }
+        return <Avatar>{getInitials(user.name)}</Avatar>;
+      }
+    }
+    return <Avatar>{getInitials(DEFAULT_USER)}</Avatar>;
   }
 
   renderCardHeader() {
@@ -253,7 +268,7 @@ class CommentEditor extends Component {
     return isEdited ? null : (
       <CardHeader
         className={classes.header}
-        avatar={this.renderAvatar(userName)}
+        avatar={this.renderAvatar()}
         title={userName}
         subheader={formattedUpdatedAt}
         action={
