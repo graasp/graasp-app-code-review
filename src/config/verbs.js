@@ -1,2 +1,4 @@
-// eslint-disable-next-line import/prefer-default-export
-export const SAVED = 'saved';
+export const CREATED_COMMENT = 'CREATED_COMMENT';
+export const UPDATED_COMMENT = 'UPDATED_COMMENT';
+export const DELETED_COMMENT = 'DELETED_COMMENT';
+export const CLICKED_ADD_COMMENT = 'CLICKED_ADD_COMMENT';

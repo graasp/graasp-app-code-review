@@ -13,6 +13,7 @@ import {
   postAppInstanceResource,
   deleteAppInstanceResource,
   getUsers,
+  postAction,
 } from '../../actions';
 import {
   BOT_COMMENT,
@@ -21,12 +22,18 @@ import {
 } from '../../config/appInstanceResourceTypes';
 import {
   ADAPT_HEIGHT_TIMEOUT,
-  DELETED_COMMENT,
+  DELETED_COMMENT_TEXT,
   NEW_COMMENT_ID,
   PRIVATE_VISIBILITY,
   PUBLIC_VISIBILITY,
   STUDENT_MODES,
 } from '../../config/settings';
+import {
+  CLICKED_ADD_COMMENT,
+  CREATED_COMMENT,
+  DELETED_COMMENT,
+  UPDATED_COMMENT,
+} from '../../config/verbs';
 
 Prism.manual = true;
 
@@ -86,6 +93,7 @@ class CodeReview extends Component {
     dispatchPatchAppInstanceResource: PropTypes.func.isRequired,
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
     dispatchGetUsers: PropTypes.func.isRequired,
+    dispatchPostAction: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -141,6 +149,7 @@ class CodeReview extends Component {
 
   handleDelete = (_id) => {
     const {
+      dispatchPostAction,
       dispatchDeleteAppInstanceResource,
       dispatchPatchAppInstanceResource,
       teacherComments,
@@ -151,19 +160,28 @@ class CodeReview extends Component {
     const allChildComments = allComments.filter(
       (comment) => comment.data.parent === _id,
     );
+    const comment = allComments.find((c) => c._id === _id);
     if (allChildComments.length) {
-      const comment = allComments.find((c) => c._id === _id);
       dispatchPatchAppInstanceResource({
         id: _id,
         data: {
           ...comment.data,
-          content: DELETED_COMMENT,
+          content: DELETED_COMMENT_TEXT,
           deleted: true,
         },
       });
     } else {
       dispatchDeleteAppInstanceResource(_id);
     }
+    // track that this comment was deleted, along
+    // with the state at the time of deletion
+    dispatchPostAction({
+      data: {
+        ...comment.data,
+        type: comment.type,
+      },
+      verb: DELETED_COMMENT,
+    });
     this.setState({ focusedId: null });
   };
 
@@ -191,6 +209,7 @@ class CodeReview extends Component {
     const {
       dispatchPostAppInstanceResource,
       dispatchPatchAppInstanceResource,
+      dispatchPostAction,
       userId,
       selectedBot,
       isTeacherView,
@@ -201,41 +220,74 @@ class CodeReview extends Component {
       (c) => c._id === _id,
     );
     if (_id) {
+      const data = {
+        ...comment.data,
+        content,
+      };
+      // update comment
       dispatchPatchAppInstanceResource({
         id: _id,
+        data,
+      });
+      // track that this comment was edited,
+      // along with its updated state
+      dispatchPostAction({
         data: {
-          ...comment.data,
-          content,
+          ...data,
+          type: comment.type,
         },
+        verb: UPDATED_COMMENT,
       });
     } else if (isTeacherView) {
+      const data = {
+        ...comment.data,
+        content,
+        // only add the botId property when the comment is from a bot
+        ...(selectedBot && { botId: selectedBot.value }),
+      };
+      const type = selectedBot ? BOT_COMMENT : TEACHER_COMMENT;
+      // create comment
       dispatchPostAppInstanceResource({
-        data: {
-          ...comment.data,
-          content,
-          // only add the botId property when the comment is from a bot
-          ...(selectedBot && { botId: selectedBot.value }),
-        },
-        type: selectedBot ? BOT_COMMENT : TEACHER_COMMENT,
+        data,
+        type,
         visibility: PUBLIC_VISIBILITY,
         userId,
       });
-    } else {
-      dispatchPostAppInstanceResource({
+      // track that this comment was created, along with its state
+      dispatchPostAction({
         data: {
-          ...comment.data,
-          content,
+          ...data,
+          type,
         },
-        type: COMMENT,
+        verb: CREATED_COMMENT,
+      });
+    } else {
+      const data = {
+        ...comment.data,
+        content,
+      };
+      const type = COMMENT;
+      // create comment
+      dispatchPostAppInstanceResource({
+        data,
+        type,
         visibility: PRIVATE_VISIBILITY,
         userId,
+      });
+      // track that this comment was created, along with its state
+      dispatchPostAction({
+        data: {
+          ...data,
+          type,
+        },
+        verb: CREATED_COMMENT,
       });
     }
     this.setState({ focusedId: null });
   };
 
   handleAddComment(lineNum, parentId = null) {
-    const { comments } = this.props;
+    const { comments, dispatchPostAction } = this.props;
     const newComments = [
       ...comments,
       {
@@ -250,6 +302,13 @@ class CodeReview extends Component {
     this.setState({
       comments: newComments,
       focusedId: NEW_COMMENT_ID,
+    });
+    // track that this line was clicked
+    dispatchPostAction({
+      data: {
+        line: lineNum,
+      },
+      verb: CLICKED_ADD_COMMENT,
     });
   }
 
@@ -432,6 +491,7 @@ const mapStateToProps = (
 };
 
 const mapDispatchToProps = {
+  dispatchPostAction: postAction,
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
