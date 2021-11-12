@@ -34,11 +34,11 @@ export const DEFAULT_USER = 'Anonymous';
 // time to wait in ms
 export const ADAPT_HEIGHT_TIMEOUT = 50;
 
-// Special id for newly created comments
+// special id for newly created comments
 export const NEW_COMMENT_ID = '';
 
-// Default text to display when comment is deleted but has active children
-export const DELETED_COMMENT = '[DELETED]';
+// default text to display when comment is deleted but has active children
+export const DELETED_COMMENT_TEXT = '[DELETED]';
 
 // user type
 export const GRAASP_USER_TYPE = 'graasp';
