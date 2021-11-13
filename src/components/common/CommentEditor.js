@@ -220,8 +220,7 @@ class CommentEditor extends Component {
   };
 
   handleExpandComment = () => {
-    const { expanded: previousExpanded } = this.state;
-    this.setState({ expanded: !previousExpanded });
+    this.setState((prevState) => ({ expanded: !prevState.expanded }));
   };
 
   renderAvatar() {
@@ -311,11 +310,11 @@ class CommentEditor extends Component {
                 <Reply />
               </IconButton>
             ) : null}
-            <Tooltip title={t('Toggle visibility')}>
+            <Tooltip title={t('Toggle Visibility')}>
               <IconButton
                 onClick={this.handleExpandComment}
                 aria-expanded={expanded}
-                aria-label="show more"
+                aria-label={t('show more')}
                 style={{
                   transform: !expanded ? 'rotate(0deg)' : 'rotate(180deg)',
                   marginLeft: 'auto',
