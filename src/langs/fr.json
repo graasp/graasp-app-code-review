@@ -29,6 +29,7 @@
     "Bot users": "Utilisateurs robots",
     "Add a new bot user": "Ajouter un nouvel utilisateur robot",
     "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.": "Attention ! Vous endossez la personnalité d'un robot. Videz le champ ci-dessus pour comment avec votre profile",
-    "[DELETED]": "[SUPPRIMÉ]"
+    "[DELETED]": "[SUPPRIMÉ]",
+    "Toggle visibility": "Afficher/Masquer"
   }
 }

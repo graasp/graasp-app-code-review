@@ -12,13 +12,15 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Collapse,
+  Tooltip,
 } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import { withTranslation } from 'react-i18next';
-import { Reply } from '@material-ui/icons';
+import { ExpandMore, Reply } from '@material-ui/icons';
 import _ from 'lodash';
 import { formatDistance } from 'date-fns';
 import { fr, enGB } from 'date-fns/locale';
@@ -46,20 +48,22 @@ const styles = (theme) => ({
     padding: theme.spacing(1),
   },
   header: {
-    padding: theme.spacing(1),
+    padding: theme.spacing(0),
   },
   content: {
-    paddingTop: 0,
+    padding: 0,
     '&:last-child': {
       paddingBottom: 0,
     },
   },
   actions: {
-    padding: theme.spacing(1),
+    paddingRight: 0,
+    paddingBottom: 0,
     justifyContent: 'flex-end',
   },
   commentText: {
-    paddingLeft: '38px',
+    // shift text left to align it with the Author name
+    paddingLeft: '46px',
   },
 });
 
@@ -131,6 +135,7 @@ class CommentEditor extends Component {
     selectedTab: 'preview',
     isHovered: false,
     open: false,
+    expanded: true,
   };
 
   converter = new Showdown.Converter({
@@ -214,6 +219,11 @@ class CommentEditor extends Component {
     adaptStyle();
   };
 
+  handleExpandComment = () => {
+    const { expanded: previousExpanded } = this.state;
+    this.setState({ expanded: !previousExpanded });
+  };
+
   renderAvatar() {
     const { comment, botUsers, users } = this.props;
     if (comment.type === BOT_COMMENT) {
@@ -238,6 +248,7 @@ class CommentEditor extends Component {
 
   renderCardHeader() {
     const {
+      t,
       comment,
       classes,
       readOnly,
@@ -259,7 +270,7 @@ class CommentEditor extends Component {
       },
     );
 
-    const { isEdited, isHovered, open } = this.state;
+    const { isEdited, isHovered, open, expanded } = this.state;
     const userName =
       (comment.type === BOT_COMMENT
         ? botUsers.find((u) => u.id === comment.data.botId)?.name
@@ -300,6 +311,19 @@ class CommentEditor extends Component {
                 <Reply />
               </IconButton>
             ) : null}
+            <Tooltip title={t('Toggle visibility')}>
+              <IconButton
+                onClick={this.handleExpandComment}
+                aria-expanded={expanded}
+                aria-label="show more"
+                style={{
+                  transform: !expanded ? 'rotate(0deg)' : 'rotate(180deg)',
+                  marginLeft: 'auto',
+                }}
+              >
+                <ExpandMore />
+              </IconButton>
+            </Tooltip>
             <ConfirmDialog
               open={open}
               setOpen={(v) => this.setState({ open: v })}
@@ -316,7 +340,7 @@ class CommentEditor extends Component {
   }
 
   render() {
-    const { selectedTab, value, isEdited } = this.state;
+    const { selectedTab, value, isEdited, expanded } = this.state;
     const { classes, t, activity } = this.props;
 
     if (activity) {
@@ -328,66 +352,71 @@ class CommentEditor extends Component {
         className={classes.root}
         onMouseEnter={() => this.setState({ isHovered: true })}
         onMouseLeave={() => this.setState({ isHovered: false })}
+        onFocus={() => this.setState({ isHovered: true })}
+        onBlur={() => this.setState({ isHovered: false })}
         elevation={0}
       >
         {this.renderCardHeader()}
-        <CardContent className={classes.content}>
-          {isEdited ? (
-            <ReactMde
-              value={value}
-              onChange={(v) => this.setState({ value: v })}
-              selectedTab={selectedTab}
-              onTabChange={(tab) => this.setState({ selectedTab: tab })}
-              generateMarkdownPreview={(markdown) =>
-                Promise.resolve(this.converter.makeHtml(markdown))
-              }
-              l18n={{
-                write: t('Write'),
-                preview: t('Preview'),
-              }}
-              childProps={{
-                writeButton: {
-                  tabIndex: -1,
-                },
-                textArea: {
-                  autoFocus: true,
-                },
-              }}
-            />
-          ) : (
-            <Grid
-              container
-              className={`mde-preview standalone ${classes.commentText}`}
-            >
-              <Grid
-                item
-                xs={12}
-                className="mde-preview-content"
-                dangerouslySetInnerHTML={{
-                  __html: this.converter.makeHtml(value),
+        <Collapse in={expanded} timeout="auto" unmountOnExit>
+          <CardContent className={classes.content}>
+            {isEdited ? (
+              <ReactMde
+                value={value}
+                onChange={(v) => this.setState({ value: v })}
+                selectedTab={selectedTab}
+                onTabChange={(tab) => this.setState({ selectedTab: tab })}
+                generateMarkdownPreview={(markdown) =>
+                  Promise.resolve(this.converter.makeHtml(markdown))
+                }
+                l18n={{
+                  write: t('Write'),
+                  preview: t('Preview'),
                 }}
+                childProps={{
+                  writeButton: {
+                    tabIndex: -1,
+                  },
+                  textArea: {
+                    autoFocus: true,
+                  },
+                }}
+                minEditorHeight={60}
               />
-            </Grid>
-          )}
-        </CardContent>
-        {isEdited ? (
-          <CardActions className={classes.actions}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={this.handleOnCancel}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.handleOnSubmit}
-            >
-              {t('Save')}
-            </Button>
-          </CardActions>
-        ) : null}
+            ) : (
+              <Grid
+                container
+                className={`mde-preview standalone ${classes.commentText}`}
+              >
+                <Grid
+                  item
+                  xs={12}
+                  className="mde-preview-content"
+                  dangerouslySetInnerHTML={{
+                    __html: this.converter.makeHtml(value),
+                  }}
+                />
+              </Grid>
+            )}
+          </CardContent>
+          {isEdited ? (
+            <CardActions className={classes.actions}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={this.handleOnCancel}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.handleOnSubmit}
+              >
+                {t('Save')}
+              </Button>
+            </CardActions>
+          ) : null}
+        </Collapse>
       </Card>
     );
   }
