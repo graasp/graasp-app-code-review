@@ -388,6 +388,7 @@ class CodeReview extends Component {
             onDeleteComment={(_id) => this.handleDelete(_id)}
             onCancel={this.handleCancel}
             onSubmit={(_id, content) => this.handleSubmit(_id, content)}
+            adaptStyle={this.adaptHeight}
           />
           {this.renderChildrenComments(comments, comment._id)}
         </Paper>

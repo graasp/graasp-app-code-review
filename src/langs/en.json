@@ -29,6 +29,8 @@
     "Bot users": "Bot users",
     "Add a new bot user": "Add a new bot user",
     "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.": "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.",
-    "[DELETED]": "[DELETED]"
+    "[DELETED]": "[DELETED]",
+    "Toggle Visibility": "Toggle Visibility",
+    "show more": "show more"
   }
 }

@@ -257,7 +257,11 @@ class Settings extends Component {
               language={programmingLanguage}
               value={code}
               onChange={this.handleChangeEditor('code')}
-              options={{ scrollBeyondLastLine: false }}
+              options={{
+                scrollBeyondLastLine: false,
+                detectIndentation: false,
+                tabSize: 2,
+              }}
             />
           </Grid>
         </Grid>
