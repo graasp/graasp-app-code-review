@@ -4,7 +4,7 @@ import ReactGa from 'react-ga';
 import { I18nextProvider } from 'react-i18next';
 import {
   MuiThemeProvider,
-  createMuiTheme,
+  createTheme,
   withStyles,
 } from '@material-ui/core/styles';
 import { ToastContainer } from 'react-toastify';
@@ -35,7 +35,7 @@ const styles = {
   },
 };
 
-const theme = createMuiTheme({
+const theme = createTheme({
   palette: {
     primary: {
       main: '#5050d2',

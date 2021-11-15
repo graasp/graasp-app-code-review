@@ -1,11 +1,21 @@
 import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import _ from 'lodash';
-import { Divider, Button, Modal, Grid, TextField } from '@material-ui/core';
+import {
+  Divider,
+  Button,
+  Modal,
+  Grid,
+  TextField,
+  FormLabel,
+  Switch,
+  FormControlLabel,
+} from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
 import { connect } from 'react-redux';
 import { withTranslation } from 'react-i18next';
+import Editor from '@monaco-editor/react';
 import {
   closeAvatarDialog,
   postAppInstanceResource,
@@ -13,11 +23,19 @@ import {
 } from '../../../actions';
 import Loader from '../../common/Loader';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
-import { PUBLIC_VISIBILITY } from '../../../config/settings';
+import { JSON_LANG, PUBLIC_VISIBILITY } from '../../../config/settings';
+import {
+  addEmptyStep,
+  DEFAULT_PERSONALITY_JSON,
+  stringifyPersonality,
+} from '../../../utils/autoBotEngine';
 
 const DEFAULT_AVATAR = {
   name: '',
   uri: '',
+  autoBot: false,
+  autoSeed: false,
+  personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
 };
 
 function getModalStyle() {
@@ -33,7 +51,8 @@ function getModalStyle() {
 const styles = (theme) => ({
   paper: {
     position: 'absolute',
-    width: theme.spacing(80),
+    minWidth: theme.spacing(80),
+    maxWidth: theme.spacing(80),
     backgroundColor: theme.palette.background.paper,
     boxShadow: theme.shadows[5],
     padding: theme.spacing(4),
@@ -54,10 +73,6 @@ const styles = (theme) => ({
   button: {
     margin: theme.spacing(),
   },
-  right: {
-    position: 'absolute',
-    right: theme.spacing(),
-  },
   formControlSpace: {
     left: theme.spacing(2),
   },
@@ -67,14 +82,20 @@ const styles = (theme) => ({
   formControl: {
     width: '100%',
   },
-  fab: {
-    margin: theme.spacing(),
-    position: 'fixed',
-    bottom: theme.spacing(2),
-    right: theme.spacing(2),
-  },
   divider: {
     marginTop: '10px',
+  },
+  modal: {
+    overflowY: 'scroll',
+  },
+  noFlex: {
+    display: 'block',
+  },
+  lastGrid: {
+    margin: '0px',
+    '&:last-child': {
+      paddingBottom: '10px',
+    },
   },
 });
 
@@ -94,6 +115,9 @@ class AvatarDialog extends Component {
       button: PropTypes.string,
       editor: PropTypes.string,
       paper: PropTypes.string,
+      noFlex: PropTypes.string,
+      modal: PropTypes.string,
+      lastGrid: PropTypes.string,
     }).isRequired,
     open: PropTypes.bool.isRequired,
     activity: PropTypes.number.isRequired,
@@ -102,6 +126,9 @@ class AvatarDialog extends Component {
     avatar: PropTypes.shape({
       name: PropTypes.string,
       uri: PropTypes.string,
+      autoBot: PropTypes.bool,
+      autoSeed: PropTypes.bool,
+      personality: PropTypes.string,
     }),
     t: PropTypes.func.isRequired,
     dispatchCloseAvatarDialog: PropTypes.func.isRequired,
@@ -166,7 +193,7 @@ class AvatarDialog extends Component {
     (key) =>
     ({ target: { value } }) => {
       this.setState((prevState) => {
-        // get the previous state's settings
+        // get the previous state's avatar
         const avatar = { ...prevState.avatar };
         // use lodash to be able to use dot and array notation
         _.set(avatar, key, value);
@@ -178,17 +205,56 @@ class AvatarDialog extends Component {
     (key) =>
     ({ target: { value } }) => {
       this.setState((prevState) => {
-        // get the previous state's settings
-        const settings = { ...prevState.settings };
+        // get the previous state's avatar
+        const avatar = { ...prevState.avatar };
         // use lodash to be able to use dot and array notation
-        _.set(settings, key, value);
-        return { settings };
+        _.set(avatar, key, value);
+        return { avatar };
       });
+    };
+
+  handleChangeEditor = (key) => (value) => {
+    this.setState((prevState) => {
+      // get the previous state's avatar
+      const avatar = { ...prevState.avatar };
+      // use lodash to be able to use dot and array notation
+      _.set(avatar, key, value);
+      return { avatar };
+    });
+  };
+
+  handleAddEmptyStep = () => {
+    this.setState((prevState) => {
+      const newPersonality = stringifyPersonality(
+        addEmptyStep(prevState.avatar.personality),
+      );
+      return { avatar: { ...prevState.avatar, personality: newPersonality } };
+    });
+  };
+
+  handleResetToDefaultPersonality = () => {
+    this.setState((prevState) => ({
+      avatar: {
+        ...prevState.avatar,
+        personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
+      },
+    }));
+  };
+
+  handleChangeSwitch =
+    (key) =>
+    ({ target: { checked } }) => {
+      this.setState((prevState) => ({
+        avatar: {
+          ...prevState.avatar,
+          [key]: checked,
+        },
+      }));
     };
 
   handleClose = () => {
     const { dispatchCloseAvatarDialog } = this.props;
-    this.setState({ ...DEFAULT_AVATAR });
+    this.setState({ avatar: DEFAULT_AVATAR });
     dispatchCloseAvatarDialog();
   };
 
@@ -224,11 +290,106 @@ class AvatarDialog extends Component {
       />
     );
 
+    const autoBotSwitchControl = (
+      <Switch
+        color="primary"
+        value="autoBot"
+        size="small"
+        checked={avatar.autoBot}
+        onChange={this.handleChangeSwitch('autoBot')}
+      />
+    );
+
+    const autoSeedSwitchControl = (
+      <Switch
+        color="primary"
+        value="autoSeed"
+        size="small"
+        checked={avatar.autoSeed}
+        onChange={this.handleChangeSwitch('autoSeed')}
+      />
+    );
+
+    const addEmptyStepButton = (
+      <Button
+        color="primary"
+        variant="outlined"
+        onClick={this.handleAddEmptyStep}
+      >
+        {t('Add Empty Step')}
+      </Button>
+    );
+
+    const resetToDefaultButton = (
+      <Button
+        color="primary"
+        variant="outlined"
+        onClick={this.handleResetToDefaultPersonality}
+      >
+        {t('Reset Defaults')}
+      </Button>
+    );
+
     return (
       <>
-        <Grid container direction="column" spacing={3} alignItems="stretch">
-          <Grid item>{nameControl}</Grid>
-          <Grid item>{uriControl}</Grid>
+        <Grid
+          container
+          direction="column"
+          spacing={3}
+          alignItems="stretch"
+          className={classes.noFlex}
+        >
+          <Grid item className={classes.noFlex}>
+            {nameControl}
+          </Grid>
+          <Grid item className={classes.noFlex}>
+            {uriControl}
+          </Grid>
+          <Grid
+            container
+            direction="row"
+            spacing={3}
+            justifyContent="space-between"
+            alignItems="center"
+            className={classes.lastGrid}
+          >
+            <Grid item>
+              <FormControlLabel
+                control={autoBotSwitchControl}
+                label={t('Enable Auto Reply')}
+              />
+            </Grid>
+            {avatar.autoBot ? (
+              <Grid item>
+                <FormControlLabel
+                  control={autoSeedSwitchControl}
+                  label={t('Enable Automatic Message Seeding')}
+                />
+              </Grid>
+            ) : null}
+          </Grid>
+          {avatar.autoBot ? (
+            <>
+              <Grid container direction="row" justifyContent="space-evenly">
+                <Grid item>{addEmptyStepButton}</Grid>
+                <Grid item>{resetToDefaultButton}</Grid>
+              </Grid>
+              <Grid item className={classes.editor}>
+                <FormLabel>{t('Bot personality')}</FormLabel>
+                <Editor
+                  height="20vh"
+                  defaultLanguage={JSON_LANG}
+                  value={avatar.personality}
+                  onChange={this.handleChangeEditor('personality')}
+                  options={{
+                    scrollBeyondLastLine: false,
+                    detectIndentation: false,
+                    tabSize: 2,
+                  }}
+                />
+              </Grid>
+            </>
+          ) : null}
         </Grid>
         <Divider className={classes.divider} />
         <Button
@@ -257,6 +418,7 @@ class AvatarDialog extends Component {
     return (
       <div>
         <Modal
+          className={classes.modal}
           aria-labelledby="avatar-modal"
           aria-describedby="avatar-modal-description"
           open={open}

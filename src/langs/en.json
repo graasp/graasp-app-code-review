@@ -31,6 +31,10 @@
     "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.": "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.",
     "[DELETED]": "[DELETED]",
     "Toggle Visibility": "Toggle Visibility",
-    "show more": "show more"
+    "show more": "show more",
+    "Delete bot": "Delete bot",
+    "Delete all comments for bot": "Delete all comments for bot",
+    "Enable Auto Reply": "Enable Auto Reply",
+    "Enable Automatic Message Seeding": "Enable Automatic Message Seeding"
   }
 }

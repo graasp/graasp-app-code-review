@@ -28,6 +28,7 @@ import { showErrorToast } from '../utils/toasts';
 import { MISSING_APP_INSTANCE_RESOURCE_ID_MESSAGE } from '../constants/messages';
 import { APP_INSTANCE_RESOURCE_FORMAT } from '../config/formats';
 import { DEFAULT_VISIBILITY } from '../config/settings';
+import { handleAutoResponse } from '../utils/autoBotEngine';
 
 const flagGettingAppInstanceResources = flag(
   FLAG_GETTING_APP_INSTANCE_RESOURCES,
@@ -170,6 +171,16 @@ const postAppInstanceResource =
       await isErrorResponse(response);
 
       const appInstanceResource = await response.json();
+
+      // handle engine auto-bot
+      const autoResponse = handleAutoResponse(
+        appInstanceResource._id,
+        body,
+        getState,
+      );
+      if (autoResponse) {
+        dispatch(postAppInstanceResource(autoResponse));
+      }
 
       return dispatch({
         type: POST_APP_INSTANCE_RESOURCE_SUCCEEDED,

@@ -380,6 +380,7 @@ class CommentEditor extends Component {
                   },
                 }}
                 minEditorHeight={60}
+                minPreviewHeight={60}
               />
             ) : (
               <Grid

@@ -27,6 +27,7 @@ export const DEFAULT_VISIBILITY = PRIVATE_VISIBILITY;
 export const JAVASCRIPT = 'javascript';
 export const PYTHON = 'python';
 export const MATLAB = 'matlab';
+export const JSON_LANG = 'json';
 export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
 
 export const DEFAULT_USER = 'Anonymous';
@@ -36,6 +37,9 @@ export const ADAPT_HEIGHT_TIMEOUT = 50;
 
 // special id for newly created comments
 export const NEW_COMMENT_ID = '';
+
+// default comment
+export const DEFAULT_COMMENT_CONTENT = '';
 
 // default text to display when comment is deleted but has active children
 export const DELETED_COMMENT_TEXT = '[DELETED]';
