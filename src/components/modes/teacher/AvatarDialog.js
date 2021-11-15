@@ -13,6 +13,7 @@ import {
 } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
+import Alert from '@material-ui/lab/Alert';
 import { connect } from 'react-redux';
 import { withTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
@@ -25,9 +26,13 @@ import Loader from '../../common/Loader';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
 import { JSON_LANG, PUBLIC_VISIBILITY } from '../../../config/settings';
 import {
-  addEmptyStep,
   DEFAULT_PERSONALITY_JSON,
+  DEFAULT_VALIDATOR_MESSAGE,
+  VALIDATOR_ERROR,
+  VALIDATOR_SUCCESS,
+  addEmptyStep,
   stringifyPersonality,
+  validatePersonality,
 } from '../../../utils/autoBotEngine';
 
 const DEFAULT_AVATAR = {
@@ -101,6 +106,9 @@ const styles = (theme) => ({
     // do not display the upload file default button
     display: 'none',
   },
+  editor: {
+    paddingBottom: '10px',
+  },
 });
 
 class AvatarDialog extends Component {
@@ -113,7 +121,6 @@ class AvatarDialog extends Component {
       right: PropTypes.string,
       noMaxWidth: PropTypes.string,
       formControlSpace: PropTypes.string,
-      appBar: PropTypes.string,
       fullScreen: PropTypes.string,
       input: PropTypes.string,
       button: PropTypes.string,
@@ -149,6 +156,10 @@ class AvatarDialog extends Component {
     const avatar = avatarProps;
     return {
       avatar,
+      validator: {
+        severity: VALIDATOR_SUCCESS,
+        message: DEFAULT_VALIDATOR_MESSAGE,
+      },
     };
   })();
 
@@ -225,6 +236,7 @@ class AvatarDialog extends Component {
       _.set(avatar, key, value);
       return { avatar };
     });
+    this.handlePersonalityVerification();
   };
 
   handleAddEmptyStep = () => {
@@ -234,6 +246,7 @@ class AvatarDialog extends Component {
       );
       return { avatar: { ...prevState.avatar, personality: newPersonality } };
     });
+    this.handlePersonalityVerification();
   };
 
   handleResetToDefaultPersonality = () => {
@@ -243,6 +256,7 @@ class AvatarDialog extends Component {
         personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
       },
     }));
+    this.handlePersonalityVerification();
   };
 
   handleChangeSwitch =
@@ -263,8 +277,26 @@ class AvatarDialog extends Component {
       this.setState((prevSate) => ({
         avatar: { ...prevSate.avatar, personality: fileContent },
       }));
+      this.handlePersonalityVerification();
     });
     reader.readAsText(target.files[0]);
+  };
+
+  handlePersonalityVerification = () => {
+    const { avatar } = this.state;
+    try {
+      validatePersonality(avatar.personality);
+      this.setState({
+        validator: {
+          severity: VALIDATOR_SUCCESS,
+          message: DEFAULT_VALIDATOR_MESSAGE,
+        },
+      });
+    } catch (e) {
+      this.setState({
+        validator: { severity: VALIDATOR_ERROR, message: e.message },
+      });
+    }
   };
 
   handleClose = () => {
@@ -275,7 +307,7 @@ class AvatarDialog extends Component {
 
   renderModalContent() {
     const { t, activity, classes, avatar: avatarProp } = this.props;
-    const { avatar } = this.state;
+    const { avatar, validator } = this.state;
 
     const hasChanged = !_.isEqual(avatarProp, avatar);
 
@@ -405,9 +437,10 @@ class AvatarDialog extends Component {
                 <Grid item>{resetToDefaultButton}</Grid>
                 <Grid item>{fileUploadControl}</Grid>
               </Grid>
-              <Grid item className={classes.editor}>
+              <Grid item>
                 <FormLabel>{t('Bot personality')}</FormLabel>
                 <Editor
+                  className={classes.editor}
                   height="20vh"
                   defaultLanguage={JSON_LANG}
                   value={avatar.personality}
@@ -418,6 +451,16 @@ class AvatarDialog extends Component {
                     tabSize: 2,
                   }}
                 />
+                <Alert
+                  variant={
+                    validator.severity === VALIDATOR_ERROR
+                      ? 'filled'
+                      : 'outlined'
+                  }
+                  severity={validator.severity}
+                >
+                  {t(validator.message)}
+                </Alert>
               </Grid>
             </>
           ) : null}
@@ -428,7 +471,7 @@ class AvatarDialog extends Component {
           color="primary"
           className={classes.button}
           onClick={this.handleSave}
-          disabled={!hasChanged}
+          disabled={!hasChanged || validator.severity === VALIDATOR_ERROR}
         >
           {t('Save')}
         </Button>

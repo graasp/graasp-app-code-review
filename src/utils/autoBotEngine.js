@@ -1,13 +1,23 @@
 import { BOT_COMMENT, BOT_USER } from '../config/appInstanceResourceTypes';
 
 const DEFAULT_STEP = {
-  regex: '',
+  match: '',
   text: '',
   options: [],
 };
-
+const DEFAULT_VALIDATOR_MESSAGE = 'Valid Personality !';
+const VALIDATOR_ERROR = 'error';
+const VALIDATOR_SUCCESS = 'success';
 const DEFAULT_PERSONALITY_SEED_KEY = 'seed';
 const DEFAULT_PERSONALITY_FALLBACK_KEY = 'fallback';
+const DEFAULT_PERSONALITY_MATCH_KEY = 'match';
+const DEFAULT_PERSONALITY_TEXT_KEY = 'text';
+const DEFAULT_PERSONALITY_OPTIONS_KEY = 'options';
+const DEFAULT_PERSONALITY_STEP_KEYS = [
+  DEFAULT_PERSONALITY_MATCH_KEY,
+  DEFAULT_PERSONALITY_TEXT_KEY,
+  DEFAULT_PERSONALITY_OPTIONS_KEY,
+];
 const DEFAULT_PERSONALITY_JSON = {
   seed: {
     text: 'Ask me about :',
@@ -15,22 +25,22 @@ const DEFAULT_PERSONALITY_JSON = {
   },
   steps: [
     {
-      regex: '1',
+      match: '1',
       text: 'You chose option 1 ! Now you can ask about :',
       options: ['the weather', 'my lovely dog'],
     },
     {
-      regex: '2',
+      match: '2',
       text: 'You chose option 2 !',
       options: [],
     },
     {
-      regex: 'dog',
+      match: 'dog',
       text: 'My dog is a german shepard',
       options: [],
     },
     {
-      regex: 'weather',
+      match: 'weather',
       text: 'I heard it is going to rain tomorrow',
       options: [],
     },
@@ -83,6 +93,7 @@ const getDefaultOptionText = (personality) => {
 
 const validatePersonality = (personality) => {
   let personalityObj = personality;
+  // try to parse the object
   if (typeof personality === 'string') {
     personalityObj = parsePersonality(personality);
   }
@@ -96,6 +107,17 @@ const validatePersonality = (personality) => {
   if (!personalityObj.hasOwnProperty(DEFAULT_PERSONALITY_FALLBACK_KEY)) {
     throw Error(`Missing '${DEFAULT_PERSONALITY_FALLBACK_KEY}' key`);
   }
+  personalityObj.steps.forEach((step) => {
+    DEFAULT_PERSONALITY_STEP_KEYS.forEach((key) => {
+      // eslint-disable-next-line no-prototype-builtins
+      if (!step.hasOwnProperty(key)) {
+        throw Error(`Missing '${key}' key`);
+      }
+    });
+    if (!Array.isArray(step.options)) {
+      throw Error(`'options' property must be an array`);
+    }
+  });
 };
 
 const handleAutoResponse = (commentId, comment, getState) => {
@@ -120,7 +142,7 @@ const handleAutoResponse = (commentId, comment, getState) => {
     const personality = getBotPersonality(botAuthor);
     // find an option that matches it's regex against the comment content
     const chosenOption = personality.steps.find((m) =>
-      comment.data.content.match(new RegExp(m.regex, 'gim')),
+      comment.data.content.match(new RegExp(m.match, 'gim')),
     );
     let responseText = getFallbackOptionText(personality);
     if (chosenOption) {
@@ -146,6 +168,9 @@ export {
   DEFAULT_STEP,
   DEFAULT_PERSONALITY_JSON,
   DEFAULT_PERSONALITY_OPTION_SEPARATOR,
+  DEFAULT_VALIDATOR_MESSAGE,
+  VALIDATOR_ERROR,
+  VALIDATOR_SUCCESS,
   stringifyPersonality,
   validatePersonality,
   addEmptyStep,
