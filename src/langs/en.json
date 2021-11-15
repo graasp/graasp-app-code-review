@@ -35,6 +35,10 @@
     "Delete bot": "Delete bot",
     "Delete all comments for bot": "Delete all comments for bot",
     "Enable Auto Reply": "Enable Auto Reply",
-    "Enable Automatic Message Seeding": "Enable Automatic Message Seeding"
+    "Enable Automatic Message Seeding": "Enable Automatic Message Seeding",
+    "Upload File": "Upload File",
+    "Bot personality": "Bot personality",
+    "Reset Defaults": "Reset Defaults",
+    "Add Empty Step": "Add Empty Step"
   }
 }

@@ -34,7 +34,11 @@
     "show more": "montrer plus",
     "Delete bot": "Supprimer le robot",
     "Delete all comments for bot": "Supprimer tous les commentaires du robot",
-    "Enable Auto reply": "Activer les réponses automatiques",
-    "Enable Automatic Message Seeding": "Activer l'initialisation automatique dse messages"
+    "Enable Auto Reply": "Activer les réponses auto",
+    "Enable Automatic Message Seeding": "Activer l'initialisation auto",
+    "Upload File": "Télécharger un fichier",
+    "Bot personality": "Personnalité du robot",
+    "Reset Defaults": "Retour aux défauts",
+    "Add Empty Step": "Ajouter un step"
   }
 }

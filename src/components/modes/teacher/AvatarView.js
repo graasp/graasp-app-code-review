@@ -153,7 +153,7 @@ const AvatarView = (props) => {
                 <TableRow>
                   <TableCell>ID</TableCell>
                   <TableCell>Avatar</TableCell>
-                  <TableCell>Name</TableCell>
+                  <TableCell>{t('Name')}</TableCell>
                   <TableCell>App Instance</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>

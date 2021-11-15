@@ -97,6 +97,10 @@ const styles = (theme) => ({
       paddingBottom: '10px',
     },
   },
+  input: {
+    // do not display the upload file default button
+    display: 'none',
+  },
 });
 
 class AvatarDialog extends Component {
@@ -111,7 +115,7 @@ class AvatarDialog extends Component {
       formControlSpace: PropTypes.string,
       appBar: PropTypes.string,
       fullScreen: PropTypes.string,
-      fab: PropTypes.string,
+      input: PropTypes.string,
       button: PropTypes.string,
       editor: PropTypes.string,
       paper: PropTypes.string,
@@ -252,6 +256,17 @@ class AvatarDialog extends Component {
       }));
     };
 
+  handleFile = ({ target }) => {
+    const reader = new FileReader();
+    reader.addEventListener('load', ({ target: fileTarget }) => {
+      const fileContent = fileTarget.result;
+      this.setState((prevSate) => ({
+        avatar: { ...prevSate.avatar, personality: fileContent },
+      }));
+    });
+    reader.readAsText(target.files[0]);
+  };
+
   handleClose = () => {
     const { dispatchCloseAvatarDialog } = this.props;
     this.setState({ avatar: DEFAULT_AVATAR });
@@ -330,6 +345,21 @@ class AvatarDialog extends Component {
       </Button>
     );
 
+    const fileUploadControl = (
+      <label htmlFor="button-file">
+        <input
+          accept="application/json"
+          className={classes.input}
+          id="button-file"
+          type="file"
+          onChange={this.handleFile}
+        />
+        <Button color="primary" variant="outlined" component="span">
+          {t('Upload File')}
+        </Button>
+      </label>
+    );
+
     return (
       <>
         <Grid
@@ -373,6 +403,7 @@ class AvatarDialog extends Component {
               <Grid container direction="row" justifyContent="space-evenly">
                 <Grid item>{addEmptyStepButton}</Grid>
                 <Grid item>{resetToDefaultButton}</Grid>
+                <Grid item>{fileUploadControl}</Grid>
               </Grid>
               <Grid item className={classes.editor}>
                 <FormLabel>{t('Bot personality')}</FormLabel>
