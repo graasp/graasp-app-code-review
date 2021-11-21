@@ -7,12 +7,13 @@ import Toolbar from '@material-ui/core/Toolbar';
 import { withStyles } from '@material-ui/core/styles';
 import { withTranslation } from 'react-i18next';
 import {
-  AssignmentInd as AccountIcon,
   Code,
   TableChart as TableIcon,
   Refresh as RefreshIcon,
 } from '@material-ui/icons';
 import IconButton from '@material-ui/core/IconButton';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { ReactComponent as Logo } from '../../resources/logo.svg';
 import './Header.css';
 import { addQueryParamsToUrl } from '../../utils/url';
@@ -84,7 +85,7 @@ class Header extends Component {
           className={classes.button}
           href={`index.html${addQueryParamsToUrl({ view: AVATAR_VIEW })}`}
         >
-          <AccountIcon />
+          <FontAwesomeIcon icon={faRobot} />
         </IconButton>,
         <IconButton
           key="preset"

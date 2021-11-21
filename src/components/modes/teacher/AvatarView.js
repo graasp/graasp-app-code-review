@@ -93,14 +93,13 @@ const AvatarView = (props) => {
       );
     }
     // map each app instance resource to a row in the table
-    return botUsers.map(({ _id, appInstance, data }) => (
+    return botUsers.map(({ _id, data }) => (
       <TableRow key={_id}>
-        <TableCell scope="row">{_id}</TableCell>
         <TableCell>
           <Avatar alt={data.name} src={data.uri} />
         </TableCell>
         <TableCell>{data.name}</TableCell>
-        <TableCell>{appInstance}</TableCell>
+        <TableCell>{data.description}</TableCell>
         <TableCell>
           <IconButton
             color="primary"
@@ -145,17 +144,16 @@ const AvatarView = (props) => {
       <Grid container spacing={0}>
         <Grid item xs={12} className={classes.main}>
           <Typography variant="h6" color="inherit">
-            {t('Bot users')}
+            {t('Bot Users')}
           </Typography>
           <Paper className={classes.root}>
             <Table className={classes.table}>
               <TableHead>
                 <TableRow>
-                  <TableCell>ID</TableCell>
-                  <TableCell>Avatar</TableCell>
-                  <TableCell>Name</TableCell>
-                  <TableCell>App Instance</TableCell>
-                  <TableCell>Actions</TableCell>
+                  <TableCell>{t('Avatar')}</TableCell>
+                  <TableCell>{t('Name')}</TableCell>
+                  <TableCell>{t('Description')}</TableCell>
+                  <TableCell>{t('Actions')}</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>{renderBotUsers()}</TableBody>
