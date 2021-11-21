@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import * as Showdown from 'showdown';
 import { connect } from 'react-redux';
 import ReactMde from 'react-mde';
@@ -145,6 +145,12 @@ class CommentEditor extends Component {
     tasklists: true,
   });
 
+  constructor(props) {
+    super(props);
+    // create ref to focus confirmation dialog
+    this.dialogRef = createRef();
+  }
+
   componentDidMount() {
     const { comment, focused, t } = this.props;
     const value = comment.data.deleted
@@ -211,6 +217,15 @@ class CommentEditor extends Component {
     });
     onSubmit(comment._id, value);
     adaptStyle();
+  };
+
+  handleDeleteClicked = () => {
+    // focus the confirmation dialog
+    const { current: confirmationDialogElement } = this.dialogRef;
+    if (confirmationDialogElement !== null) {
+      confirmationDialogElement.focus();
+    }
+    this.setState({ open: true });
   };
 
   handleDelete = (id) => {
@@ -298,7 +313,7 @@ class CommentEditor extends Component {
                   <IconButton
                     aria-label="delete"
                     color="secondary"
-                    onClick={() => this.setState({ open: true })}
+                    onClick={this.handleDeleteClicked}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -324,6 +339,7 @@ class CommentEditor extends Component {
               </IconButton>
             </Tooltip>
             <ConfirmDialog
+              ref={this.dialogRef}
               open={open}
               setOpen={(v) => this.setState({ open: v })}
               onClose={(m) => {

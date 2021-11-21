@@ -1,43 +1,40 @@
 import React, { Component } from 'react';
 import { connect } from 'react-redux';
 import { withStyles } from '@material-ui/core/styles';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
-import './TeacherView.css';
-import { Close } from '@material-ui/icons';
-import { IconButton } from '@material-ui/core';
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+} from '@material-ui/core';
 import {
   patchAppInstanceResource,
   postAppInstanceResource,
   deleteAppInstanceResource,
-  patchAppInstance,
-  getUsers,
+  setSelectedStudent,
+  closeFeedbackView,
 } from '../../../actions';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
 import CodeReview from '../../common/CodeReview';
-import { addQueryParamsToUrl } from '../../../utils/url';
-import { DEFAULT_VIEW } from '../../../config/views';
 
 export class FeedbackView extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
+    open: PropTypes.bool.isRequired,
     classes: PropTypes.shape({
       root: PropTypes.string,
-      select: PropTypes.string,
       grid: PropTypes.string,
-      table: PropTypes.string,
+      paper: PropTypes.string,
       main: PropTypes.string,
       button: PropTypes.string,
-      message: PropTypes.string,
-      fab: PropTypes.string,
     }).isRequired,
-    dispatchGetUsers: PropTypes.func.isRequired,
-    dispatchPatchAppInstance: PropTypes.func.isRequired,
-    settings: PropTypes.shape({
-      selectedStudent: PropTypes.string.isRequired,
-    }).isRequired,
+    // dispatchGetUsers: PropTypes.func.isRequired,
+    dispatchCloseFeedbackView: PropTypes.func.isRequired,
+    dispatchSetSelectedStudent: PropTypes.func.isRequired,
+    selectedStudent: PropTypes.string.isRequired,
     studentName: PropTypes.string,
   };
 
@@ -59,97 +56,50 @@ export class FeedbackView extends Component {
       marginBottom: theme.spacing(),
     },
     grid: {},
-    select: {
-      margin: 'auto',
-      maxWidth: 300,
-    },
     button: {
       marginTop: theme.spacing(1),
       marginRight: theme.spacing(2),
     },
-    table: {
-      minWidth: 700,
-    },
-    message: {
-      padding: theme.spacing(),
-      backgroundColor: theme.status.danger.background[500],
-      color: theme.status.danger.color,
-      marginBottom: theme.spacing(2),
-    },
-    fab: {
-      margin: theme.spacing(),
-      position: 'fixed',
-      top: theme.spacing(2),
-      right: theme.spacing(2),
-    },
+    paper: {},
   });
 
   state = {};
 
-  constructor(props) {
-    super(props);
-    const { dispatchGetUsers } = this.props;
-    dispatchGetUsers();
-  }
-
-  handleChangeBot = (value) => {
-    const { settings, dispatchPatchAppInstance } = this.props;
-    dispatchPatchAppInstance({
-      data: { ...settings, selectedBot: value },
-    });
+  handleClose = () => {
+    const { dispatchCloseFeedbackView, dispatchSetSelectedStudent } =
+      this.props;
+    dispatchSetSelectedStudent({ selectedStudent: null });
+    dispatchCloseFeedbackView();
   };
 
   render() {
-    // extract properties from the props object
-    const {
-      // this property allows us to do styling and is injected by withStyles
-      classes,
-      // this property allows us to do translations and is injected by i18next
-      t,
-      // these properties are injected by the redux mapStateToProps method
-      // appInstanceResources,
-      settings,
-      studentName,
-      dispatchPatchAppInstance,
-    } = this.props;
-    const { selectedStudent } = settings;
+    const { open, t, studentName, selectedStudent } = this.props;
 
     return (
-      <>
-        <IconButton
-          color="primary"
-          aria-label={t('Close')}
-          className={classes.button}
-          onClick={() => {
-            dispatchPatchAppInstance({
-              data: {
-                ...settings,
-                selectedStudent: null,
-              },
-            });
-          }}
-          href={`index.html${addQueryParamsToUrl({ view: DEFAULT_VIEW })}`}
-        >
-          <Close />
-        </IconButton>
-        <Grid container spacing={1} direction="column">
-          <Grid item xs={12} className={classes.main}>
-            <Typography variant="h6" color="inherit">
-              {t('Viewing comments from ') + studentName}
-            </Typography>
-          </Grid>
+      <Dialog
+        open={open}
+        onClose={this.handleClose}
+        scroll="body"
+        maxWidth="lg"
+      >
+        <DialogTitle>{t('Viewing comments from ') + studentName}</DialogTitle>
+        <DialogContent>
           <CodeReview isFeedbackView selectedStudent={selectedStudent} />
-        </Grid>
-      </>
+        </DialogContent>
+        <DialogActions>
+          <Button color="primary" variant="outlined" onClick={this.handleClose}>
+            {t('Close')}
+          </Button>
+        </DialogActions>
+      </Dialog>
     );
   }
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ users, appInstance, appInstanceResources }) => {
-  const { settings } = appInstance.content;
+const mapStateToProps = ({ users, appInstanceResources, layout }) => {
   const studentName = users.content.find(
-    (u) => u.id === settings.selectedStudent,
+    (u) => u.id === layout.selectedStudent,
   )?.name;
   return {
     // we transform the list of students in the database
@@ -160,20 +110,21 @@ const mapStateToProps = ({ users, appInstance, appInstanceResources }) => {
         value: _id,
         label: data.name,
       })),
-    settings,
+    selectedStudent: layout.selectedStudent,
     studentName,
     appInstanceResources: appInstanceResources.content,
+    open: layout.feedbackView.open,
   };
 };
 
 // allow this component to dispatch a post
 // request to create an app instance resource
 const mapDispatchToProps = {
-  dispatchGetUsers: getUsers,
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
-  dispatchPatchAppInstance: patchAppInstance,
+  dispatchCloseFeedbackView: closeFeedbackView,
+  dispatchSetSelectedStudent: setSelectedStudent,
 };
 
 const ConnectedComponent = connect(

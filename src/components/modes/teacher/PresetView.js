@@ -15,8 +15,8 @@ import {
   postAppInstanceResource,
   deleteAppInstanceResource,
   openSettings,
-  patchAppInstance,
   getUsers,
+  setSelectedBot,
 } from '../../../actions';
 import Settings from './Settings';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
@@ -37,14 +37,15 @@ export class PresetView extends Component {
       fab: PropTypes.string,
     }).isRequired,
     dispatchGetUsers: PropTypes.func.isRequired,
-    dispatchPatchAppInstance: PropTypes.func.isRequired,
-    settings: PropTypes.shape({
-      selectedBot: PropTypes.shape({
+    dispatchSetSelectedBot: PropTypes.func.isRequired,
+    selectedBot: PropTypes.oneOfType([
+      PropTypes.shape({
         label: PropTypes.string,
         value: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
           .isRequired,
       }),
-    }).isRequired,
+      PropTypes.string,
+    ]),
     botOptions: PropTypes.arrayOf(
       PropTypes.shape({
         label: PropTypes.string,
@@ -54,7 +55,12 @@ export class PresetView extends Component {
     ).isRequired,
   };
 
-  static defaultProps = {};
+  static defaultProps = {
+    selectedBot: {
+      value: null,
+      label: null,
+    },
+  };
 
   static styles = (theme) => ({
     root: {
@@ -103,9 +109,9 @@ export class PresetView extends Component {
   }
 
   handleChangeBot = (value) => {
-    const { settings, dispatchPatchAppInstance } = this.props;
-    dispatchPatchAppInstance({
-      data: { ...settings, selectedBot: value },
+    const { dispatchSetSelectedBot } = this.props;
+    dispatchSetSelectedBot({
+      selectedBot: value,
     });
   };
 
@@ -120,9 +126,8 @@ export class PresetView extends Component {
       // appInstanceResources,
       botOptions,
       dispatchOpenSettings,
-      settings,
+      selectedBot,
     } = this.props;
-    const { selectedBot } = settings;
 
     return (
       <>
@@ -165,7 +170,7 @@ export class PresetView extends Component {
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ appInstance, appInstanceResources }) => ({
+const mapStateToProps = ({ layout, appInstanceResources }) => ({
   // we transform the list of students in the database
   // to the shape needed by the select component
   botOptions: appInstanceResources.content
@@ -174,7 +179,7 @@ const mapStateToProps = ({ appInstance, appInstanceResources }) => ({
       value: _id,
       label: data.name,
     })),
-  settings: appInstance.content.settings,
+  selectedBot: layout.selectedBot,
   appInstanceResources: appInstanceResources.content,
 });
 
@@ -185,7 +190,7 @@ const mapDispatchToProps = {
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
-  dispatchPatchAppInstance: patchAppInstance,
+  dispatchSetSelectedBot: setSelectedBot,
   dispatchOpenSettings: openSettings,
 };
 

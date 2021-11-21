@@ -22,17 +22,19 @@ import {
   deleteAppInstanceResource,
   openSettings,
   getUsers,
-  patchAppInstance,
+  setSelectedStudent,
+  openFeedbackView,
+  getAppInstanceResources,
 } from '../../../actions';
-import { addQueryParamsToUrl } from '../../../utils/url';
 import Settings from './Settings';
 import { COMMENT } from '../../../config/appInstanceResourceTypes';
-import { FEEDBACK_VIEW } from '../../../config/views';
+import FeedbackView from './FeedbackView';
 
 export class TeacherView extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
     dispatchOpenSettings: PropTypes.func.isRequired,
+    dispatchOpenFeedbackView: PropTypes.func.isRequired,
     classes: PropTypes.shape({
       root: PropTypes.string,
       table: PropTypes.string,
@@ -42,10 +44,8 @@ export class TeacherView extends Component {
       fab: PropTypes.string,
     }).isRequired,
     dispatchGetUsers: PropTypes.func.isRequired,
-    dispatchPatchAppInstance: PropTypes.func.isRequired,
-    settings: PropTypes.shape({
-      selectedStudent: PropTypes.string,
-    }).isRequired,
+    dispatchGetAppInstanceResources: PropTypes.func.isRequired,
+    dispatchSetSelectedStudent: PropTypes.func.isRequired,
     // inside the shape method you should put the shape
     // that the resources your app uses will have
     comments: PropTypes.arrayOf(
@@ -104,10 +104,6 @@ export class TeacherView extends Component {
     },
   });
 
-  state = {
-    selectedStudent: null,
-  };
-
   constructor(props) {
     super(props);
     const { dispatchGetUsers } = this.props;
@@ -115,9 +111,13 @@ export class TeacherView extends Component {
   }
 
   renderStudentList = () => {
-    const { students, comments, dispatchPatchAppInstance, settings } =
-      this.props;
-    const { selectedStudent } = this.state;
+    const {
+      students,
+      comments,
+      dispatchOpenFeedbackView,
+      dispatchSetSelectedStudent,
+      dispatchGetAppInstanceResources,
+    } = this.props;
     // if there are no resources, show an empty table
     if (!comments.length) {
       return (
@@ -138,29 +138,21 @@ export class TeacherView extends Component {
           <TableCell>
             <IconButton
               color="primary"
-              disabled={id === selectedStudent}
               onClick={() => {
-                // dispatch to settings the selected student
-                dispatchPatchAppInstance({
-                  data: {
-                    ...settings,
-                    selectedStudent: id,
-                  },
+                // force update the comments
+                dispatchGetAppInstanceResources();
+                // dispatch the selected student to layout
+                dispatchSetSelectedStudent({
+                  selectedStudent: id,
                 });
+                dispatchOpenFeedbackView();
               }}
-              href={`index.html${addQueryParamsToUrl({ view: FEEDBACK_VIEW })}`}
             >
               <Input />
             </IconButton>
           </TableCell>
         </TableRow>
       ) : null;
-    });
-  };
-
-  handleChangeStudent = (value) => {
-    this.setState({
-      selectedStudent: value,
     });
   };
 
@@ -196,6 +188,7 @@ export class TeacherView extends Component {
             </Paper>
           </Grid>
         </Grid>
+        <FeedbackView />
         <Settings />
         <Fab
           color="primary"
@@ -211,7 +204,7 @@ export class TeacherView extends Component {
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ users, appInstance, appInstanceResources }) => ({
+const mapStateToProps = ({ users, appInstanceResources }) => ({
   // we transform the list of students in the database
   // to the shape needed by the select component
   students: users.content.map(({ id, name }) => ({
@@ -219,18 +212,19 @@ const mapStateToProps = ({ users, appInstance, appInstanceResources }) => ({
     name,
   })),
   comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
-  settings: appInstance.content.settings,
 });
 
 // allow this component to dispatch a post
 // request to create an app instance resource
 const mapDispatchToProps = {
   dispatchGetUsers: getUsers,
+  dispatchGetAppInstanceResources: getAppInstanceResources,
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
   dispatchOpenSettings: openSettings,
-  dispatchPatchAppInstance: patchAppInstance,
+  dispatchOpenFeedbackView: openFeedbackView,
+  dispatchSetSelectedStudent: setSelectedStudent,
 };
 
 const ConnectedComponent = connect(

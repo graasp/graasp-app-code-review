@@ -464,7 +464,7 @@ class CodeReview extends Component {
 }
 
 const mapStateToProps = (
-  { context, appInstance, appInstanceResources },
+  { context, appInstance, appInstanceResources, layout },
   { isFeedbackView, selectedStudent },
 ) => {
   // filter resources that are comments
@@ -485,7 +485,7 @@ const mapStateToProps = (
     teacherComments: appInstanceResources.content.filter(
       (r) => r.type === TEACHER_COMMENT,
     ),
-    selectedBot: appInstance.content.settings.selectedBot,
+    selectedBot: layout.selectedBot,
     standalone: context.standalone,
     isStudentView: STUDENT_MODES.includes(context.mode),
   };
