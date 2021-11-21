@@ -39,7 +39,7 @@ export const ADAPT_HEIGHT_TIMEOUT = 50;
 export const NEW_COMMENT_ID = '';
 
 // default comment
-export const DEFAULT_COMMENT_CONTENT = '';
+export const DEFAULT_COMMENT_CONTENT = { content: '' };
 
 // default text to display when comment is deleted but has active children
 export const DELETED_COMMENT_TEXT = '[DELETED]';

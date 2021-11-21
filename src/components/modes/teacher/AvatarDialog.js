@@ -438,7 +438,7 @@ class AvatarDialog extends Component {
                 <Grid item>{fileUploadControl}</Grid>
               </Grid>
               <Grid item>
-                <FormLabel>{t('Bot personality')}</FormLabel>
+                <FormLabel>{t('Bot Personality')}</FormLabel>
                 <Editor
                   className={classes.editor}
                   height="20vh"

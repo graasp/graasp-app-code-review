@@ -323,6 +323,7 @@ class CodeReview extends Component {
     // if a bot is selected and the bot is configured for automatic seeding
     let textContent = DEFAULT_COMMENT_CONTENT;
     if (bot && bot.data.autoBot && bot.data.autoSeed) {
+      // is an object with `content` and `optionId` which is used for context
       textContent = getDefaultOptionText(bot.data.personality);
     }
 
@@ -332,7 +333,7 @@ class CodeReview extends Component {
         _id: NEW_COMMENT_ID,
         data: {
           line: lineNum,
-          content: textContent,
+          ...textContent,
           parent: parentId,
         },
       },

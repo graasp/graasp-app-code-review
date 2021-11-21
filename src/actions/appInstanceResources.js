@@ -179,7 +179,10 @@ const postAppInstanceResource =
         getState,
       );
       if (autoResponse) {
-        dispatch(postAppInstanceResource(autoResponse));
+        setTimeout(
+          () => dispatch(postAppInstanceResource(autoResponse.response)),
+          autoResponse.timeout,
+        );
       }
 
       return dispatch({
