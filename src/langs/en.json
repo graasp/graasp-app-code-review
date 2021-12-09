@@ -26,11 +26,12 @@
     "Select a bot to impersonate": "Select a bot to impersonate",
     "Close": "Close",
     "Viewing comments from ": "Viewing comments from ",
-    "Bot users": "Bot users",
+    "Bot Users": "Bot Users",
     "Add a new bot user": "Add a new bot user",
     "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.": "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.",
     "[DELETED]": "[DELETED]",
     "Toggle Visibility": "Toggle Visibility",
-    "show more": "show more"
+    "show more": "show more",
+    "Description": "Description"
   }
 }

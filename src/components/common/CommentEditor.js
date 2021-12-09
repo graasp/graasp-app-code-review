@@ -228,7 +228,11 @@ class CommentEditor extends Component {
     if (comment.type === BOT_COMMENT) {
       const user = botUsers.find((u) => u.id === comment.data.botId);
       if (user) {
-        return <Avatar alt={user.initials} src={user.uri} />;
+        return (
+          <Tooltip title={user.description} disableInteractive arrow>
+            <Avatar alt={user.initials} src={user.uri} />
+          </Tooltip>
+        );
       }
     }
     // for the other types of comments, we have to look
@@ -430,6 +434,7 @@ const mapStateToProps = ({ context, users, appInstanceResources }) => ({
       name: data.name,
       initials: getInitials(data.name),
       uri: data.uri,
+      description: data.description,
     })),
   activity: appInstanceResources.activity.length,
   lang: context.lang,

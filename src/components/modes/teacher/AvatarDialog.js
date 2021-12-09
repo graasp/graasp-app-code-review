@@ -18,6 +18,7 @@ import { PUBLIC_VISIBILITY } from '../../../config/settings';
 const DEFAULT_AVATAR = {
   name: '',
   uri: '',
+  description: '',
 };
 
 function getModalStyle() {
@@ -102,6 +103,7 @@ class AvatarDialog extends Component {
     avatar: PropTypes.shape({
       name: PropTypes.string,
       uri: PropTypes.string,
+      description: PropTypes.string,
     }),
     t: PropTypes.func.isRequired,
     dispatchCloseAvatarDialog: PropTypes.func.isRequired,
@@ -210,6 +212,9 @@ class AvatarDialog extends Component {
         onChange={this.handleChangeTextField('name')}
         value={avatar.name}
         fullWidth
+        multiline
+        maxRows={3}
+        size="small"
       />
     );
 
@@ -221,6 +226,23 @@ class AvatarDialog extends Component {
         onChange={this.handleChangeTextField('uri')}
         value={avatar.uri}
         fullWidth
+        multiline
+        maxRows={3}
+        size="small"
+      />
+    );
+
+    const descriptionControl = (
+      <TextField
+        color="primary"
+        variant="outlined"
+        label={t('Description')}
+        onChange={this.handleChangeTextField('description')}
+        value={avatar.description}
+        fullWidth
+        multiline
+        maxRows={4}
+        size="small"
       />
     );
 
@@ -229,6 +251,7 @@ class AvatarDialog extends Component {
         <Grid container direction="column" spacing={3} alignItems="stretch">
           <Grid item>{nameControl}</Grid>
           <Grid item>{uriControl}</Grid>
+          <Grid item>{descriptionControl}</Grid>
         </Grid>
         <Divider className={classes.divider} />
         <Button
