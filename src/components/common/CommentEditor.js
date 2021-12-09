@@ -1,4 +1,4 @@
-import React, { Component } from 'react';
+import React, { Component, createRef } from 'react';
 import * as Showdown from 'showdown';
 import { connect } from 'react-redux';
 import ReactMde from 'react-mde';
@@ -145,6 +145,12 @@ class CommentEditor extends Component {
     tasklists: true,
   });
 
+  constructor(props) {
+    super(props);
+    // create ref to focus confirmation dialog
+    this.dialogRef = createRef();
+  }
+
   componentDidMount() {
     const { comment, focused, t } = this.props;
     const value = comment.data.deleted
@@ -213,6 +219,15 @@ class CommentEditor extends Component {
     adaptStyle();
   };
 
+  handleDeleteClicked = () => {
+    // focus the confirmation dialog
+    const { current: confirmationDialogElement } = this.dialogRef;
+    if (confirmationDialogElement !== null) {
+      confirmationDialogElement.focus();
+    }
+    this.setState({ open: true });
+  };
+
   handleDelete = (id) => {
     const { onDeleteComment, adaptStyle } = this.props;
     onDeleteComment(id);
@@ -228,7 +243,11 @@ class CommentEditor extends Component {
     if (comment.type === BOT_COMMENT) {
       const user = botUsers.find((u) => u.id === comment.data.botId);
       if (user) {
-        return <Avatar alt={user.initials} src={user.uri} />;
+        return (
+          <Tooltip title={user.description} disableInteractive arrow>
+            <Avatar alt={user.initials} src={user.uri} />
+          </Tooltip>
+        );
       }
     }
     // for the other types of comments, we have to look
@@ -283,7 +302,7 @@ class CommentEditor extends Component {
         subheader={formattedUpdatedAt}
         action={
           <>
-            {isHovered && !readOnly ? (
+            {isHovered && !readOnly && expanded ? (
               <>
                 {!comment.data.deleted ? (
                   <IconButton
@@ -298,7 +317,7 @@ class CommentEditor extends Component {
                   <IconButton
                     aria-label="delete"
                     color="secondary"
-                    onClick={() => this.setState({ open: true })}
+                    onClick={this.handleDeleteClicked}
                   >
                     <DeleteIcon />
                   </IconButton>
@@ -324,6 +343,7 @@ class CommentEditor extends Component {
               </IconButton>
             </Tooltip>
             <ConfirmDialog
+              ref={this.dialogRef}
               open={open}
               setOpen={(v) => this.setState({ open: v })}
               onClose={(m) => {
@@ -431,6 +451,7 @@ const mapStateToProps = ({ context, users, appInstanceResources }) => ({
       name: data.name,
       initials: getInitials(data.name),
       uri: data.uri,
+      description: data.description,
     })),
   activity: appInstanceResources.activity.length,
   lang: context.lang,

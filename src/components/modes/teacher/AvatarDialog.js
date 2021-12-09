@@ -41,6 +41,7 @@ const DEFAULT_AVATAR = {
   autoBot: false,
   autoSeed: false,
   personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
+  description: '',
 };
 
 function getModalStyle() {
@@ -140,6 +141,7 @@ class AvatarDialog extends Component {
       autoBot: PropTypes.bool,
       autoSeed: PropTypes.bool,
       personality: PropTypes.string,
+      description: PropTypes.string,
     }),
     t: PropTypes.func.isRequired,
     dispatchCloseAvatarDialog: PropTypes.func.isRequired,
@@ -323,6 +325,9 @@ class AvatarDialog extends Component {
         onChange={this.handleChangeTextField('name')}
         value={avatar.name}
         fullWidth
+        multiline
+        maxRows={3}
+        size="small"
       />
     );
 
@@ -334,6 +339,23 @@ class AvatarDialog extends Component {
         onChange={this.handleChangeTextField('uri')}
         value={avatar.uri}
         fullWidth
+        multiline
+        maxRows={3}
+        size="small"
+      />
+    );
+
+    const descriptionControl = (
+      <TextField
+        color="primary"
+        variant="outlined"
+        label={t('Description')}
+        onChange={this.handleChangeTextField('description')}
+        value={avatar.description}
+        fullWidth
+        multiline
+        maxRows={4}
+        size="small"
       />
     );
 
@@ -406,6 +428,9 @@ class AvatarDialog extends Component {
           </Grid>
           <Grid item className={classes.noFlex}>
             {uriControl}
+          </Grid>
+          <Grid item className={classes.noFlex}>
+            {descriptionControl}
           </Grid>
           <Grid
             container
