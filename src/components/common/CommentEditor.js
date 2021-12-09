@@ -302,7 +302,7 @@ class CommentEditor extends Component {
         subheader={formattedUpdatedAt}
         action={
           <>
-            {isHovered && !readOnly ? (
+            {isHovered && !readOnly && expanded ? (
               <>
                 {!comment.data.deleted ? (
                   <IconButton
