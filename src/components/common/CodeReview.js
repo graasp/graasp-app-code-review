@@ -17,11 +17,13 @@ import {
 } from '../../actions';
 import {
   BOT_COMMENT,
+  BOT_USER,
   COMMENT,
   TEACHER_COMMENT,
 } from '../../config/appInstanceResourceTypes';
 import {
   ADAPT_HEIGHT_TIMEOUT,
+  DEFAULT_COMMENT_CONTENT,
   DELETED_COMMENT_TEXT,
   NEW_COMMENT_ID,
   PRIVATE_VISIBILITY,
@@ -34,6 +36,7 @@ import {
   DELETED_COMMENT,
   UPDATED_COMMENT,
 } from '../../config/verbs';
+import { getDefaultOptionText } from '../../utils/autoBotEngine';
 
 Prism.manual = true;
 
@@ -64,6 +67,17 @@ class CodeReview extends Component {
       value: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       label: PropTypes.string,
     }),
+    botUsers: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        data: PropTypes.shape({
+          name: PropTypes.string,
+          autoBot: PropTypes.bool,
+          autoSeed: PropTypes.bool,
+          personality: PropTypes.string,
+        }),
+      }),
+    ),
     botComments: PropTypes.arrayOf(
       PropTypes.shape({
         _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
@@ -85,7 +99,12 @@ class CodeReview extends Component {
       PropTypes.shape({
         _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         appInstanceId: PropTypes.string,
-        data: PropTypes.shape({}),
+        data: PropTypes.shape({
+          line: PropTypes.number,
+          content: PropTypes.string,
+          createdAt: PropTypes.string,
+          parent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        }),
       }),
     ),
     standalone: PropTypes.bool.isRequired,
@@ -102,6 +121,7 @@ class CodeReview extends Component {
     isFeedbackView: false,
     userId: null,
     selectedBot: null,
+    botUsers: [],
     botComments: [],
     teacherComments: [],
     comments: [],
@@ -287,14 +307,33 @@ class CodeReview extends Component {
   };
 
   handleAddComment(lineNum, parentId = null) {
-    const { comments, dispatchPostAction } = this.props;
+    const {
+      comments,
+      dispatchPostAction,
+      selectedBot,
+      botUsers,
+      isStudentView,
+    } = this.props;
+
+    // check if a bot is selected
+    const bot =
+      selectedBot && !isStudentView
+        ? botUsers.find((b) => b._id === selectedBot.value)
+        : null;
+    // if a bot is selected and the bot is configured for automatic seeding
+    let textContent = DEFAULT_COMMENT_CONTENT;
+    if (bot && bot.data.autoBot && bot.data.autoSeed) {
+      // is an object with `content` and `optionId` which is used for context
+      textContent = getDefaultOptionText(bot.data.personality);
+    }
+
     const newComments = [
       ...comments,
       {
         _id: NEW_COMMENT_ID,
         data: {
           line: lineNum,
-          content: '',
+          ...textContent,
           parent: parentId,
         },
       },
@@ -313,13 +352,16 @@ class CodeReview extends Component {
   }
 
   getReadOnlyProperty(comment) {
-    const { isTeacherView, isFeedbackView } = this.props;
+    const { isTeacherView, isFeedbackView, userId } = this.props;
     if (isTeacherView) {
       // teacher can edit all comments
       return false;
     }
     if (isFeedbackView) {
       return true;
+    }
+    if (comment.type === BOT_COMMENT && comment.user === userId) {
+      return false;
     }
     // readOnly just for comments that are not from users
     return comment.type !== COMMENT;
@@ -350,7 +392,8 @@ class CodeReview extends Component {
     const { focusedId } = this.state;
     const childrenComments = comments
       .filter((comment) => comment.data.parent === parentId)
-      .sort((comment) => comment.createdAt);
+      .sort((comment) => comment.createdAt)
+      .reverse();
     if (childrenComments.length === 0) {
       return null;
     }
@@ -484,6 +527,9 @@ const mapStateToProps = (
     ),
     teacherComments: appInstanceResources.content.filter(
       (r) => r.type === TEACHER_COMMENT,
+    ),
+    botUsers: appInstanceResources.content.filter(
+      (res) => res.type === BOT_USER,
     ),
     selectedBot: layout.selectedBot,
     standalone: context.standalone,

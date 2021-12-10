@@ -116,7 +116,7 @@ const AvatarView = (props) => {
           >
             <EditIcon />
           </IconButton>
-          <Tooltip title={t('Delete bot')}>
+          <Tooltip title={t('Delete Bot')}>
             <IconButton
               color="primary"
               // remove the bot
@@ -125,7 +125,7 @@ const AvatarView = (props) => {
               <DeleteIcon />
             </IconButton>
           </Tooltip>
-          <Tooltip title={t('Delete all comments for bot')}>
+          <Tooltip title={t('Delete All Comments for Bot')}>
             <IconButton
               color="primary"
               // remove all the comments linked to this bot
@@ -165,7 +165,7 @@ const AvatarView = (props) => {
             variant="contained"
             onClick={() => handleNewBot()}
           >
-            {t('Add a new bot user')}
+            {t('Add a New Bot User')}
           </Button>
         </Grid>
       </Grid>

@@ -27,11 +27,19 @@
     "Close": "Close",
     "Viewing comments from ": "Viewing comments from ",
     "Bot Users": "Bot Users",
-    "Add a new bot user": "Add a new bot user",
+    "Add a New Bot User": "Add a New Bot User",
     "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.": "Warning ! You are impersonating a bot. Clear the field above to write comments as yourself.",
     "[DELETED]": "[DELETED]",
     "Toggle Visibility": "Toggle Visibility",
     "show more": "show more",
+    "Delete Bot": "Delete Bot",
+    "Delete All Comments for Bot": "Delete All Comments for Bot",
+    "Enable Auto Reply": "Enable Auto Reply",
+    "Enable Automatic Message Seeding": "Enable Automatic Message Seeding",
+    "Upload File": "Upload File",
+    "Bot Personality": "Bot Personality",
+    "Reset Defaults": "Reset Defaults",
+    "Add Empty Step": "Add Empty Step",
     "Description": "Description"
   }
 }
