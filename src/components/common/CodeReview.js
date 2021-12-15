@@ -24,6 +24,7 @@ import {
 import {
   ADAPT_HEIGHT_TIMEOUT,
   DEFAULT_COMMENT_CONTENT,
+  DEFAULT_COMMENT_HIDDEN_STATE,
   DELETED_COMMENT_TEXT,
   NEW_COMMENT_ID,
   PRIVATE_VISIBILITY,
@@ -37,6 +38,7 @@ import {
   UPDATED_COMMENT,
 } from '../../config/verbs';
 import { getDefaultOptionText } from '../../utils/autoBotEngine';
+import CodeReviewTools from './CodeReviewTools';
 
 Prism.manual = true;
 
@@ -45,7 +47,7 @@ const styles = {
     borderSpacing: 0,
     maxWidth: '800px',
     width: '90%',
-    margin: '20px auto auto',
+    margin: '0px auto auto',
     boxSizing: 'border-box',
   },
   commentContainer: {
@@ -93,6 +95,7 @@ class CodeReview extends Component {
       }),
     ),
     code: PropTypes.string.isRequired,
+    codeId: PropTypes.string.isRequired,
     programmingLanguage: PropTypes.string.isRequired,
     userId: PropTypes.string,
     comments: PropTypes.arrayOf(
@@ -138,9 +141,12 @@ class CodeReview extends Component {
   }
 
   state = (() => {
-    const { comments } = this.props;
-
+    const { comments, code } = this.props;
+    const numLines = code.split('\n').length;
     return {
+      lineCommentsHiddenState: new Array(numLines).fill(
+        DEFAULT_COMMENT_HIDDEN_STATE,
+      ),
       focusedId: null,
       comments,
     };
@@ -313,7 +319,10 @@ class CodeReview extends Component {
       selectedBot,
       botUsers,
       isStudentView,
+      codeId,
     } = this.props;
+
+    const { lineCommentsHiddenState } = this.state;
 
     // check if a bot is selected
     const bot =
@@ -335,6 +344,7 @@ class CodeReview extends Component {
           line: lineNum,
           ...textContent,
           parent: parentId,
+          codeId,
         },
       },
     ];
@@ -342,6 +352,11 @@ class CodeReview extends Component {
       comments: newComments,
       focusedId: NEW_COMMENT_ID,
     });
+    // make sure the comments on that line are not hidden
+    if (lineCommentsHiddenState[lineNum - 1]) {
+      this.toggleHiddenCommentState(lineNum);
+    }
+
     // track that this line was clicked
     dispatchPostAction({
       data: {
@@ -350,6 +365,15 @@ class CodeReview extends Component {
       verb: CLICKED_ADD_COMMENT,
     });
   }
+
+  handleHideAllComments = (checked) => {
+    const { lineCommentsHiddenState: lineCommentsHiddenStatePrevious } =
+      this.state;
+    const lineCommentsHiddenState =
+      lineCommentsHiddenStatePrevious.fill(checked);
+    // set hidden state
+    this.setState({ lineCommentsHiddenState });
+  };
 
   getReadOnlyProperty(comment) {
     const { isTeacherView, isFeedbackView, userId } = this.props;
@@ -366,6 +390,16 @@ class CodeReview extends Component {
     // readOnly just for comments that are not from users
     return comment.type !== COMMENT;
   }
+
+  toggleHiddenCommentState = (lineNumber) => {
+    const indexInArray = lineNumber - 1;
+    const { lineCommentsHiddenState: lineCommentsHiddenStatePrevious } =
+      this.state;
+    lineCommentsHiddenStatePrevious[indexInArray] =
+      !lineCommentsHiddenStatePrevious[indexInArray];
+    // set hidden state
+    this.setState({ lineCommentsHiddenState: lineCommentsHiddenStatePrevious });
+  };
 
   adaptHeight = () => {
     // set timeout to leave time for the height to be set
@@ -447,12 +481,14 @@ class CodeReview extends Component {
       teacherComments,
       programmingLanguage,
     } = this.props;
-    const { focusedId } = this.state;
+    const { focusedId, lineCommentsHiddenState } = this.state;
     const highlightedCode = CodeReview.highlightCode(
       code,
       programmingLanguage,
     ).split('\n');
     return highlightedCode.map((line, i) => {
+      // get hidden comments state
+      const hiddenCommentState = lineCommentsHiddenState[i];
       const filteredComments = commentList.filter(
         (comment) =>
           (isTeacherView && comment._id === focusedId) || !isTeacherView,
@@ -465,15 +501,18 @@ class CodeReview extends Component {
 
       // check if there are any first level comments
       // if there are any, just do not render a row
-      const renderedComments = lineComments.filter(
+      const parentComments = lineComments.filter(
         (comment) => comment.data.parent === null,
-      ).length ? (
-        <tr className="comment">
-          <td className="comment editor" colSpan={2}>
-            {this.renderChildrenComments(lineComments, null)}
-          </td>
-        </tr>
-      ) : null;
+      );
+      const numThreads = parentComments.length;
+      const renderedComments =
+        numThreads && !hiddenCommentState ? (
+          <tr className="comment">
+            <td className="comment editor" colSpan={2}>
+              {this.renderChildrenComments(lineComments, null)}
+            </td>
+          </tr>
+        ) : null;
 
       return (
         <Fragment
@@ -485,23 +524,34 @@ class CodeReview extends Component {
             lineNumber={i + 1}
             onClickAdd={(lineNum) => this.handleAddComment(lineNum)}
             disableButton={isFeedbackView}
+            numThreads={numThreads}
+            toggleHiddenStateCallback={this.toggleHiddenCommentState}
           />
-          {renderedComments}
+          {hiddenCommentState ? null : renderedComments}
         </Fragment>
       );
     });
   }
 
   render() {
-    const { classes, code } = this.props;
-    const { comments } = this.state;
-
+    const { classes, code, isStudentView, isFeedbackView } = this.props;
+    const { comments, lineCommentsHiddenState } = this.state;
     return (
-      <table ref={this.rootRef} className={classes.container}>
-        <tbody className="code-area">
-          {this.renderCodeReview(code, comments)}
-        </tbody>
-      </table>
+      <>
+        <CodeReviewTools
+          showVisibilityButton={comments.length}
+          showEditButton={isStudentView}
+          showHistoryDropdown={isFeedbackView || isStudentView}
+          hideCommentsCallback={this.handleHideAllComments}
+          allHiddenState={lineCommentsHiddenState.every((s) => s === true)}
+          allVisibleState={lineCommentsHiddenState.every((s) => s === false)}
+        />
+        <table ref={this.rootRef} className={classes.container}>
+          <tbody className="code-area">
+            {this.renderCodeReview(code, comments)}
+          </tbody>
+        </table>
+      </>
     );
   }
 }
@@ -510,16 +560,19 @@ const mapStateToProps = (
   { context, appInstance, appInstanceResources, layout },
   { isFeedbackView, selectedStudent },
 ) => {
+  const { codeId } = layout.codeEditorSettings;
   // filter resources that are comments
   const comments = appInstanceResources.content.filter(
     (r) =>
       r.type === COMMENT &&
       // select only comments from the selected user when in FeedbackView
-      ((isFeedbackView && r.user === selectedStudent) || !isFeedbackView),
+      ((isFeedbackView && r.user === selectedStudent) || !isFeedbackView) &&
+      r.data.codeId === codeId,
   );
   return {
     userId: context.userId,
-    code: appInstance.content.settings.code,
+    code: layout.codeEditorSettings.code || appInstance.content.settings.code,
+    codeId,
     programmingLanguage: appInstance.content.settings.programmingLanguage,
     comments,
     botComments: appInstanceResources.content.filter(

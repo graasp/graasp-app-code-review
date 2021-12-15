@@ -1,10 +1,13 @@
 import {
   CLOSE_AVATAR_DIALOG,
+  CLOSE_EDITOR_VIEW,
   CLOSE_FEEDBACK_VIEW,
   CLOSE_SETTINGS,
   OPEN_AVATAR_DIALOG,
+  OPEN_EDITOR_VIEW,
   OPEN_FEEDBACK_VIEW,
   OPEN_SETTINGS,
+  SET_CODE_EDITOR_SETTINGS,
   SET_SELECTED_BOT,
   SET_SELECTED_STUDENT,
 } from '../types';
@@ -39,6 +42,16 @@ const closeFeedbackView = () => (dispatch) =>
     type: CLOSE_FEEDBACK_VIEW,
   });
 
+const openEditorView = () => (dispatch) =>
+  dispatch({
+    type: OPEN_EDITOR_VIEW,
+  });
+
+const closeEditorView = () => (dispatch) =>
+  dispatch({
+    type: CLOSE_EDITOR_VIEW,
+  });
+
 const setSelectedStudent =
   ({ selectedStudent }) =>
   (dispatch) =>
@@ -55,6 +68,12 @@ const setSelectedBot =
       payload: selectedBot,
     });
 
+const setCodeEditorSettings = (data) => (dispatch) =>
+  dispatch({
+    type: SET_CODE_EDITOR_SETTINGS,
+    payload: data,
+  });
+
 export {
   openSettings,
   closeSettings,
@@ -62,6 +81,9 @@ export {
   closeAvatarDialog,
   openFeedbackView,
   closeFeedbackView,
+  openEditorView,
+  closeEditorView,
   setSelectedStudent,
   setSelectedBot,
+  setCodeEditorSettings,
 };

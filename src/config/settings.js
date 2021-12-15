@@ -31,6 +31,7 @@ export const JSON_LANG = 'json';
 export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
 
 export const DEFAULT_USER = 'Anonymous';
+export const DEFAULT_CODE_ID = 'Instructor';
 
 // time to wait in ms
 export const ADAPT_HEIGHT_TIMEOUT = 50;
@@ -40,6 +41,10 @@ export const NEW_COMMENT_ID = '';
 
 // default comment
 export const DEFAULT_COMMENT_CONTENT = { content: '' };
+export const DEFAULT_COMMENT_HIDDEN_STATE = false;
+
+// default commit message
+export const DEFAULT_COMMIT_MESSAGE = '';
 
 // default text to display when comment is deleted but has active children
 export const DELETED_COMMENT_TEXT = '[DELETED]';

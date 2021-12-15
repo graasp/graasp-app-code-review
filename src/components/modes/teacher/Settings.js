@@ -103,6 +103,7 @@ class Settings extends Component {
     settings: PropTypes.shape({
       programmingLanguage: PropTypes.string.isRequired,
       headerVisible: PropTypes.bool.isRequired,
+      topBarVisible: PropTypes.bool.isRequired,
       code: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,
@@ -200,7 +201,8 @@ class Settings extends Component {
   renderModalContent() {
     const { t, activity, classes, settings: settingsProp } = this.props;
     const { settings } = this.state;
-    const { headerVisible, code, programmingLanguage } = settings;
+    const { headerVisible, topBarVisible, code, programmingLanguage } =
+      settings;
 
     const hasChanged = !_.isEqual(settingsProp, settings);
 
@@ -215,6 +217,15 @@ class Settings extends Component {
         checked={headerVisible}
         onChange={this.handleChangeSwitch('headerVisible')}
         value="headerVisibility"
+      />
+    );
+
+    const topBarVisibleSwitchControl = (
+      <Switch
+        color="primary"
+        checked={topBarVisible}
+        onChange={this.handleChangeSwitch('topBarVisible')}
+        value="topBarVisibility"
       />
     );
 
@@ -241,6 +252,12 @@ class Settings extends Component {
             <FormControlLabel
               control={headerVisibleSwitchControl}
               label={t('Show Header to Students')}
+            />
+          </Grid>
+          <Grid item>
+            <FormControlLabel
+              control={topBarVisibleSwitchControl}
+              label={t('Show Top Bar to Students')}
             />
           </Grid>
           <Grid item>

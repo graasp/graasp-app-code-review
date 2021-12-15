@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { createStyles, IconButton, makeStyles } from '@material-ui/core';
+import { Badge, createStyles, IconButton, makeStyles } from '@material-ui/core';
 import AddIcon from '@material-ui/icons/Add';
 import PropTypes from 'prop-types';
 import 'prismjs/themes/prism.css';
+import { MessageOutlined } from '@material-ui/icons';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -19,6 +20,7 @@ const useStyles = makeStyles((theme) =>
       minWidth: '50px',
       paddingRight: '10px',
       paddingLeft: '10px',
+      marginRight: '30px',
       fontFamily:
         'ui-monospace, SFMono-Regular, SF Mono, Menlo, Consolas, Liberation Mono, monospace',
       fontSize: '12px',
@@ -28,13 +30,48 @@ const useStyles = makeStyles((theme) =>
       whiteSpace: 'nowrap',
       verticalAlign: 'top',
     },
+    commentNumber: {
+      width: '36px',
+      minWidth: '36px',
+      lineHeight: '20px',
+    },
+    lastCol: {
+      width: '36px',
+      height: '36px',
+    },
+    badgeRoot: {
+      color: theme.palette.background.paper,
+      '& .MuiBadge-badge': {
+        backgroundColor: theme.palette.primary.main,
+        border: `2px solid ${theme.palette.background.paper}`,
+        right: 5,
+        top: 5,
+      },
+    },
   }),
 );
 
-const CodeLine = ({ htmlLine, lineNumber, onClickAdd, disableButton }) => {
+const CodeLine = ({
+  htmlLine,
+  lineNumber,
+  onClickAdd,
+  disableButton,
+  numThreads,
+  toggleHiddenStateCallback,
+}) => {
   /* eslint-disable react/no-danger */
   const [showAdd, setShowAdd] = useState(false);
   const classes = useStyles();
+
+  const commentButton = (
+    <IconButton
+      size="small"
+      onClick={() => toggleHiddenStateCallback(lineNumber)}
+    >
+      <MessageOutlined />
+    </IconButton>
+  );
+
   return (
     <tr
       onMouseOver={() => setShowAdd(true)}
@@ -63,6 +100,17 @@ const CodeLine = ({ htmlLine, lineNumber, onClickAdd, disableButton }) => {
           dangerouslySetInnerHTML={{ __html: htmlLine }}
         />
       </td>
+      <td className={classes.commentNumber}>
+        {numThreads ? (
+          <Badge
+            badgeContent={numThreads}
+            className={classes.badgeRoot}
+            max={9}
+          >
+            {commentButton}
+          </Badge>
+        ) : null}
+      </td>
     </tr>
   );
 };
@@ -72,10 +120,13 @@ CodeLine.propTypes = {
   lineNumber: PropTypes.number.isRequired,
   onClickAdd: PropTypes.func.isRequired,
   disableButton: PropTypes.bool,
+  numThreads: PropTypes.number,
+  toggleHiddenStateCallback: PropTypes.func.isRequired,
 };
 
 CodeLine.defaultProps = {
   disableButton: false,
+  numThreads: 0,
 };
 
 export default CodeLine;

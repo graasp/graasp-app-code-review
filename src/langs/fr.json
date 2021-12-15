@@ -40,6 +40,9 @@
     "Bot Personality": "Personnalité du robot",
     "Reset Defaults": "Retour aux défauts",
     "Add Empty Step": "Ajouter un step",
-    "Description": "Description"
+    "Description": "Description",
+    "Show Top Bar to Students": "Montrer la barre d'outils aux étudiants",
+    "Show All Comments": "Montrer tous les commentaires",
+    "Hide All Comments": "Cacher tous les commentaires"
   }
 }
