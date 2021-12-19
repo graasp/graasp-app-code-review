@@ -13,7 +13,10 @@ import {
 } from '../../actions';
 import { CODE } from '../../config/appInstanceResourceTypes';
 import {
+  COMMIT_MESSAGE_TOO_LONG,
   DEFAULT_COMMIT_MESSAGE,
+  DEFAULT_MAX_COMMIT_MESSAGE_LENGTH,
+  DEFAULT_WARNING_COLOR,
   PUBLIC_VISIBILITY,
 } from '../../config/settings';
 
@@ -30,6 +33,7 @@ const styles = (theme) => ({
   editor: {
     minHeight: '100px',
     height: '100%',
+    width: '100%',
   },
   button: {
     marginRight: theme.spacing(),
@@ -43,6 +47,14 @@ const styles = (theme) => ({
   divider: {
     marginBottom: theme.spacing(2),
   },
+  commitTextField: {
+    '& .MuiFormLabel-root.Mui-error, .MuiFormHelperText-root.Mui-error, ': {
+      color: DEFAULT_WARNING_COLOR,
+    },
+    '& .MuiOutlinedInput-root.Mui-error .MuiOutlinedInput-notchedOutline': {
+      borderColor: DEFAULT_WARNING_COLOR,
+    },
+  },
 });
 
 class CodeEditor extends React.Component {
@@ -54,6 +66,7 @@ class CodeEditor extends React.Component {
       noFlex: PropTypes.string,
       paper: PropTypes.string,
       divider: PropTypes.string,
+      commitTextField: PropTypes.string,
     }).isRequired,
     t: PropTypes.func.isRequired,
     dispatchCloseEditorView: PropTypes.func.isRequired,
@@ -62,9 +75,15 @@ class CodeEditor extends React.Component {
     commit: PropTypes.shape({
       code: PropTypes.string.isRequired,
       commitMessage: PropTypes.string.isRequired,
+      commitDescription: PropTypes.string.isRequired,
     }).isRequired,
     programmingLanguage: PropTypes.string.isRequired,
     userId: PropTypes.string.isRequired,
+    maxMessageLength: PropTypes.number,
+  };
+
+  static defaultProps = {
+    maxMessageLength: DEFAULT_MAX_COMMIT_MESSAGE_LENGTH,
   };
 
   state = (() => {
@@ -119,15 +138,24 @@ class CodeEditor extends React.Component {
   };
 
   renderCodeEditor = () => {
-    const { t, classes, commit: commitProp, programmingLanguage } = this.props;
+    const {
+      t,
+      classes,
+      commit: commitProp,
+      programmingLanguage,
+      maxMessageLength,
+    } = this.props;
 
     const { commit } = this.state;
-    const { code, commitMessage } = commit;
+    const { code, commitMessage, commitDescription } = commit;
 
     const hasChanged = !_.isEqual(commitProp, commit);
 
+    const commitMessageTooLong = commitMessage.length > maxMessageLength;
+
     const commitMessageControl = (
       <TextField
+        size="small"
         color="primary"
         variant="outlined"
         label={t('Commit Message')}
@@ -135,7 +163,23 @@ class CodeEditor extends React.Component {
         onChange={this.handleChangeTextField('commitMessage')}
         value={commitMessage}
         fullWidth
+        helperText={commitMessageTooLong ? t(COMMIT_MESSAGE_TOO_LONG) : ''}
+        error={commitMessageTooLong}
+      />
+    );
+
+    const extendedCommitDescriptionControl = (
+      <TextField
         size="small"
+        color="primary"
+        variant="outlined"
+        label={t('Optional Extended Description')}
+        placeholder={t('Add an optional description')}
+        onChange={this.handleChangeTextField('commitDescription')}
+        value={commitDescription}
+        fullWidth
+        multiline
+        maxRows={3}
       />
     );
 
@@ -170,8 +214,19 @@ class CodeEditor extends React.Component {
               alignContent="stretch"
               spacing={1}
             >
-              <Grid item alignContent="stretch">
+              <Grid
+                item
+                alignContent="stretch"
+                className={classes.commitTextField}
+              >
                 {commitMessageControl}
+              </Grid>
+              <Grid
+                item
+                alignContent="stretch"
+                className={classes.commitTextField}
+              >
+                {extendedCommitDescriptionControl}
               </Grid>
               <Grid container item direction="row">
                 <Grid item>
@@ -217,6 +272,7 @@ const mapStateToProps = ({ appInstance, layout, context }) => {
     commit: {
       code: code || defaultCode,
       commitMessage: DEFAULT_COMMIT_MESSAGE,
+      commitDescription: DEFAULT_COMMIT_MESSAGE,
     },
   };
 };

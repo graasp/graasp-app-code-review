@@ -10,6 +10,8 @@ import {
   CLOSE_EDITOR_VIEW,
   OPEN_EDITOR_VIEW,
   SET_CODE_EDITOR_SETTINGS,
+  OPEN_COMMIT_INFO_DIALOG,
+  CLOSE_COMMIT_INFO_DIALOG,
 } from '../types';
 import { DEFAULT_CODE_ID } from '../config/settings';
 
@@ -18,6 +20,9 @@ const INITIAL_STATE = {
     open: false,
   },
   avatarDialog: {
+    open: false,
+  },
+  commitInfoDialog: {
     open: false,
   },
   feedbackView: {
@@ -65,6 +70,22 @@ export default (state = INITIAL_STATE, { payload, type }) => {
         ...state,
         avatarDialog: {
           ...state.avatarDialog,
+          open: false,
+        },
+      };
+    case OPEN_COMMIT_INFO_DIALOG:
+      return {
+        ...state,
+        commitInfoDialog: {
+          ...state.commitInfoDialog,
+          open: true,
+        },
+      };
+    case CLOSE_COMMIT_INFO_DIALOG:
+      return {
+        ...state,
+        commitInfoDialog: {
+          ...state.commitInfoDialog,
           open: false,
         },
       };

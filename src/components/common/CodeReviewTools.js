@@ -7,13 +7,28 @@ import { FormControl, Grid, Tooltip } from '@material-ui/core';
 import { ToggleButton } from '@material-ui/lab';
 import {
   EditRounded,
+  InfoOutlined,
   VisibilityOffRounded,
   VisibilityRounded,
 } from '@material-ui/icons';
 import Select from 'react-select';
-import { openEditorView, setCodeEditorSettings } from '../../actions';
-import { DEFAULT_CODE_ID, DEFAULT_USER } from '../../config/settings';
+import { formatDistance } from 'date-fns';
+import { enGB, fr } from 'date-fns/locale';
+import {
+  openCommitInfoDialog,
+  openEditorView,
+  setCodeEditorSettings,
+} from '../../actions';
+import {
+  DEFAULT_CODE_ID,
+  DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH,
+  DEFAULT_USER,
+  PLACEHOLDER_DATE,
+} from '../../config/settings';
 import { CODE } from '../../config/appInstanceResourceTypes';
+import CommitInfoDialog from './CommitInfoDialog';
+
+const locales = { fr, en: enGB };
 
 const styles = (theme) => ({
   container: {
@@ -34,13 +49,26 @@ const styles = (theme) => ({
   editButton: {
     color: theme.palette.primary.main,
   },
-  select: {
-    marginLeft: 0,
-    margin: 'auto',
-    maxWidth: 400,
+  selectUsers: {
     width: '100%',
     display: 'block',
   },
+  selectVersions: {
+    width: '100%',
+    display: 'block',
+  },
+  infoButton: {
+    color: theme.palette.primary.main,
+  },
+});
+
+const customSelectStyles = (height = '36px') => ({
+  control: (provided) => ({
+    ...provided,
+    minHeight: height,
+    height,
+    maxHeight: height,
+  }),
 });
 
 class CodeReviewTools extends React.Component {
@@ -50,13 +78,16 @@ class CodeReviewTools extends React.Component {
       gridRow: PropTypes.string.isRequired,
       toolbar: PropTypes.string.isRequired,
       lastGrid: PropTypes.string.isRequired,
-      select: PropTypes.string.isRequired,
+      selectUsers: PropTypes.string.isRequired,
+      selectVersions: PropTypes.string.isRequired,
       toggleButton: PropTypes.string.isRequired,
       editButton: PropTypes.string.isRequired,
+      infoButton: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,
     dispatchOpenEditorView: PropTypes.func.isRequired,
     dispatchSetCodeEditorSettings: PropTypes.func.isRequired,
+    dispatchOpenCommitInfoDialog: PropTypes.func.isRequired,
     showVisibilityButton: PropTypes.bool,
     showEditButton: PropTypes.bool,
     showHistoryDropdown: PropTypes.bool,
@@ -67,13 +98,21 @@ class CodeReviewTools extends React.Component {
     }).isRequired,
     topBarVisible: PropTypes.bool.isRequired,
     allVisibleState: PropTypes.bool.isRequired,
-    branchOptions: PropTypes.arrayOf(
+    codeVersions: PropTypes.arrayOf(
+      PropTypes.arrayOf(
+        PropTypes.shape({
+          label: PropTypes.string.isRequired,
+          value: PropTypes.shape({
+            code: PropTypes.string.isRequired,
+            codeId: PropTypes.string.isRequired,
+          }).isRequired,
+        }),
+      ),
+    ).isRequired,
+    codeContributors: PropTypes.arrayOf(
       PropTypes.shape({
         label: PropTypes.string.isRequired,
-        value: PropTypes.shape({
-          code: PropTypes.string.isRequired,
-          codeId: PropTypes.string.isRequired,
-        }).isRequired,
+        value: PropTypes.string.isRequired,
       }),
     ).isRequired,
   };
@@ -85,11 +124,11 @@ class CodeReviewTools extends React.Component {
   };
 
   state = (() => {
-    const { branchOptions, codeEditorSettings } = this.props;
+    const { codeContributors, codeVersions } = this.props;
     return {
-      selectedBranch: branchOptions.find(
-        (opt) => opt.value.codeId === codeEditorSettings.codeId,
-      ),
+      selectedBranch: codeContributors[0],
+      selectedVersion: codeVersions[0][0],
+      availableCodeVersions: codeVersions[0],
     };
   })();
 
@@ -106,11 +145,33 @@ class CodeReviewTools extends React.Component {
   };
 
   handleChangeBranch = (value) => {
+    const { codeVersions, codeContributors } = this.props;
+    const { selectedVersion } = this.state;
+    const availableCodeVersions = codeVersions[codeContributors.indexOf(value)];
+    // check if the new set of choices includes the previously selected code version
+    if (!availableCodeVersions.includes(selectedVersion)) {
+      // instructor is selected and there is only one version available
+      if (value.value === DEFAULT_CODE_ID) {
+        this.handleChangeVersion(availableCodeVersions[0]);
+      } else {
+        this.setState({ selectedVersion: null });
+      }
+    }
+    // change the code that is displayed and filter the history select
+    this.setState({ selectedBranch: value, availableCodeVersions });
+  };
+
+  handleChangeVersion = (value) => {
     const { dispatchSetCodeEditorSettings } = this.props;
     // change the code that is displayed and filter the history select
-    this.setState({ selectedBranch: value });
+    this.setState({ selectedVersion: value });
     // this.setState({ selectedBranch: value })
     dispatchSetCodeEditorSettings(value.value);
+  };
+
+  handleInfo = () => {
+    const { dispatchOpenCommitInfoDialog } = this.props;
+    dispatchOpenCommitInfoDialog();
   };
 
   renderTopBar = () => {
@@ -120,11 +181,11 @@ class CodeReviewTools extends React.Component {
       allVisibleState,
       showVisibilityButton,
       showEditButton,
-      branchOptions,
+      codeContributors,
       showHistoryDropdown,
     } = this.props;
-    const { selectedBranch } = this.state;
-
+    const { selectedBranch, selectedVersion, availableCodeVersions } =
+      this.state;
     const selectedVisibility = allVisibleState ? 'hide' : 'show';
 
     const hideAllCommentsToggleControl = (
@@ -154,61 +215,103 @@ class CodeReviewTools extends React.Component {
       </ToggleButton>
     );
 
+    const infoButtonControl = (
+      <ToggleButton
+        className={classes.infoButton}
+        variant="outlined"
+        size="small"
+        value="info"
+        onClick={this.handleInfo}
+        // disabled={selectedBranch.value === DEFAULT_CODE_ID}
+      >
+        <InfoOutlined fontSize="small" />
+      </ToggleButton>
+    );
+
     const branchSelectControl = (
       <Select
-        className={classes.select}
+        styles={customSelectStyles()}
         value={selectedBranch}
-        options={branchOptions}
+        options={codeContributors}
         onChange={this.handleChangeBranch}
+        isSearchable
+      />
+    );
+
+    const versionSelectControl = (
+      <Select
+        styles={customSelectStyles()}
+        value={selectedVersion}
+        options={availableCodeVersions}
+        onChange={this.handleChangeVersion}
+        isSearchable
+        isDisabled={selectedBranch.value === DEFAULT_CODE_ID}
       />
     );
 
     return (
-      <Grid
-        container
-        direction="row"
-        justifyContent="space-between"
-        className={classes.container}
-        spacing={2}
-      >
-        <Grid container item xs={9}>
-          {showHistoryDropdown ? (
-            <FormControl className={classes.select}>
-              {branchSelectControl}
-            </FormControl>
-          ) : null}
-        </Grid>
+      <>
         <Grid
-          className={classes.toolbar}
           container
-          item
-          xs={3}
-          spacing={1}
+          direction="row"
           justifyContent="space-between"
-          justify="flex-end"
+          className={classes.container}
+          spacing={2}
         >
-          {showEditButton ? (
-            <Grid item>
-              <Tooltip title={t('Edit')}>
-                <FormControl>{editButtonControl}</FormControl>
-              </Tooltip>
-            </Grid>
-          ) : null}
-          {showVisibilityButton ? (
-            <Grid item>
-              <Tooltip
-                title={
-                  allVisibleState
-                    ? t('Hide All Comments')
-                    : t('Show All Comments')
-                }
-              >
-                <FormControl>{hideAllCommentsToggleControl}</FormControl>
-              </Tooltip>
-            </Grid>
-          ) : null}
+          <Grid container item xs={10} spacing={1}>
+            {showHistoryDropdown ? (
+              <>
+                <Grid item xs={3}>
+                  <FormControl className={classes.selectUsers}>
+                    {branchSelectControl}
+                  </FormControl>
+                </Grid>
+                <Grid item xs={8}>
+                  <FormControl className={classes.selectVersions}>
+                    {versionSelectControl}
+                  </FormControl>
+                </Grid>
+                {selectedVersion ? (
+                  <Grid item xs={1} className={classes.infoButton}>
+                    <FormControl>{infoButtonControl}</FormControl>
+                  </Grid>
+                ) : null}
+              </>
+            ) : null}
+          </Grid>
+          <Grid
+            className={classes.toolbar}
+            container
+            item
+            xs={2}
+            spacing={1}
+            justifyContent="space-between"
+            justify="flex-end"
+          >
+            {showEditButton ? (
+              <Grid item>
+                <Tooltip title={t('Edit')}>
+                  <FormControl>{editButtonControl}</FormControl>
+                </Tooltip>
+              </Grid>
+            ) : null}
+            {showVisibilityButton ? (
+              <Grid item>
+                <Tooltip
+                  title={
+                    allVisibleState
+                      ? t('Hide All Comments')
+                      : t('Show All Comments')
+                  }
+                >
+                  <FormControl>{hideAllCommentsToggleControl}</FormControl>
+                </Tooltip>
+              </Grid>
+            ) : null}
+          </Grid>
         </Grid>
-      </Grid>
+        <CommitInfoDialog />
+      </>
     );
   };
 
@@ -219,45 +322,73 @@ class CodeReviewTools extends React.Component {
 }
 
 const mapStateToProps = (
-  { appInstance, appInstanceResources, users, layout },
+  { appInstance, appInstanceResources, users, layout, context },
   ownProps,
 ) => {
   const { t } = ownProps;
+  const { lang } = context;
   const codeSamples = appInstanceResources.content.filter(
     (r) => r.type === CODE,
   );
-  const codeVersions = codeSamples.map((c) => ({
-    code: c.data.code,
-    codeId: c._id,
-    commitMessage: c.data.commitMessage,
-    userName: users.content.find((u) => u.id === c.user)?.name || DEFAULT_USER,
-  }));
-  const instructorCode = {
+  const instructorContributor = {
     label: t('Instructor'),
+    value: DEFAULT_CODE_ID,
+  };
+  // get unique id of users that contributed code
+  const uniqueCodeContributors = [...new Set(codeSamples.map((r) => r.user))];
+  const codeContributors = uniqueCodeContributors.map((contributorName) => ({
+    label:
+      users.content.find((u) => u.id === contributorName)?.name || DEFAULT_USER,
+    value: contributorName,
+  }));
+  // build an array of: [{code, codeId, commitMessage, userName}]
+  const codeVersions = codeContributors.map((u) =>
+    codeSamples
+      .filter((r) => r.user === u.value)
+      .map((c) => {
+        const { commitMessage } = c.data;
+        const msg = `${commitMessage.slice(
+          0,
+          DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH,
+        )}${
+          commitMessage.length > DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH
+            ? '...'
+            : ''
+        }`;
+        const { createdAt = PLACEHOLDER_DATE } = c;
+        const date = formatDistance(Date.parse(createdAt), new Date(), {
+          addSuffix: true, // adds "ago" at the end
+          locale: locales[lang],
+        });
+        return {
+          label: `${msg} - ${date}`,
+          value: {
+            code: c.data.code,
+            codeId: c._id,
+          },
+        };
+      }),
+  );
+  const instructorCode = {
+    label: t('Default Version'),
     value: {
       code: appInstance.content.settings.code,
       codeId: DEFAULT_CODE_ID,
     },
   };
+
   return {
     codeEditorSettings: layout.codeEditorSettings,
     topBarVisible: appInstance.content.settings.topBarVisible,
-    branchOptions: [
-      instructorCode,
-      ...codeVersions.map((v) => ({
-        label: `${v.userName} - ${v.commitMessage}`,
-        value: {
-          code: v.code,
-          codeId: v.codeId,
-        },
-      })),
-    ],
+    codeContributors: [instructorContributor, ...codeContributors],
+    codeVersions: [[instructorCode], ...codeVersions],
   };
 };
 
 const mapDispatchToProps = {
   dispatchOpenEditorView: openEditorView,
   dispatchSetCodeEditorSettings: setCodeEditorSettings,
+  dispatchOpenCommitInfoDialog: openCommitInfoDialog,
 };
 
 const ConnectedComponent = connect(

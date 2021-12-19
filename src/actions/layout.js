@@ -1,9 +1,11 @@
 import {
   CLOSE_AVATAR_DIALOG,
+  CLOSE_COMMIT_INFO_DIALOG,
   CLOSE_EDITOR_VIEW,
   CLOSE_FEEDBACK_VIEW,
   CLOSE_SETTINGS,
   OPEN_AVATAR_DIALOG,
+  OPEN_COMMIT_INFO_DIALOG,
   OPEN_EDITOR_VIEW,
   OPEN_FEEDBACK_VIEW,
   OPEN_SETTINGS,
@@ -30,6 +32,16 @@ const openAvatarDialog = () => (dispatch) =>
 const closeAvatarDialog = () => (dispatch) =>
   dispatch({
     type: CLOSE_AVATAR_DIALOG,
+  });
+
+const openCommitInfoDialog = () => (dispatch) =>
+  dispatch({
+    type: OPEN_COMMIT_INFO_DIALOG,
+  });
+
+const closeCommitInfoDialog = () => (dispatch) =>
+  dispatch({
+    type: CLOSE_COMMIT_INFO_DIALOG,
   });
 
 const openFeedbackView = () => (dispatch) =>
@@ -79,6 +91,8 @@ export {
   closeSettings,
   openAvatarDialog,
   closeAvatarDialog,
+  openCommitInfoDialog,
+  closeCommitInfoDialog,
   openFeedbackView,
   closeFeedbackView,
   openEditorView,

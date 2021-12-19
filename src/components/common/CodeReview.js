@@ -23,6 +23,7 @@ import {
 } from '../../config/appInstanceResourceTypes';
 import {
   ADAPT_HEIGHT_TIMEOUT,
+  DEFAULT_CODE_ID,
   DEFAULT_COMMENT_CONTENT,
   DEFAULT_COMMENT_HIDDEN_STATE,
   DELETED_COMMENT_TEXT,
@@ -268,6 +269,8 @@ class CodeReview extends Component {
       const data = {
         ...comment.data,
         content,
+        // label this comment as belonging to the teacher version
+        codeId: DEFAULT_CODE_ID,
         // only add the botId property when the comment is from a bot
         ...(selectedBot && { botId: selectedBot.value }),
       };
@@ -536,6 +539,7 @@ class CodeReview extends Component {
   render() {
     const { classes, code, isStudentView, isFeedbackView } = this.props;
     const { comments, lineCommentsHiddenState } = this.state;
+    // consider also bot and teacher comment !
     return (
       <>
         <CodeReviewTools
