@@ -98,6 +98,11 @@ class CodeReview extends Component {
     code: PropTypes.string.isRequired,
     codeId: PropTypes.string.isRequired,
     programmingLanguage: PropTypes.string.isRequired,
+    settings: PropTypes.shape({
+      showEditButton: PropTypes.bool.isRequired,
+      showVersionNav: PropTypes.bool.isRequired,
+      showVisibility: PropTypes.bool.isRequired,
+    }).isRequired,
     userId: PropTypes.string,
     comments: PropTypes.arrayOf(
       PropTypes.shape({
@@ -300,6 +305,7 @@ class CodeReview extends Component {
       dispatchPostAppInstanceResource({
         data,
         type,
+        // todo: dependant on the switch
         visibility: PRIVATE_VISIBILITY,
         userId,
       });
@@ -356,6 +362,7 @@ class CodeReview extends Component {
       focusedId: NEW_COMMENT_ID,
     });
     // make sure the comments on that line are not hidden
+    // lineNum is 1-indexed while the array is 0-indexed si we subtract 1
     if (lineCommentsHiddenState[lineNum - 1]) {
       this.toggleHiddenCommentState(lineNum);
     }
@@ -370,12 +377,10 @@ class CodeReview extends Component {
   }
 
   handleHideAllComments = (checked) => {
-    const { lineCommentsHiddenState: lineCommentsHiddenStatePrevious } =
-      this.state;
-    const lineCommentsHiddenState =
-      lineCommentsHiddenStatePrevious.fill(checked);
     // set hidden state
-    this.setState({ lineCommentsHiddenState });
+    this.setState((prevState) => ({
+      lineCommentsHiddenState: prevState.lineCommentsHiddenState.fill(checked),
+    }));
   };
 
   getReadOnlyProperty(comment) {
@@ -396,12 +401,12 @@ class CodeReview extends Component {
 
   toggleHiddenCommentState = (lineNumber) => {
     const indexInArray = lineNumber - 1;
-    const { lineCommentsHiddenState: lineCommentsHiddenStatePrevious } =
-      this.state;
-    lineCommentsHiddenStatePrevious[indexInArray] =
-      !lineCommentsHiddenStatePrevious[indexInArray];
     // set hidden state
-    this.setState({ lineCommentsHiddenState: lineCommentsHiddenStatePrevious });
+    this.setState((prevState) => {
+      const arr = prevState.lineCommentsHiddenState;
+      arr[indexInArray] = !arr[indexInArray];
+      return { lineCommentsHiddenState: [...arr] };
+    });
   };
 
   adaptHeight = () => {
@@ -425,7 +430,7 @@ class CodeReview extends Component {
   };
 
   renderChildrenComments(comments, parentId) {
-    const { classes, isFeedbackView } = this.props;
+    const { classes, isFeedbackView, isStudentView } = this.props;
     const { focusedId } = this.state;
     const childrenComments = comments
       .filter((comment) => comment.data.parent === parentId)
@@ -445,9 +450,16 @@ class CodeReview extends Component {
 
       // set to true if:
       // - the comment is not delete
-      // - the comment is deleted but it is the last comment in the tree -> so it can be deleted
+      // - the comment is deleted, but it is the last comment in the tree -> so it can be deleted
       const showDelete =
         (comment.data.deleted && !hasChildrenComments) || !comment.data.deleted;
+
+      // users should not be allowed to edit bot responses even if they are made in their name
+      const showEdit = !(
+        isStudentView &&
+        comment.type === BOT_COMMENT &&
+        comment.visibility === PRIVATE_VISIBILITY
+      );
 
       return (
         <Paper
@@ -458,8 +470,10 @@ class CodeReview extends Component {
           <CommentEditor
             comment={comment}
             readOnly={this.getReadOnlyProperty(comment)}
-            showReply={!isFeedbackView}
+            // do not show the reply button if bot comment has reach end of conversation
+            showReply={!isFeedbackView && _.isUndefined(comment.data.end)}
             showDelete={showDelete}
+            showEdit={showEdit}
             focused={focusedId === comment._id}
             onReply={() =>
               this.handleAddComment(comment.data.line, comment._id)
@@ -537,25 +551,39 @@ class CodeReview extends Component {
   }
 
   render() {
-    const { classes, code, isStudentView, isFeedbackView } = this.props;
+    const {
+      classes,
+      code,
+      isStudentView,
+      isFeedbackView,
+      settings,
+      botComments,
+      teacherComments,
+    } = this.props;
     const { comments, lineCommentsHiddenState } = this.state;
-    // consider also bot and teacher comment !
+    const { showEditButton, showVersionNav, showVisibility } = settings;
+
+    const totalNumberOfComments =
+      comments.length + botComments.length + teacherComments.length;
+
     return (
-      <>
+      <div ref={this.rootRef}>
         <CodeReviewTools
-          showVisibilityButton={comments.length}
-          showEditButton={isStudentView}
-          showHistoryDropdown={isFeedbackView || isStudentView}
+          showVisibilityButton={totalNumberOfComments > 0 && showVisibility}
+          showEditButton={isStudentView && showEditButton}
+          showHistoryDropdown={
+            (isFeedbackView || isStudentView) && showVersionNav
+          }
           hideCommentsCallback={this.handleHideAllComments}
           allHiddenState={lineCommentsHiddenState.every((s) => s === true)}
           allVisibleState={lineCommentsHiddenState.every((s) => s === false)}
         />
-        <table ref={this.rootRef} className={classes.container}>
+        <table className={classes.container}>
           <tbody className="code-area">
             {this.renderCodeReview(code, comments)}
           </tbody>
         </table>
-      </>
+      </div>
     );
   }
 }
@@ -571,10 +599,13 @@ const mapStateToProps = (
       r.type === COMMENT &&
       // select only comments from the selected user when in FeedbackView
       ((isFeedbackView && r.user === selectedStudent) || !isFeedbackView) &&
-      r.data.codeId === codeId,
+      (r.data.codeId === codeId ||
+        (_.isUndefined(r.data.codeId) && codeId === DEFAULT_CODE_ID)),
   );
   return {
     userId: context.userId,
+    // get the code from the codeEditorSettings
+    // as this might be empty, we default to the instructor code set in the appInstance settings
     code: layout.codeEditorSettings.code || appInstance.content.settings.code,
     codeId,
     programmingLanguage: appInstance.content.settings.programmingLanguage,
@@ -591,6 +622,7 @@ const mapStateToProps = (
     selectedBot: layout.selectedBot,
     standalone: context.standalone,
     isStudentView: STUDENT_MODES.includes(context.mode),
+    settings: appInstance.content.settings,
   };
 };
 

@@ -30,12 +30,51 @@ import CommitInfoDialog from './CommitInfoDialog';
 
 const locales = { fr, en: enGB };
 
+// By default, the instructor is the first contributor
+const DEFAULT_CODE_CONTRIBUTOR_INDEX = 0;
+// By default, we select the first code version
+const DEFAULT_CODE_VERSION = 0;
+
+const mapCodeVersions = (codeContributors, codeSamples, lang) =>
+  // create a row for each code contributor
+  codeContributors.map(({ value: contributorName }) =>
+    // create a row for every code sample by that contributor
+    codeSamples
+      // only get resources from the contributor
+      .filter((resource) => resource.user === contributorName)
+      .map((codeResource) => {
+        const { commitMessage, code } = codeResource.data;
+        let msg = commitMessage;
+        // if message id too long: truncate and add ellipsis
+        if (msg.length > DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH) {
+          msg = `${commitMessage.slice(
+            0,
+            DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH,
+          )}...`;
+        }
+        // format createdAt date
+        // a placeholder is used if the property does not exist (fake API)
+        const { createdAt = PLACEHOLDER_DATE } = codeResource;
+        const date = formatDistance(Date.parse(createdAt), new Date(), {
+          addSuffix: true, // adds "ago" at the end
+          locale: locales[lang],
+        });
+        return {
+          label: `${msg} - ${date}`,
+          value: {
+            code,
+            codeId: codeResource._id,
+          },
+        };
+      }),
+  );
+
 const styles = (theme) => ({
   container: {
     borderSpacing: 0,
     maxWidth: '800px',
     width: '90%',
-    margin: '20px auto auto',
+    margin: '0px auto auto',
     paddingLeft: '20px',
     boxSizing: 'border-box',
     paddingRight: '0px',
@@ -126,9 +165,10 @@ class CodeReviewTools extends React.Component {
   state = (() => {
     const { codeContributors, codeVersions } = this.props;
     return {
-      selectedBranch: codeContributors[0],
-      selectedVersion: codeVersions[0][0],
-      availableCodeVersions: codeVersions[0],
+      selectedBranch: codeContributors[DEFAULT_CODE_CONTRIBUTOR_INDEX],
+      selectedVersion:
+        codeVersions[DEFAULT_CODE_CONTRIBUTOR_INDEX][DEFAULT_CODE_VERSION],
+      availableCodeVersions: codeVersions[DEFAULT_CODE_CONTRIBUTOR_INDEX],
     };
   })();
 
@@ -222,7 +262,6 @@ class CodeReviewTools extends React.Component {
         size="small"
         value="info"
         onClick={this.handleInfo}
-        // disabled={selectedBranch.value === DEFAULT_CODE_ID}
       >
         <InfoOutlined fontSize="small" />
       </ToggleButton>
@@ -341,34 +380,10 @@ const mapStateToProps = (
       users.content.find((u) => u.id === contributorName)?.name || DEFAULT_USER,
     value: contributorName,
   }));
-  // build an array of: [{code, codeId, commitMessage, userName}]
-  const codeVersions = codeContributors.map((u) =>
-    codeSamples
-      .filter((r) => r.user === u.value)
-      .map((c) => {
-        const { commitMessage } = c.data;
-        const msg = `${commitMessage.slice(
-          0,
-          DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH,
-        )}${
-          commitMessage.length > DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH
-            ? '...'
-            : ''
-        }`;
-        const { createdAt = PLACEHOLDER_DATE } = c;
-        const date = formatDistance(Date.parse(createdAt), new Date(), {
-          addSuffix: true, // adds "ago" at the end
-          locale: locales[lang],
-        });
-        return {
-          label: `${msg} - ${date}`,
-          value: {
-            code: c.data.code,
-            codeId: c._id,
-          },
-        };
-      }),
-  );
+
+  // build an array of arrays: [label: someTextAndADate, value: {code, codeId}]
+  const codeVersions = mapCodeVersions(codeContributors, codeSamples, lang);
+
   const instructorCode = {
     label: t('Default Version'),
     value: {
@@ -381,6 +396,7 @@ const mapStateToProps = (
     codeEditorSettings: layout.codeEditorSettings,
     topBarVisible: appInstance.content.settings.topBarVisible,
     codeContributors: [instructorContributor, ...codeContributors],
+    // codeVersions is an array of array and to respect this convention instructorCode is put inside an array
     codeVersions: [[instructorCode], ...codeVersions],
   };
 };

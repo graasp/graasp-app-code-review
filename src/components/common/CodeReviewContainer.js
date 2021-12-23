@@ -5,7 +5,7 @@ import CodeReview from './CodeReview';
 import CodeEditor from './CodeEditor';
 
 function CodeReviewContainer({ editorOpen }) {
-  return <>{editorOpen ? <CodeEditor /> : <CodeReview />}</>;
+  return editorOpen ? <CodeEditor /> : <CodeReview />;
 }
 
 CodeReviewContainer.propTypes = {

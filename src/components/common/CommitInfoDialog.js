@@ -81,7 +81,7 @@ export class CommitInfoDialog extends Component {
                 // split the value on new line to display them in separate paragraphs
                 value.split('\n').map((v) => (
                   <>
-                    <Typography variant="body">{v}</Typography>
+                    <Typography variant="body1">{v}</Typography>
                     <br />
                   </>
                 ))

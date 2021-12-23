@@ -132,7 +132,6 @@ export class TeacherView extends Component {
         comments.filter((r) => r.user === id)?.length || 0;
       return numberOfComments ? (
         <TableRow key={id}>
-          <TableCell scope="row">{id}</TableCell>
           <TableCell>{name}</TableCell>
           <TableCell>{numberOfComments}</TableCell>
           <TableCell>
@@ -171,15 +170,14 @@ export class TeacherView extends Component {
         <Grid container spacing={0}>
           <Grid item xs={12} className={classes.main}>
             <Typography variant="h6" color="inherit">
-              {t('Student comments')}
+              {t('Student Comments')}
             </Typography>
             <Paper className={classes.root}>
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
-                    <TableCell>ID</TableCell>
                     <TableCell>{t('Name')}</TableCell>
-                    <TableCell>{t('Number of comments')}</TableCell>
+                    <TableCell>{t('Total Number of comments')}</TableCell>
                     <TableCell>{t('View Student comments')}</TableCell>
                   </TableRow>
                 </TableHead>

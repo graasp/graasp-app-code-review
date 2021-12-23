@@ -17,6 +17,7 @@ import {
   DEFAULT_COMMIT_MESSAGE,
   DEFAULT_MAX_COMMIT_MESSAGE_LENGTH,
   DEFAULT_WARNING_COLOR,
+  PRIVATE_VISIBILITY,
   PUBLIC_VISIBILITY,
 } from '../../config/settings';
 
@@ -78,6 +79,7 @@ class CodeEditor extends React.Component {
       commitDescription: PropTypes.string.isRequired,
     }).isRequired,
     programmingLanguage: PropTypes.string.isRequired,
+    codeSamplesArePublic: PropTypes.bool.isRequired,
     userId: PropTypes.string.isRequired,
     maxMessageLength: PropTypes.number,
   };
@@ -116,13 +118,14 @@ class CodeEditor extends React.Component {
     };
 
   handleCommit = () => {
-    const { dispatchPostAppInstanceResource, userId } = this.props;
+    const { dispatchPostAppInstanceResource, userId, codeSamplesArePublic } =
+      this.props;
     const { commit } = this.state;
     // post app instance resource as public
     dispatchPostAppInstanceResource({
       data: commit,
       type: CODE,
-      visibility: PUBLIC_VISIBILITY,
+      visibility: codeSamplesArePublic ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY,
       userId,
     });
 
@@ -192,7 +195,7 @@ class CodeEditor extends React.Component {
           spacing={2}
         >
           <Paper variant="outlined" className={classes.paper}>
-            <Grid className={classes.editor} item spacing={2}>
+            <Grid className={classes.editor} item>
               <Editor
                 height="40vh"
                 defaultLanguage={programmingLanguage}
@@ -214,18 +217,10 @@ class CodeEditor extends React.Component {
               alignContent="stretch"
               spacing={1}
             >
-              <Grid
-                item
-                alignContent="stretch"
-                className={classes.commitTextField}
-              >
+              <Grid item className={classes.commitTextField}>
                 {commitMessageControl}
               </Grid>
-              <Grid
-                item
-                alignContent="stretch"
-                className={classes.commitTextField}
-              >
+              <Grid item className={classes.commitTextField}>
                 {extendedCommitDescriptionControl}
               </Grid>
               <Grid container item direction="row">
@@ -269,6 +264,7 @@ const mapStateToProps = ({ appInstance, layout, context }) => {
   return {
     userId: context.userId,
     programmingLanguage: appInstance.content.settings.programmingLanguage,
+    codeSamplesArePublic: appInstance.content.settings.codeSamplesArePublic,
     commit: {
       code: code || defaultCode,
       commitMessage: DEFAULT_COMMIT_MESSAGE,

@@ -88,7 +88,7 @@ const AvatarView = (props) => {
     if (!botUsers.length) {
       return (
         <TableRow>
-          <TableCell colSpan={4}>No App Instance Resources</TableCell>
+          <TableCell colSpan={4}>{t('No Bots')}</TableCell>
         </TableRow>
       );
     }

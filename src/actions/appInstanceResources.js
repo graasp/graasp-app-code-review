@@ -29,6 +29,7 @@ import { MISSING_APP_INSTANCE_RESOURCE_ID_MESSAGE } from '../constants/messages'
 import { APP_INSTANCE_RESOURCE_FORMAT } from '../config/formats';
 import { DEFAULT_VISIBILITY } from '../config/settings';
 import { handleAutoResponse } from '../utils/autoBotEngine';
+import { BOT_COMMENT } from '../config/appInstanceResourceTypes';
 
 const flagGettingAppInstanceResources = flag(
   FLAG_GETTING_APP_INSTANCE_RESOURCES,
@@ -113,6 +114,73 @@ const getAppInstanceResources =
     }
   };
 
+const patchAppInstanceResource =
+  async ({ id, data } = {}) =>
+  async (dispatch, getState) => {
+    dispatch(flagPatchingAppInstanceResource(true));
+    try {
+      const {
+        appInstanceId,
+        apiHost,
+        offline,
+        spaceId,
+        subSpaceId,
+        standalone,
+      } = await getApiContext(getState);
+
+      // if standalone, you cannot connect to api
+      if (standalone) {
+        return false;
+      }
+
+      // if offline send message to parent requesting to patch resource
+      if (offline) {
+        return postMessage({
+          type: PATCH_APP_INSTANCE_RESOURCE,
+          payload: {
+            data,
+            spaceId,
+            subSpaceId,
+            appInstanceId,
+            id,
+          },
+        });
+      }
+
+      if (!id) {
+        return showErrorToast(MISSING_APP_INSTANCE_RESOURCE_ID_MESSAGE);
+      }
+
+      const url = `//${apiHost + APP_INSTANCE_RESOURCES_ENDPOINT}/${id}`;
+
+      const body = {
+        data,
+      };
+
+      const response = await fetch(url, {
+        ...DEFAULT_PATCH_REQUEST,
+        body: JSON.stringify(body),
+      });
+
+      // throws if it is an error
+      await isErrorResponse(response);
+
+      const appInstanceResource = await response.json();
+
+      return dispatch({
+        type: PATCH_APP_INSTANCE_RESOURCE_SUCCEEDED,
+        payload: appInstanceResource,
+      });
+    } catch (err) {
+      return dispatch({
+        type: PATCH_APP_INSTANCE_RESOURCE_FAILED,
+        payload: err,
+      });
+    } finally {
+      dispatch(flagPatchingAppInstanceResource(false));
+    }
+  };
+
 const postAppInstanceResource =
   async ({ data, userId, type, visibility = DEFAULT_VISIBILITY } = {}) =>
   async (dispatch, getState) => {
@@ -179,11 +247,29 @@ const postAppInstanceResource =
         getState,
       );
       if (autoResponse) {
+        dispatch(postAppInstanceResource(autoResponse));
+      }
+
+      if (body.type === BOT_COMMENT && body.data.thinking) {
+        const { thinking, ...commentData } = body.data;
         setTimeout(
-          () => dispatch(postAppInstanceResource(autoResponse.response)),
-          autoResponse.timeout,
+          () =>
+            dispatch(
+              patchAppInstanceResource({
+                id: appInstanceResource._id,
+                data: commentData,
+              }),
+            ),
+          thinking,
         );
       }
+
+      // if (autoResponse) {
+      //   setTimeout(
+      //     () => dispatch(postAppInstanceResource(autoResponse.response)),
+      //     autoResponse.timeout,
+      //   );
+      // }
 
       return dispatch({
         type: POST_APP_INSTANCE_RESOURCE_SUCCEEDED,
@@ -196,73 +282,6 @@ const postAppInstanceResource =
       });
     } finally {
       dispatch(flagPostingAppInstanceResource(false));
-    }
-  };
-
-const patchAppInstanceResource =
-  async ({ id, data } = {}) =>
-  async (dispatch, getState) => {
-    dispatch(flagPatchingAppInstanceResource(true));
-    try {
-      const {
-        appInstanceId,
-        apiHost,
-        offline,
-        spaceId,
-        subSpaceId,
-        standalone,
-      } = await getApiContext(getState);
-
-      // if standalone, you cannot connect to api
-      if (standalone) {
-        return false;
-      }
-
-      // if offline send message to parent requesting to patch resource
-      if (offline) {
-        return postMessage({
-          type: PATCH_APP_INSTANCE_RESOURCE,
-          payload: {
-            data,
-            spaceId,
-            subSpaceId,
-            appInstanceId,
-            id,
-          },
-        });
-      }
-
-      if (!id) {
-        return showErrorToast(MISSING_APP_INSTANCE_RESOURCE_ID_MESSAGE);
-      }
-
-      const url = `//${apiHost + APP_INSTANCE_RESOURCES_ENDPOINT}/${id}`;
-
-      const body = {
-        data,
-      };
-
-      const response = await fetch(url, {
-        ...DEFAULT_PATCH_REQUEST,
-        body: JSON.stringify(body),
-      });
-
-      // throws if it is an error
-      await isErrorResponse(response);
-
-      const appInstanceResource = await response.json();
-
-      return dispatch({
-        type: PATCH_APP_INSTANCE_RESOURCE_SUCCEEDED,
-        payload: appInstanceResource,
-      });
-    } catch (err) {
-      return dispatch({
-        type: PATCH_APP_INSTANCE_RESOURCE_FAILED,
-        payload: err,
-      });
-    } finally {
-      dispatch(flagPatchingAppInstanceResource(false));
     }
   };
 

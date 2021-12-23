@@ -9,6 +9,11 @@ import {
   Modal,
   Grid,
   FormLabel,
+  FormControl,
+  FormGroup,
+  Tabs,
+  Tab,
+  Box,
 } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -21,11 +26,15 @@ import { closeSettings, patchAppInstance } from '../../../actions';
 import Loader from '../../common/Loader';
 import { JAVASCRIPT, MATLAB, PYTHON } from '../../../config/settings';
 import {
-  HEADER_VISIBILITY_SWITCH_CYPRESS,
   SAVE_SETTINGS_BUTTON_CYPRESS,
   SETTINGS_MODAL_CYPRESS,
 } from '../../../config/selectors';
 import { DEFAULT_SETTINGS } from '../../../reducers/appInstance';
+
+const CODE_SETTINGS_TAB = 'code-settings-tab';
+const DISPLAY_SETTINGS_TAB = 'display-settings-tab';
+const DEFAULT_TAB = CODE_SETTINGS_TAB;
+const TABS = [CODE_SETTINGS_TAB, DISPLAY_SETTINGS_TAB];
 
 function getModalStyle() {
   const top = 50;
@@ -81,6 +90,11 @@ const styles = (theme) => ({
     marginTop: '10px',
   },
   editor: {},
+  tabBox: {},
+  container: {
+    marginTop: theme.spacing(2),
+    marginBottom: theme.spacing(2),
+  },
 });
 
 class Settings extends Component {
@@ -97,6 +111,8 @@ class Settings extends Component {
       button: PropTypes.string,
       editor: PropTypes.string,
       paper: PropTypes.string,
+      tabBox: PropTypes.string,
+      container: PropTypes.string,
     }).isRequired,
     open: PropTypes.bool.isRequired,
     activity: PropTypes.number.isRequired,
@@ -104,6 +120,10 @@ class Settings extends Component {
       programmingLanguage: PropTypes.string.isRequired,
       headerVisible: PropTypes.bool.isRequired,
       topBarVisible: PropTypes.bool.isRequired,
+      showVersionNav: PropTypes.bool.isRequired,
+      showEditButton: PropTypes.bool.isRequired,
+      showVisibility: PropTypes.bool.isRequired,
+      codeSamplesArePublic: PropTypes.bool.isRequired,
       code: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,
@@ -119,6 +139,7 @@ class Settings extends Component {
 
     return {
       settings,
+      tabIndex: TABS.indexOf(DEFAULT_TAB),
     };
   })();
 
@@ -134,6 +155,17 @@ class Settings extends Component {
   };
 
   handleChangeSwitch =
+    (key) =>
+    ({ target: { checked } }) => {
+      this.setState((prevState) => ({
+        settings: {
+          ...prevState.settings,
+          [key]: checked,
+        },
+      }));
+    };
+
+  handleChangeCheckbox =
     (key) =>
     ({ target: { checked } }) => {
       this.setState((prevState) => ({
@@ -192,6 +224,10 @@ class Settings extends Component {
       });
     };
 
+  handleChangeTab = (event, newValue) => {
+    this.setState({ tabIndex: newValue });
+  };
+
   handleClose = () => {
     const { dispatchCloseSettings, settings } = this.props;
     this.setState({ ...DEFAULT_SETTINGS, ...settings });
@@ -200,9 +236,16 @@ class Settings extends Component {
 
   renderModalContent() {
     const { t, activity, classes, settings: settingsProp } = this.props;
-    const { settings } = this.state;
-    const { headerVisible, topBarVisible, code, programmingLanguage } =
-      settings;
+    const { settings, tabIndex } = this.state;
+    const {
+      topBarVisible,
+      code,
+      programmingLanguage,
+      showVersionNav,
+      showEditButton,
+      showVisibility,
+      codeSamplesArePublic,
+    } = settings;
 
     const hasChanged = !_.isEqual(settingsProp, settings);
 
@@ -210,22 +253,52 @@ class Settings extends Component {
       return <Loader />;
     }
 
-    const headerVisibleSwitchControl = (
-      <Switch
-        data-cy={HEADER_VISIBILITY_SWITCH_CYPRESS}
-        color="primary"
-        checked={headerVisible}
-        onChange={this.handleChangeSwitch('headerVisible')}
-        value="headerVisibility"
-      />
-    );
-
     const topBarVisibleSwitchControl = (
       <Switch
         color="primary"
         checked={topBarVisible}
         onChange={this.handleChangeSwitch('topBarVisible')}
         value="topBarVisibility"
+      />
+    );
+
+    const versionNavSwitchControl = (
+      <Switch
+        color="primary"
+        value="showVersionNav"
+        checked={showVersionNav}
+        onChange={this.handleChangeCheckbox('showVersionNav')}
+        disabled={!topBarVisible}
+      />
+    );
+
+    const editButtonSwitchControl = (
+      <Switch
+        color="primary"
+        value="showEditButton"
+        checked={showEditButton}
+        onChange={this.handleChangeCheckbox('showEditButton')}
+        disabled={!topBarVisible}
+      />
+    );
+
+    const visibilityToggleSwitchControl = (
+      <Switch
+        color="primary"
+        value="showVisibility"
+        checked={showVisibility}
+        onChange={this.handleChangeCheckbox('showVisibility')}
+        disabled={!topBarVisible}
+      />
+    );
+
+    const codeSampleVisibilitySwitchControl = (
+      <Switch
+        color="primary"
+        value="codeSamplesArePublic"
+        checked={codeSamplesArePublic}
+        onChange={this.handleChangeCheckbox('codeSamplesArePublic')}
+        disabled={!topBarVisible}
       />
     );
 
@@ -247,41 +320,73 @@ class Settings extends Component {
 
     return (
       <>
-        <Grid container direction="column" spacing={2} alignItems="stretch">
-          <Grid item>
-            <FormControlLabel
-              control={headerVisibleSwitchControl}
-              label={t('Show Header to Students')}
-            />
+        <div hidden={tabIndex !== TABS.indexOf(DISPLAY_SETTINGS_TAB)}>
+          <Grid
+            className={classes.container}
+            container
+            direction="column"
+            spacing={2}
+            alignItems="stretch"
+          >
+            <Grid item>
+              <FormControl>
+                <FormGroup>
+                  <FormControlLabel
+                    control={topBarVisibleSwitchControl}
+                    label={t('Show Top Bar to Students')}
+                  />
+                  <FormControlLabel
+                    control={versionNavSwitchControl}
+                    label={t('Show Version Navigation')}
+                  />
+                  <FormControlLabel
+                    control={editButtonSwitchControl}
+                    label={t('Show Code Edit Button')}
+                  />
+                  <FormControlLabel
+                    control={visibilityToggleSwitchControl}
+                    label={t('Show Visibility Toggle')}
+                  />
+                  <FormControlLabel
+                    control={codeSampleVisibilitySwitchControl}
+                    label={t('Allow Students to see other students code')}
+                  />
+                </FormGroup>
+              </FormControl>
+            </Grid>
           </Grid>
-          <Grid item>
-            <FormControlLabel
-              control={topBarVisibleSwitchControl}
-              label={t('Show Top Bar to Students')}
-            />
+        </div>
+        <div hidden={tabIndex !== TABS.indexOf(CODE_SETTINGS_TAB)}>
+          <Grid
+            className={classes.container}
+            container
+            direction="column"
+            spacing={2}
+            alignItems="stretch"
+          >
+            <Grid item>
+              <FormControlLabel
+                control={programmingLanguageSelectControl}
+                label={t('Programming Language')}
+              />
+            </Grid>
+            <Grid item className={classes.editor}>
+              <FormLabel>{t('Code')}</FormLabel>
+              <Editor
+                height="50vh"
+                defaultLanguage={programmingLanguage}
+                language={programmingLanguage}
+                value={code}
+                onChange={this.handleChangeEditor('code')}
+                options={{
+                  scrollBeyondLastLine: false,
+                  detectIndentation: false,
+                  tabSize: 2,
+                }}
+              />
+            </Grid>
           </Grid>
-          <Grid item>
-            <FormControlLabel
-              control={programmingLanguageSelectControl}
-              label={t('Programming Language')}
-            />
-          </Grid>
-          <Grid item className={classes.editor}>
-            <FormLabel>{t('Code')}</FormLabel>
-            <Editor
-              height="50vh"
-              defaultLanguage={programmingLanguage}
-              language={programmingLanguage}
-              value={code}
-              onChange={this.handleChangeEditor('code')}
-              options={{
-                scrollBeyondLastLine: false,
-                detectIndentation: false,
-                tabSize: 2,
-              }}
-            />
-          </Grid>
-        </Grid>
+        </div>
         <Divider className={classes.divider} />
         <Button
           variant="contained"
@@ -307,6 +412,7 @@ class Settings extends Component {
 
   render() {
     const { open, classes, t } = this.props;
+    const { tabIndex } = this.state;
 
     return (
       <div>
@@ -321,6 +427,20 @@ class Settings extends Component {
             <Typography variant="h5" id="settings-modal-title">
               {t('Settings')}
             </Typography>
+            <Box
+              sx={{ borderBottom: 1, borderColor: 'divider', margin: 'auto' }}
+            >
+              <Tabs
+                centered
+                value={tabIndex}
+                onChange={this.handleChangeTab}
+                indicatorColor="primary"
+                textColor="primary"
+              >
+                <Tab label={t('Code Settings')} id={CODE_SETTINGS_TAB} />
+                <Tab label={t('Display Settings')} id={DISPLAY_SETTINGS_TAB} />
+              </Tabs>
+            </Box>
             {this.renderModalContent()}
           </div>
         </Modal>
