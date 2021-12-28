@@ -264,13 +264,6 @@ const postAppInstanceResource =
         );
       }
 
-      // if (autoResponse) {
-      //   setTimeout(
-      //     () => dispatch(postAppInstanceResource(autoResponse.response)),
-      //     autoResponse.timeout,
-      //   );
-      // }
-
       return dispatch({
         type: POST_APP_INSTANCE_RESOURCE_SUCCEEDED,
         payload: appInstanceResource,

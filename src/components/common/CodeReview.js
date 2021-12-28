@@ -48,7 +48,7 @@ const styles = {
     borderSpacing: 0,
     maxWidth: '800px',
     width: '90%',
-    margin: '0px auto auto',
+    margin: '0 auto auto',
     boxSizing: 'border-box',
   },
   commentContainer: {

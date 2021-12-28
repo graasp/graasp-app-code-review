@@ -140,7 +140,7 @@ class CodeEditor extends React.Component {
     dispatchCloseEditorView();
   };
 
-  renderCodeEditor = () => {
+  render() {
     const {
       t,
       classes,
@@ -177,7 +177,7 @@ class CodeEditor extends React.Component {
         color="primary"
         variant="outlined"
         label={t('Optional Extended Description')}
-        placeholder={t('Add an optional description')}
+        placeholder={t('Add an Optional Description')}
         onChange={this.handleChangeTextField('commitDescription')}
         value={commitDescription}
         fullWidth
@@ -187,74 +187,68 @@ class CodeEditor extends React.Component {
     );
 
     return (
-      <>
-        <Grid
-          container
-          className={classes.container}
-          direction="column"
-          spacing={2}
-        >
-          <Paper variant="outlined" className={classes.paper}>
-            <Grid className={classes.editor} item>
-              <Editor
-                height="40vh"
-                defaultLanguage={programmingLanguage}
-                language={programmingLanguage}
-                value={code}
-                onChange={this.handleChangeEditor('code')}
-                options={{
-                  scrollBeyondLastLine: false,
-                  detectIndentation: false,
-                  tabSize: 2,
-                }}
-              />
+      <Grid
+        container
+        className={classes.container}
+        direction="column"
+        spacing={2}
+      >
+        <Paper variant="outlined" className={classes.paper}>
+          <Grid className={classes.editor} item>
+            <Editor
+              height="40vh"
+              defaultLanguage={programmingLanguage}
+              language={programmingLanguage}
+              value={code}
+              onChange={this.handleChangeEditor('code')}
+              options={{
+                scrollBeyondLastLine: false,
+                detectIndentation: false,
+                tabSize: 2,
+              }}
+            />
+          </Grid>
+          <Divider className={classes.divider} />
+          <Grid
+            container
+            item
+            direction="column"
+            alignContent="stretch"
+            spacing={1}
+          >
+            <Grid item className={classes.commitTextField}>
+              {commitMessageControl}
             </Grid>
-            <Divider className={classes.divider} />
-            <Grid
-              container
-              item
-              direction="column"
-              alignContent="stretch"
-              spacing={1}
-            >
-              <Grid item className={classes.commitTextField}>
-                {commitMessageControl}
+            <Grid item className={classes.commitTextField}>
+              {extendedCommitDescriptionControl}
+            </Grid>
+            <Grid container item direction="row">
+              <Grid item>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  className={classes.button}
+                  onClick={this.handleCommit}
+                  disabled={!hasChanged}
+                >
+                  {t('Commit Changes')}
+                </Button>
               </Grid>
-              <Grid item className={classes.commitTextField}>
-                {extendedCommitDescriptionControl}
-              </Grid>
-              <Grid container item direction="row">
-                <Grid item>
-                  <Button
-                    variant="contained"
-                    color="primary"
-                    className={classes.button}
-                    onClick={this.handleCommit}
-                    disabled={!hasChanged}
-                  >
-                    {t('Commit changes')}
-                  </Button>
-                </Grid>
-                <Grid item>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    className={classes.button}
-                    onClick={this.handleClose}
-                  >
-                    {t('Cancel')}
-                  </Button>
-                </Grid>
+              <Grid item>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  className={classes.button}
+                  onClick={this.handleClose}
+                >
+                  {t('Cancel')}
+                </Button>
               </Grid>
             </Grid>
-          </Paper>
-        </Grid>
-      </>
+          </Grid>
+        </Paper>
+      </Grid>
     );
-  };
-
-  render() {
-    return this.renderCodeEditor();
   }
 }
 

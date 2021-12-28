@@ -52,15 +52,15 @@
     "Show Version Navigation": "Show Version Navigation",
     "Show Code Edit Button": "Show Code Edit Button",
     "Show Visibility Toggle": "Show Visibility Toggle",
-    "Allow Students to see other students code": "Allow Students to see other students code",
+    "Allow students to see other students' code": "Allow students to see other students' code",
     "Edit": "Edit",
-    "Commit info": "Commit info",
+    "Commit Info": "Commit Info",
     "Author": "Author",
     "Message": "Message",
-    "Commit changes": "Commit changes",
+    "Commit Changes": "Commit Changes",
     "Commit Message": "Commit Message",
     "Optional Extended Description": "Optional Extended Description",
     "Updated code sample": "Updated code sample",
-    "Add an optional description": "Add an optional description"
+    "Add an Optional Description": "Add an Optional Description"
   }
 }

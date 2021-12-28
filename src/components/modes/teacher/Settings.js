@@ -349,7 +349,7 @@ class Settings extends Component {
                   />
                   <FormControlLabel
                     control={codeSampleVisibilitySwitchControl}
-                    label={t('Allow Students to see other students code')}
+                    label={t("Allow students to see other students' code")}
                   />
                 </FormGroup>
               </FormControl>

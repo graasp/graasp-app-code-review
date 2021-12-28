@@ -227,7 +227,7 @@ const handleAutoResponse = (commentId, comment, getState) => {
         content: `> *${comment.data.content}*\n\n${responseText}`,
         botId: botAuthor._id,
         optionId,
-        // add en end property if the optionId is negative
+        // add an end property if the optionId is negative
         ...(isEnd ? { end: true } : null),
         thinking: getTimeOutValue(responseText),
       },

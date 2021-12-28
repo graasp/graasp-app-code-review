@@ -103,7 +103,7 @@ export class CommitInfoDialog extends Component {
         scroll="body"
         maxWidth="lg"
       >
-        <DialogTitle>{t('Commit info')}</DialogTitle>
+        <DialogTitle>{t('Commit Info')}</DialogTitle>
         <DialogContent>{this.renderContent()}</DialogContent>
         <DialogActions>
           <Button color="primary" onClick={this.handleClose}>
