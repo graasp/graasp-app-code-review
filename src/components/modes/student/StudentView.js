@@ -1,7 +1,7 @@
 import React from 'react';
 import { withTranslation } from 'react-i18next';
 import { withStyles } from '@material-ui/core/styles';
-import CodeReviewContainer from '../../common/CodeReviewContainer';
+import CodeReview from '../../common/CodeReview';
 
 const styles = (theme) => ({
   main: {
@@ -16,7 +16,7 @@ const styles = (theme) => ({
   },
 });
 
-export const StudentView = () => <CodeReviewContainer />;
+export const StudentView = () => <CodeReview />;
 
 StudentView.propTypes = {};
 

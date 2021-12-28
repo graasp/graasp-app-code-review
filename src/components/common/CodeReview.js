@@ -40,6 +40,7 @@ import {
 } from '../../config/verbs';
 import { getDefaultOptionText } from '../../utils/autoBotEngine';
 import CodeReviewTools from './CodeReviewTools';
+import CodeEditor from './CodeEditor';
 
 Prism.manual = true;
 
@@ -117,6 +118,7 @@ class CodeReview extends Component {
       }),
     ),
     standalone: PropTypes.bool.isRequired,
+    editorOpen: PropTypes.bool.isRequired,
     dispatchPostAppInstanceResource: PropTypes.func.isRequired,
     dispatchPatchAppInstanceResource: PropTypes.func.isRequired,
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
@@ -490,7 +492,7 @@ class CodeReview extends Component {
     });
   }
 
-  renderCodeReview(code, commentList) {
+  renderCodeReviewBody(code, commentList) {
     const {
       isFeedbackView,
       isTeacherView,
@@ -550,7 +552,7 @@ class CodeReview extends Component {
     });
   }
 
-  render() {
+  renderCodeReview() {
     const {
       classes,
       code,
@@ -567,7 +569,7 @@ class CodeReview extends Component {
       comments.length + botComments.length + teacherComments.length;
 
     return (
-      <div ref={this.rootRef}>
+      <>
         <CodeReviewTools
           showVisibilityButton={totalNumberOfComments > 0 && showVisibility}
           showEditButton={isStudentView && showEditButton}
@@ -580,9 +582,19 @@ class CodeReview extends Component {
         />
         <table className={classes.container}>
           <tbody className="code-area">
-            {this.renderCodeReview(code, comments)}
+            {this.renderCodeReviewBody(code, comments)}
           </tbody>
         </table>
+      </>
+    );
+  }
+
+  render() {
+    const { editorOpen } = this.props;
+
+    return (
+      <div ref={this.rootRef}>
+        {editorOpen ? <CodeEditor /> : this.renderCodeReview()}
       </div>
     );
   }
@@ -623,6 +635,7 @@ const mapStateToProps = (
     standalone: context.standalone,
     isStudentView: STUDENT_MODES.includes(context.mode),
     settings: appInstance.content.settings,
+    editorOpen: layout.editorView.open,
   };
 };
 

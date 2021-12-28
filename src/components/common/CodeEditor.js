@@ -196,7 +196,7 @@ class CodeEditor extends React.Component {
         <Paper variant="outlined" className={classes.paper}>
           <Grid className={classes.editor} item>
             <Editor
-              height="40vh"
+              height="400px"
               defaultLanguage={programmingLanguage}
               language={programmingLanguage}
               value={code}
