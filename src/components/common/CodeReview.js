@@ -364,7 +364,7 @@ class CodeReview extends Component {
       focusedId: NEW_COMMENT_ID,
     });
     // make sure the comments on that line are not hidden
-    // lineNum is 1-indexed while the array is 0-indexed si we subtract 1
+    // lineNum is 1-indexed while the array is 0-indexed, so we subtract 1
     if (lineCommentsHiddenState[lineNum - 1]) {
       this.toggleHiddenCommentState(lineNum);
     }

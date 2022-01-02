@@ -72,7 +72,6 @@ class CodeEditor extends React.Component {
     t: PropTypes.func.isRequired,
     dispatchCloseEditorView: PropTypes.func.isRequired,
     dispatchPostAppInstanceResource: PropTypes.func.isRequired,
-    // dispatchSetCodeEditorSettings: PropTypes.func.isRequired,
     commit: PropTypes.shape({
       code: PropTypes.string.isRequired,
       commitMessage: PropTypes.string.isRequired,
@@ -162,7 +161,7 @@ class CodeEditor extends React.Component {
         color="primary"
         variant="outlined"
         label={t('Commit Message')}
-        placeholder={t('Updated code sample')}
+        placeholder={t('Updated Code sample')}
         onChange={this.handleChangeTextField('commitMessage')}
         value={commitMessage}
         fullWidth

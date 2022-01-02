@@ -224,7 +224,7 @@ const handleAutoResponse = (commentId, comment, getState) => {
       data: {
         ...comment.data,
         parent: commentId,
-        content: `> *${comment.data.content}*\n\n${responseText}`,
+        content: `> *${comment.data.content.trim()}*\n\n${responseText}`,
         botId: botAuthor._id,
         optionId,
         // add an end property if the optionId is negative

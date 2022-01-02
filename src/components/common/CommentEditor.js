@@ -35,11 +35,13 @@ import {
 import DotLoader from './DotLoader';
 
 // helper method
-const getInitials = (name) =>
-  name
-    .match(/\b(\w)/g)
-    .slice(0, 2)
-    .join('');
+const getInitials = (name) => {
+  const initials = name.match(/\b(\w)/g);
+  if (initials) {
+    return initials.slice(0, 2).join('');
+  }
+  return '';
+};
 
 // to add a new language to the dates
 const locales = { fr, en: enGB };
