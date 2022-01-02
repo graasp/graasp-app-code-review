@@ -34,11 +34,12 @@ export class FeedbackView extends Component {
     // dispatchGetUsers: PropTypes.func.isRequired,
     dispatchCloseFeedbackView: PropTypes.func.isRequired,
     dispatchSetSelectedStudent: PropTypes.func.isRequired,
-    selectedStudent: PropTypes.string.isRequired,
+    selectedStudent: PropTypes.string,
     studentName: PropTypes.string,
   };
 
   static defaultProps = {
+    selectedStudent: null,
     studentName: '',
   };
 

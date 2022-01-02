@@ -32,13 +32,16 @@ import {
   BOT_USER,
   USER_COMMENT_TYPES,
 } from '../../config/appInstanceResourceTypes';
+import DotLoader from './DotLoader';
 
 // helper method
-const getInitials = (name) =>
-  name
-    .match(/\b(\w)/g)
-    .slice(0, 2)
-    .join('');
+const getInitials = (name) => {
+  const initials = name.match(/\b(\w)/g);
+  if (initials) {
+    return initials.slice(0, 2).join('');
+  }
+  return '';
+};
 
 // to add a new language to the dates
 const locales = { fr, en: enGB };
@@ -77,6 +80,7 @@ class CommentEditor extends Component {
         content: PropTypes.string.isRequired,
         botId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         deleted: PropTypes.bool,
+        thinking: PropTypes.number,
       }),
       type: PropTypes.string,
       user: PropTypes.string,
@@ -86,6 +90,7 @@ class CommentEditor extends Component {
     readOnly: PropTypes.bool,
     showReply: PropTypes.bool,
     showDelete: PropTypes.bool,
+    showEdit: PropTypes.bool,
     onEditComment: PropTypes.func.isRequired,
     onReply: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
@@ -127,6 +132,7 @@ class CommentEditor extends Component {
     readOnly: false,
     showReply: true,
     showDelete: true,
+    showEdit: true,
   };
 
   state = {
@@ -220,6 +226,9 @@ class CommentEditor extends Component {
   };
 
   handleDeleteClicked = () => {
+    // todo: functional components can not be given refs
+    // here we are trying to give focus to the dialog
+    // this does not seems to work yet
     // focus the confirmation dialog
     const { current: confirmationDialogElement } = this.dialogRef;
     if (confirmationDialogElement !== null) {
@@ -275,6 +284,7 @@ class CommentEditor extends Component {
       onReply,
       showReply,
       showDelete,
+      showEdit,
       lang,
     } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
@@ -304,7 +314,7 @@ class CommentEditor extends Component {
           <>
             {isHovered && !readOnly && expanded ? (
               <>
-                {!comment.data.deleted ? (
+                {!comment.data.deleted && showEdit ? (
                   <IconButton
                     aria-label="edit"
                     color="primary"
@@ -358,12 +368,35 @@ class CommentEditor extends Component {
     );
   }
 
+  renderThinkingComment() {
+    const { comment, classes, botUsers } = this.props;
+    const userName =
+      botUsers.find((u) => u.id === comment.data.botId)?.name || DEFAULT_USER;
+
+    return (
+      <Card className={classes.root} elevation={0}>
+        <CardHeader
+          className={classes.header}
+          avatar={this.renderAvatar()}
+          title={userName}
+        />
+        <CardContent className={`${classes.content} ${classes.commentText}`}>
+          <DotLoader />
+        </CardContent>
+      </Card>
+    );
+  }
+
   render() {
     const { selectedTab, value, isEdited, expanded } = this.state;
-    const { classes, t, activity } = this.props;
+    const { classes, t, activity, comment } = this.props;
 
     if (activity) {
       return <Loader />;
+    }
+
+    if (comment.data.thinking) {
+      return this.renderThinkingComment();
     }
 
     return (

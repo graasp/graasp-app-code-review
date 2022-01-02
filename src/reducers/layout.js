@@ -7,7 +7,13 @@ import {
   SET_SELECTED_BOT,
   OPEN_FEEDBACK_VIEW,
   CLOSE_FEEDBACK_VIEW,
+  CLOSE_EDITOR_VIEW,
+  OPEN_EDITOR_VIEW,
+  SET_CODE_EDITOR_SETTINGS,
+  OPEN_COMMIT_INFO_DIALOG,
+  CLOSE_COMMIT_INFO_DIALOG,
 } from '../types';
+import { DEFAULT_CODE_ID } from '../config/settings';
 
 const INITIAL_STATE = {
   settings: {
@@ -16,11 +22,21 @@ const INITIAL_STATE = {
   avatarDialog: {
     open: false,
   },
+  commitInfoDialog: {
+    open: false,
+  },
   feedbackView: {
+    open: false,
+  },
+  editorView: {
     open: false,
   },
   selectedStudent: null,
   selectedBot: null,
+  codeEditorSettings: {
+    code: null,
+    codeId: DEFAULT_CODE_ID,
+  },
 };
 
 export default (state = INITIAL_STATE, { payload, type }) => {
@@ -57,6 +73,22 @@ export default (state = INITIAL_STATE, { payload, type }) => {
           open: false,
         },
       };
+    case OPEN_COMMIT_INFO_DIALOG:
+      return {
+        ...state,
+        commitInfoDialog: {
+          ...state.commitInfoDialog,
+          open: true,
+        },
+      };
+    case CLOSE_COMMIT_INFO_DIALOG:
+      return {
+        ...state,
+        commitInfoDialog: {
+          ...state.commitInfoDialog,
+          open: false,
+        },
+      };
     case OPEN_FEEDBACK_VIEW:
       return {
         ...state,
@@ -71,6 +103,30 @@ export default (state = INITIAL_STATE, { payload, type }) => {
         feedbackView: {
           ...state.feedbackView,
           open: false,
+        },
+      };
+    case OPEN_EDITOR_VIEW:
+      return {
+        ...state,
+        editorView: {
+          ...state.editorView,
+          open: true,
+        },
+      };
+    case CLOSE_EDITOR_VIEW:
+      return {
+        ...state,
+        editorView: {
+          ...state.editorView,
+          open: false,
+        },
+      };
+    case SET_CODE_EDITOR_SETTINGS:
+      return {
+        ...state,
+        codeEditorSettings: {
+          ...state.codeEditorSettings,
+          ...payload,
         },
       };
     case SET_SELECTED_STUDENT:

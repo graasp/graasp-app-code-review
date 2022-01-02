@@ -12,6 +12,11 @@ import { DEFAULT_PROGRAMMING_LANGUAGE } from '../config/settings';
 
 export const DEFAULT_SETTINGS = {
   headerVisible: false,
+  topBarVisible: true,
+  showVersionNav: false,
+  showEditButton: false,
+  showVisibility: true,
+  codeSamplesArePublic: true,
   code: '',
   programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
   selectedBot: null,
