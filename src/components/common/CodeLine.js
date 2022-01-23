@@ -4,6 +4,7 @@ import AddIcon from '@material-ui/icons/Add';
 import PropTypes from 'prop-types';
 import 'prismjs/themes/prism.css';
 import { MessageOutlined } from '@material-ui/icons';
+import { programmingLanguageSettings } from '../../constants/programmingLanguages';
 
 const useStyles = makeStyles((theme) =>
   createStyles({
@@ -14,6 +15,8 @@ const useStyles = makeStyles((theme) =>
       display: 'inline',
       whiteSpace: 'pre-wrap',
       wordWrap: 'break-word',
+      tabSize: (props) =>
+        programmingLanguageSettings[props.programmingLanguage].tabSize,
     },
     lineNumber: {
       width: '1%',
@@ -58,10 +61,11 @@ const CodeLine = ({
   disableButton,
   numThreads,
   toggleHiddenStateCallback,
+  programmingLanguage,
 }) => {
   /* eslint-disable react/no-danger */
   const [showAdd, setShowAdd] = useState(false);
-  const classes = useStyles();
+  const classes = useStyles({ programmingLanguage });
 
   const commentButton = (
     <IconButton
@@ -122,6 +126,7 @@ CodeLine.propTypes = {
   disableButton: PropTypes.bool,
   numThreads: PropTypes.number,
   toggleHiddenStateCallback: PropTypes.func.isRequired,
+  programmingLanguage: PropTypes.string.isRequired,
 };
 
 CodeLine.defaultProps = {

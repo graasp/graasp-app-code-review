@@ -545,6 +545,7 @@ class CodeReview extends Component {
             disableButton={isFeedbackView}
             numThreads={numThreads}
             toggleHiddenStateCallback={this.toggleHiddenCommentState}
+            programmingLanguage={programmingLanguage}
           />
           {hiddenCommentState ? null : renderedComments}
         </Fragment>
