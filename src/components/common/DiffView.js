@@ -1,34 +1,28 @@
-import React from 'react';
-import { uniqueId } from 'lodash';
-import sha from 'sha1';
+import React, { useCallback, useMemo, useState } from 'react';
+import PropTypes from 'prop-types';
+import { Button, Grid } from '@material-ui/core';
 import { parseDiff, Diff, Hunk } from 'react-diff-view';
 import { formatLines, diffLines } from 'unidiff';
+import tokenize from '../../utils/tokenize';
 import 'react-diff-view/style/index.css';
+import 'prismjs/themes/prism.css';
+import { DEFAULT_PROGRAMMING_LANGUAGE } from '../../config/settings';
 
-// creates fake indices
-const fakeIndex = () => sha(uniqueId()).slice(0, 9);
-
-// this creates the diff between the two sources
-const createDiff = ({ oldSource, newSource }) => {
-  const diffText = formatLines(diffLines(oldSource, newSource), { context: 3 });
-  return {
-    diff: diffText,
-    source: oldSource,
-  };
+const renderToken = (token, defaultRender, i) => {
+  switch (token.type) {
+    case 'space':
+      return (
+        <span key={i} className="space">
+          {token.children &&
+            token.children.map((t, j) => renderToken(t, defaultRender, j))}
+        </span>
+      );
+    default:
+      return defaultRender(token, i);
+  }
 };
 
-// this puts it in a format that can be rendered by the diff view
-const createSnippetDiff = ({ diff }) => {
-  const segments = [
-    'diff --git a/a b/b',
-    `index ${fakeIndex()}..${fakeIndex()} 100644`,
-    diff,
-  ];
-  const [file] = parseDiff(segments.join('\n'), { nearbySequences: 'zip' });
-  return file;
-};
-
-function DiffView() {
+function DiffView({ programmingLanguage }) {
   const oldSource =
     'const d = ({ oldSource, newSource }) => {\n' +
     '  const diffText = formatLines(diffLines(oldSource, newSource), {context: 3});\n' +
@@ -48,26 +42,49 @@ function DiffView() {
     '  return dd;\n' +
     '};';
 
-  // prepare diff
-  const d = createDiff({ oldSource, newSource });
-
-  // prepare snippet
-  const snippet = createSnippetDiff(d);
-
-  // this renders the diff view of the snippet
-  const renderSnippetDiff = ({ oldRevision, newRevision, type, hunks }) => (
-    <Diff
-      key={`${oldRevision}-${newRevision}`}
-      viewType="split"
-      diffType={type}
-      hunks={hunks}
-      oldSource={oldSource}
-    >
-      {(hs) => hs.map((hunk) => <Hunk key={hunk.content} hunk={hunk} />)}
-    </Diff>
+  const [{ type, hunks }, setDiff] = useState('');
+  const updateDiffText = useCallback(() => {
+    const diffText = formatLines(diffLines(oldSource, newSource), {
+      context: 3,
+    });
+    const [diff] = parseDiff(diffText, { nearbySequences: 'zip' });
+    setDiff(diff);
+  }, [oldSource, newSource, setDiff]);
+  const tokens = useMemo(
+    () => tokenize({ hunks, programmingLanguage }),
+    [hunks],
   );
 
-  return <div>{renderSnippetDiff(snippet)}</div>;
+  return (
+    <>
+      <Diff
+        viewType="split"
+        diffType={type}
+        hunks={hunks || []}
+        tokens={tokens}
+        renderToken={renderToken}
+      >
+        {(hunkList) =>
+          hunkList.map((hunk) => <Hunk key={hunk.content} hunk={hunk} />)
+        }
+      </Diff>
+      <Grid container justifyContent="center" alignItems="center">
+        <Grid item>
+          <Button variant="outlined" color="primary" onClick={updateDiffText}>
+            GENERATE DIFF
+          </Button>
+        </Grid>
+      </Grid>
+    </>
+  );
 }
+
+DiffView.propTypes = {
+  programmingLanguage: PropTypes.string,
+};
+
+DiffView.defaultProps = {
+  programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
+};
 
 export default DiffView;

@@ -6,6 +6,7 @@ import { withStyles } from '@material-ui/core/styles';
 import CodeReview from '../../common/CodeReview';
 import DiffView from '../../common/DiffView';
 import { DEFAULT_VIEW, DIFF_VIEW } from '../../../config/views';
+import { DEFAULT_PROGRAMMING_LANGUAGE } from '../../../config/settings';
 
 const styles = (theme) => ({
   main: {
@@ -20,10 +21,10 @@ const styles = (theme) => ({
   },
 });
 
-export const StudentView = ({ view }) => {
+export const StudentView = ({ view, programmingLanguage }) => {
   switch (view) {
     case DIFF_VIEW:
-      return <DiffView />;
+      return <DiffView programmingLanguage={programmingLanguage} />;
 
     case DEFAULT_VIEW:
     default:
@@ -33,16 +34,25 @@ export const StudentView = ({ view }) => {
 
 StudentView.propTypes = {
   view: PropTypes.string,
+  programmingLanguage: PropTypes.string,
 };
 
 StudentView.defaultProps = {
   view: DEFAULT_VIEW,
+  programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
 };
 
-const mapStateToProps = ({ layout }) => {
+const mapStateToProps = ({ layout, appInstance }) => {
   const { view } = layout;
+  const {
+    content: {
+      settings: { programmingLanguage },
+    },
+  } = appInstance;
+
   return {
     view,
+    programmingLanguage,
   };
 };
 
