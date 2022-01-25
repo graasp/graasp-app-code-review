@@ -9,11 +9,13 @@ import {
   CLOSE_FEEDBACK_VIEW,
   CLOSE_EDITOR_VIEW,
   OPEN_EDITOR_VIEW,
+  SET_DIFF_VIEW,
   SET_CODE_EDITOR_SETTINGS,
   OPEN_COMMIT_INFO_DIALOG,
   CLOSE_COMMIT_INFO_DIALOG,
 } from '../types';
 import { DEFAULT_CODE_ID } from '../config/settings';
+import { DEFAULT_VIEW, DIFF_VIEW } from '../config/views';
 
 const INITIAL_STATE = {
   settings: {
@@ -31,12 +33,16 @@ const INITIAL_STATE = {
   editorView: {
     open: false,
   },
+  diffView: {
+    open: false,
+  },
   selectedStudent: null,
   selectedBot: null,
   codeEditorSettings: {
     code: null,
     codeId: DEFAULT_CODE_ID,
   },
+  view: DEFAULT_VIEW,
 };
 
 export default (state = INITIAL_STATE, { payload, type }) => {
@@ -138,6 +144,11 @@ export default (state = INITIAL_STATE, { payload, type }) => {
       return {
         ...state,
         selectedBot: payload,
+      };
+    case SET_DIFF_VIEW:
+      return {
+        ...state,
+        view: DIFF_VIEW,
       };
     default:
       return state;

@@ -10,6 +10,7 @@ import {
   OPEN_FEEDBACK_VIEW,
   OPEN_SETTINGS,
   SET_CODE_EDITOR_SETTINGS,
+  SET_DIFF_VIEW,
   SET_SELECTED_BOT,
   SET_SELECTED_STUDENT,
 } from '../types';
@@ -59,6 +60,11 @@ const openEditorView = () => (dispatch) =>
     type: OPEN_EDITOR_VIEW,
   });
 
+const setDiffView = () => (dispatch) =>
+  dispatch({
+    type: SET_DIFF_VIEW,
+  });
+
 const closeEditorView = () => (dispatch) =>
   dispatch({
     type: CLOSE_EDITOR_VIEW,
@@ -100,4 +106,5 @@ export {
   setSelectedStudent,
   setSelectedBot,
   setCodeEditorSettings,
+  setDiffView,
 };

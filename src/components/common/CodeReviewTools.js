@@ -10,6 +10,7 @@ import {
   InfoOutlined,
   VisibilityOffRounded,
   VisibilityRounded,
+  VerticalSplitRounded,
 } from '@material-ui/icons';
 import Select from 'react-select';
 import { formatDistance } from 'date-fns';
@@ -18,6 +19,7 @@ import {
   openCommitInfoDialog,
   openEditorView,
   setCodeEditorSettings,
+  setDiffView,
 } from '../../actions';
 import {
   DEFAULT_CODE_ID,
@@ -88,6 +90,9 @@ const styles = (theme) => ({
   editButton: {
     color: theme.palette.primary.main,
   },
+  diffButton: {
+    color: theme.palette.primary.main,
+  },
   selectUsers: {
     width: '100%',
     display: 'block',
@@ -124,11 +129,13 @@ class CodeReviewTools extends React.Component {
       infoButton: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,
+    dispatchSetDiffView: PropTypes.func.isRequired,
     dispatchOpenEditorView: PropTypes.func.isRequired,
     dispatchSetCodeEditorSettings: PropTypes.func.isRequired,
     dispatchOpenCommitInfoDialog: PropTypes.func.isRequired,
     showVisibilityButton: PropTypes.bool,
     showEditButton: PropTypes.bool,
+    showDiffButton: PropTypes.bool,
     showHistoryDropdown: PropTypes.bool,
     hideCommentsCallback: PropTypes.func.isRequired,
     codeEditorSettings: PropTypes.shape({
@@ -160,6 +167,7 @@ class CodeReviewTools extends React.Component {
     showVisibilityButton: true,
     showEditButton: true,
     showHistoryDropdown: true,
+    showDiffButton: true,
   };
 
   state = (() => {
@@ -182,6 +190,11 @@ class CodeReviewTools extends React.Component {
     const { hideCommentsCallback } = this.props;
     // send true if the visibility is not "visible" -> the comments are hidden
     hideCommentsCallback(visibility !== 'show');
+  };
+
+  handleDiff = () => {
+    const { dispatchSetDiffView } = this.props;
+    dispatchSetDiffView();
   };
 
   handleChangeBranch = (value) => {
@@ -223,6 +236,7 @@ class CodeReviewTools extends React.Component {
       showEditButton,
       codeContributors,
       showHistoryDropdown,
+      showDiffButton,
     } = this.props;
     const { selectedBranch, selectedVersion, availableCodeVersions } =
       this.state;
@@ -252,6 +266,18 @@ class CodeReviewTools extends React.Component {
         onClick={this.handleEdit}
       >
         <EditRounded fontSize="small" />
+      </ToggleButton>
+    );
+
+    const diffButtonControl = (
+      <ToggleButton
+        className={classes.editButton}
+        variant="outlined"
+        size="small"
+        value="edit"
+        onClick={this.handleDiff}
+      >
+        <VerticalSplitRounded fontSize="small" />
       </ToggleButton>
     );
 
@@ -327,6 +353,13 @@ class CodeReviewTools extends React.Component {
             justifyContent="space-between"
             justify="flex-end"
           >
+            {showDiffButton ? (
+              <Grid item>
+                <Tooltip title={t('Diff')}>
+                  <FormControl>{diffButtonControl}</FormControl>
+                </Tooltip>
+              </Grid>
+            ) : null}
             {showEditButton ? (
               <Grid item>
                 <Tooltip title={t('Edit')}>
@@ -405,6 +438,7 @@ const mapDispatchToProps = {
   dispatchOpenEditorView: openEditorView,
   dispatchSetCodeEditorSettings: setCodeEditorSettings,
   dispatchOpenCommitInfoDialog: openCommitInfoDialog,
+  dispatchSetDiffView: setDiffView,
 };
 
 const ConnectedComponent = connect(
