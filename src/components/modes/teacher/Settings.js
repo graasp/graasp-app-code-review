@@ -30,6 +30,7 @@ import {
   SETTINGS_MODAL_CYPRESS,
 } from '../../../config/selectors';
 import { DEFAULT_SETTINGS } from '../../../reducers/appInstance';
+import { programmingLanguageSettings } from '../../../constants/programmingLanguages';
 
 const CODE_SETTINGS_TAB = 'code-settings-tab';
 const DISPLAY_SETTINGS_TAB = 'display-settings-tab';
@@ -381,7 +382,8 @@ class Settings extends Component {
                 options={{
                   scrollBeyondLastLine: false,
                   detectIndentation: false,
-                  tabSize: 2,
+                  tabSize:
+                    programmingLanguageSettings[programmingLanguage].tabSize,
                 }}
               />
             </Grid>
