@@ -540,7 +540,7 @@ class AvatarDialog extends Component {
 }
 
 const mapStateToProps = ({ layout, appInstance, appInstanceResources }) => {
-  const { avatarId } = appInstance.content.settings;
+  const { avatarId } = layout.avatarDialog;
   return {
     open: layout.avatarDialog.open,
     activity: appInstance.activity.length,

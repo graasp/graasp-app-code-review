@@ -22,7 +22,7 @@ import {
   postAppInstanceResource,
   deleteAppInstanceResource,
   openAvatarDialog,
-  patchAppInstance,
+  setAvatarId,
 } from '../../../actions';
 import {
   BOT_COMMENT,
@@ -56,9 +56,8 @@ const AvatarView = (props) => {
     botUsers,
     botComments,
     dispatchOpenAvatarDialog,
-    dispatchPatchAppInstance,
+    dispatchSetAvatarId,
     dispatchDeleteAppInstanceResource,
-    settings,
   } = props;
 
   const handleDeleteBot = (_id) => {
@@ -74,12 +73,7 @@ const AvatarView = (props) => {
   };
 
   const handleNewBot = () => {
-    dispatchPatchAppInstance({
-      data: {
-        ...settings,
-        avatarId: '',
-      },
-    });
+    dispatchSetAvatarId({ avatarId: null });
     dispatchOpenAvatarDialog();
   };
 
@@ -104,13 +98,8 @@ const AvatarView = (props) => {
           <IconButton
             color="primary"
             onClick={() => {
-              // sending the avatarId that is being edited to the modal through settings
-              dispatchPatchAppInstance({
-                data: {
-                  ...settings,
-                  avatarId: _id,
-                },
-              });
+              // sending the avatarId that is being edited to the modal through layout
+              dispatchSetAvatarId({ avatarId: _id });
               dispatchOpenAvatarDialog();
             }}
           >
@@ -190,13 +179,9 @@ AvatarView.propTypes = {
       resourceId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
     }),
   ),
-  settings: PropTypes.shape({
-    avatarId: PropTypes.oneOfType([PropTypes.string, PropTypes.number])
-      .isRequired,
-  }).isRequired,
 
   dispatchOpenAvatarDialog: PropTypes.func.isRequired,
-  dispatchPatchAppInstance: PropTypes.func.isRequired,
+  dispatchSetAvatarId: PropTypes.func.isRequired,
   dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
 };
 
@@ -205,7 +190,7 @@ AvatarView.defaultProps = {
   botComments: [],
 };
 
-const mapStateToProps = ({ appInstance, appInstanceResources }) => {
+const mapStateToProps = ({ appInstanceResources }) => {
   const botUsers = appInstanceResources.content.filter(
     (r) => r.type === BOT_USER,
   );
@@ -221,7 +206,6 @@ const mapStateToProps = ({ appInstance, appInstanceResources }) => {
     botUsers,
     // array of botIds and resource ids corresponding to bot comments
     botComments,
-    settings: appInstance.content.settings,
     userOptions: botUsers.map(({ _id, data }) => ({
       value: _id,
       label: data.name,
@@ -234,7 +218,7 @@ const mapDispatchToProps = {
   dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPatchAppInstanceResource: patchAppInstanceResource,
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
-  dispatchPatchAppInstance: patchAppInstance,
+  dispatchSetAvatarId: setAvatarId,
   dispatchOpenAvatarDialog: openAvatarDialog,
 };
 
