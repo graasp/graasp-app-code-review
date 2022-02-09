@@ -39,6 +39,9 @@ export const ADAPT_HEIGHT_TIMEOUT = 50;
 // special id for newly created comments
 export const NEW_COMMENT_ID = '';
 
+// default number of quick replies to show
+export const MAX_QUICK_REPLIES_TO_SHOW = 1;
+
 // default comment
 export const DEFAULT_COMMENT_CONTENT = { content: '' };
 export const DEFAULT_COMMENT_HIDDEN_STATE = false;
