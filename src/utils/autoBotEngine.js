@@ -103,7 +103,10 @@ const addEmptyStep = (personality) => {
 
 // only return the text without the bullet points
 const getFormattedOptionText = (step) => step.text;
-// [step.text, ...step.options].join(DEFAULT_PERSONALITY_OPTION_SEPARATOR);
+
+// return the text with the bullet point options
+const getFormattedOptionTextAndOptionsList = (step) =>
+  [step.text, ...step.options].join(DEFAULT_PERSONALITY_OPTION_SEPARATOR);
 
 const getBotPersonality = (bot) => JSON.parse(bot.data.personality);
 
@@ -232,7 +235,7 @@ const handleAutoResponse = (commentId, comment, getState) => {
         optionId,
         // add an end property if the optionId is negative
         ...(isEnd ? { end: true } : null),
-        options: chosenOption ? chosenOption.options : null,
+        options: chosenOption?.options,
         thinking: getTimeOutValue(responseText),
       },
       type: BOT_COMMENT,
@@ -254,6 +257,7 @@ export {
   validatePersonality,
   addEmptyStep,
   getFormattedOptionText,
+  getFormattedOptionTextAndOptionsList,
   getDefaultOptionText,
   handleAutoResponse,
 };

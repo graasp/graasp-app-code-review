@@ -293,6 +293,8 @@ class CodeReview extends Component {
         // only add the botId property when the comment is from a bot
         ...(selectedBot && { botId: selectedBot.value }),
       };
+
+      // this check is too weak and results in incorrect behavior when a bot is still selected
       const type = selectedBot ? BOT_COMMENT : TEACHER_COMMENT;
       // create comment
       dispatchPostAppInstanceResource({
@@ -400,8 +402,7 @@ class CodeReview extends Component {
       isTeacherView,
     } = this.props;
     const { line } = parentComment.data;
-    // this.handleAddComment(lineNum, parentId);
-    // this.handleSubmit(NEW_COMMENT_ID, option)
+
     const data = {
       line,
       codeId,

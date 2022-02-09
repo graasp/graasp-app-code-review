@@ -27,7 +27,12 @@ import { formatDistance } from 'date-fns';
 import { fr, enGB } from 'date-fns/locale';
 import { MoreVertRounded } from '@material-ui/icons';
 import ConfirmDialog from './ConfirmDialog';
-import { DEFAULT_USER, MAX_QUICK_REPLIES_TO_SHOW } from '../../config/settings';
+import {
+  DEFAULT_USER,
+  MAX_QUICK_REPLIES_TO_SHOW,
+  MIN_EDITOR_HEIGHT,
+  MIN_PREVIEW_HEIGHT,
+} from '../../config/settings';
 import Loader from './Loader';
 import {
   BOT_COMMENT,
@@ -538,8 +543,8 @@ class CommentView extends Component {
                   autoFocus: true,
                 },
               }}
-              minEditorHeight={60}
-              minPreviewHeight={60}
+              minEditorHeight={MIN_EDITOR_HEIGHT}
+              minPreviewHeight={MIN_PREVIEW_HEIGHT}
             />
           ) : (
             <Grid

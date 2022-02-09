@@ -40,7 +40,11 @@ export const ADAPT_HEIGHT_TIMEOUT = 50;
 export const NEW_COMMENT_ID = '';
 
 // default number of quick replies to show
-export const MAX_QUICK_REPLIES_TO_SHOW = 1;
+export const MAX_QUICK_REPLIES_TO_SHOW = 3;
+
+// default height for the Markdown editor
+export const MIN_EDITOR_HEIGHT = 60;
+export const MIN_PREVIEW_HEIGHT = 60;
 
 // default comment
 export const DEFAULT_COMMENT_CONTENT = { content: '' };
