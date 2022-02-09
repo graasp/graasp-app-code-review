@@ -12,6 +12,7 @@ import {
   SET_CODE_EDITOR_SETTINGS,
   OPEN_COMMIT_INFO_DIALOG,
   CLOSE_COMMIT_INFO_DIALOG,
+  SET_AVATAR_ID,
 } from '../types';
 import { DEFAULT_CODE_ID } from '../config/settings';
 
@@ -20,6 +21,7 @@ const INITIAL_STATE = {
     open: false,
   },
   avatarDialog: {
+    avatarId: null,
     open: false,
   },
   commitInfoDialog: {
@@ -71,6 +73,14 @@ export default (state = INITIAL_STATE, { payload, type }) => {
         avatarDialog: {
           ...state.avatarDialog,
           open: false,
+        },
+      };
+    case SET_AVATAR_ID:
+      return {
+        ...state,
+        avatarDialog: {
+          ...state.avatarDialog,
+          avatarId: payload,
         },
       };
     case OPEN_COMMIT_INFO_DIALOG:

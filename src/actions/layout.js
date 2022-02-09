@@ -9,6 +9,7 @@ import {
   OPEN_EDITOR_VIEW,
   OPEN_FEEDBACK_VIEW,
   OPEN_SETTINGS,
+  SET_AVATAR_ID,
   SET_CODE_EDITOR_SETTINGS,
   SET_SELECTED_BOT,
   SET_SELECTED_STUDENT,
@@ -33,6 +34,14 @@ const closeAvatarDialog = () => (dispatch) =>
   dispatch({
     type: CLOSE_AVATAR_DIALOG,
   });
+
+const setAvatarId =
+  ({ avatarId }) =>
+  (dispatch) =>
+    dispatch({
+      type: SET_AVATAR_ID,
+      payload: avatarId,
+    });
 
 const openCommitInfoDialog = () => (dispatch) =>
   dispatch({
@@ -91,6 +100,7 @@ export {
   closeSettings,
   openAvatarDialog,
   closeAvatarDialog,
+  setAvatarId,
   openCommitInfoDialog,
   closeCommitInfoDialog,
   openFeedbackView,
