@@ -101,7 +101,11 @@ const addEmptyStep = (personality) => {
   };
 };
 
-const getFormattedOptionText = (step) =>
+// only return the text without the bullet points
+const getFormattedOptionText = (step) => step.text;
+
+// return the text with the bullet point options
+const getFormattedOptionTextAndOptionsList = (step) =>
   [step.text, ...step.options].join(DEFAULT_PERSONALITY_OPTION_SEPARATOR);
 
 const getBotPersonality = (bot) => JSON.parse(bot.data.personality);
@@ -128,6 +132,7 @@ const getDefaultOptionText = (personality) => {
   return {
     content: getFormattedOptionText(personalityObj.start),
     optionId: personalityObj.start.id,
+    options: personalityObj.start.options,
   };
 };
 
@@ -205,13 +210,14 @@ const handleAutoResponse = (commentId, comment, getState) => {
     let responseText = getFallbackOptionText(personality, prevCommentOptionId);
     let optionId = prevCommentOptionId;
     let isEnd = false;
+    let chosenOption = null;
 
     if (prevCommentStep && !prevCommentStep.options.length) {
       responseText = personality.end.text;
       isEnd = true;
     } else if (availableOptions.length) {
       // find an option that matches its regex against the comment content
-      const chosenOption = availableOptions.find((m) =>
+      chosenOption = availableOptions.find((m) =>
         comment.data.content.match(new RegExp(m.match, 'gim')),
       );
       if (chosenOption) {
@@ -229,6 +235,7 @@ const handleAutoResponse = (commentId, comment, getState) => {
         optionId,
         // add an end property if the optionId is negative
         ...(isEnd ? { end: true } : null),
+        options: chosenOption?.options,
         thinking: getTimeOutValue(responseText),
       },
       type: BOT_COMMENT,
@@ -250,6 +257,7 @@ export {
   validatePersonality,
   addEmptyStep,
   getFormattedOptionText,
+  getFormattedOptionTextAndOptionsList,
   getDefaultOptionText,
   handleAutoResponse,
 };

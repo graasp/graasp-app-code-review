@@ -7,7 +7,6 @@ import Prism from 'prismjs';
 import _ from 'lodash';
 import { Paper } from '@material-ui/core';
 import CodeLine from './CodeLine';
-import CommentEditor from './CommentEditor';
 import {
   patchAppInstanceResource,
   postAppInstanceResource,
@@ -35,12 +34,14 @@ import {
 import {
   CLICKED_ADD_COMMENT,
   CREATED_COMMENT,
+  CREATED_QUICK_REPLY,
   DELETED_COMMENT,
   UPDATED_COMMENT,
 } from '../../config/verbs';
 import { getDefaultOptionText } from '../../utils/autoBotEngine';
 import CodeReviewTools from './CodeReviewTools';
 import CodeEditor from './CodeEditor';
+import CommentView from './CommentView';
 
 Prism.manual = true;
 
@@ -50,6 +51,7 @@ const styles = {
     maxWidth: '800px',
     width: '90%',
     margin: '0 auto auto',
+    paddingTop: '5px',
     boxSizing: 'border-box',
   },
   commentContainer: {
@@ -57,6 +59,9 @@ const styles = {
     marginLeft: '20px',
   },
 };
+
+const findChild = (comments, parentId) =>
+  comments.find((c) => c.data.parent === parentId);
 
 class CodeReview extends Component {
   static propTypes = {
@@ -219,6 +224,13 @@ class CodeReview extends Component {
     this.setState({ focusedId: null });
   };
 
+  handleDeleteThread = (commentId) => {
+    const thread = this.getCommentIdsInThread(commentId);
+    // remove the line comment
+    thread.pop();
+    thread.forEach((id) => this.handleDelete(id));
+  };
+
   handleCancel = () => {
     const { focusedId } = this.state;
     if (focusedId === NEW_COMMENT_ID) {
@@ -281,6 +293,8 @@ class CodeReview extends Component {
         // only add the botId property when the comment is from a bot
         ...(selectedBot && { botId: selectedBot.value }),
       };
+
+      // this check is too weak and results in incorrect behavior when a bot is still selected
       const type = selectedBot ? BOT_COMMENT : TEACHER_COMMENT;
       // create comment
       dispatchPostAppInstanceResource({
@@ -342,8 +356,9 @@ class CodeReview extends Component {
         : null;
     // if a bot is selected and the bot is configured for automatic seeding
     let textContent = DEFAULT_COMMENT_CONTENT;
-    if (bot && bot.data.autoBot && bot.data.autoSeed) {
-      // is an object with `content` and `optionId` which is used for context
+    // get startup text only if a bot is selected, and it is a line comment and not a response
+    if (bot && !parentId && bot.data.autoBot && bot.data.autoSeed) {
+      // is an object with `content`, `optionId` and `options` which is used for context
       textContent = getDefaultOptionText(bot.data.personality);
     }
 
@@ -377,6 +392,43 @@ class CodeReview extends Component {
       verb: CLICKED_ADD_COMMENT,
     });
   }
+
+  handleQuickResponse = (parentComment, option) => {
+    const {
+      dispatchPostAppInstanceResource,
+      dispatchPostAction,
+      codeId,
+      userId,
+      isTeacherView,
+    } = this.props;
+    const { line } = parentComment.data;
+
+    const data = {
+      line,
+      codeId,
+      parent: parentComment._id,
+      content: option,
+    };
+    // when the quick reply is clicked in the teacher view it is saved as a teacher comment
+    // when it is in the student view it is saved as a simple comment
+    const type = isTeacherView ? TEACHER_COMMENT : COMMENT;
+    // create comment
+    dispatchPostAppInstanceResource({
+      data,
+      type,
+      // todo: dependant on the switch
+      visibility: PRIVATE_VISIBILITY,
+      userId,
+    });
+    // track that this quick reply was created, along with its state
+    dispatchPostAction({
+      data: {
+        ...data,
+        type,
+      },
+      verb: CREATED_QUICK_REPLY,
+    });
+  };
 
   handleHideAllComments = (checked) => {
     // set hidden state
@@ -431,24 +483,52 @@ class CodeReview extends Component {
     }, ADAPT_HEIGHT_TIMEOUT);
   };
 
-  renderChildrenComments(comments, parentId) {
-    const { classes, isFeedbackView, isStudentView } = this.props;
-    const { focusedId } = this.state;
-    const childrenComments = comments
-      .filter((comment) => comment.data.parent === parentId)
-      .sort((comment) => comment.createdAt)
-      .reverse();
-    if (childrenComments.length === 0) {
-      return null;
-    }
+  buildThread = (parentComment, comments) => {
+    // build thread list
+    const thread = [parentComment];
+    let parentId = parentComment._id;
+    let nextChild = null;
+    do {
+      nextChild = findChild(comments, parentId);
+      if (nextChild) {
+        thread.push(nextChild);
+        parentId = nextChild._id;
+      }
+    } while (nextChild);
 
-    return childrenComments.map((comment) => {
+    return thread;
+  };
+
+  findParent = (comments, parentId) =>
+    comments.find((c) => c.data.parent === parentId);
+
+  getCommentIdsInThread = (commentId) => {
+    const { comments, botComments, teacherComments } = this.props;
+    const allComments = [...comments, ...botComments, ...teacherComments];
+    const thread = [commentId];
+    let parentId = commentId;
+    let parent = null;
+    do {
+      parent = this.findParent(allComments, parentId);
+      if (parent) {
+        parentId = parent._id;
+        thread.push(parentId);
+      }
+    } while (parent);
+
+    return thread;
+  };
+
+  renderCommentThread(parentComment, comments) {
+    const { isFeedbackView, isStudentView } = this.props;
+    const { focusedId } = this.state;
+
+    const thread = this.buildThread(parentComment, comments);
+
+    return thread.map((comment, i) => {
       // verify if the comment has children by
       // checking the length of the array of first order children
-      const hasChildrenComments =
-        comments.filter(
-          (childComment) => childComment.data.parent === comment._id,
-        ).length !== 0;
+      const hasChildrenComments = i !== thread.length - 1;
 
       // set to true if:
       // - the comment is not delete
@@ -464,16 +544,12 @@ class CodeReview extends Component {
       );
 
       return (
-        <Paper
-          key={comment._id}
-          className={classes.commentContainer}
-          variant="outlined"
-        >
-          <CommentEditor
+        <Fragment key={comment._id}>
+          <CommentView
             comment={comment}
             readOnly={this.getReadOnlyProperty(comment)}
             // do not show the reply button if bot comment has reach end of conversation
-            showReply={!isFeedbackView && _.isUndefined(comment.data.end)}
+            showReply={!isFeedbackView && !hasChildrenComments}
             showDelete={showDelete}
             showEdit={showEdit}
             focused={focusedId === comment._id}
@@ -484,10 +560,11 @@ class CodeReview extends Component {
             onDeleteComment={(_id) => this.handleDelete(_id)}
             onCancel={this.handleCancel}
             onSubmit={(_id, content) => this.handleSubmit(_id, content)}
+            onQuickResponse={this.handleQuickResponse}
+            onDeleteThread={this.handleDeleteThread}
             adaptStyle={this.adaptHeight}
           />
-          {this.renderChildrenComments(comments, comment._id)}
-        </Paper>
+        </Fragment>
       );
     });
   }
@@ -499,6 +576,7 @@ class CodeReview extends Component {
       botComments,
       teacherComments,
       programmingLanguage,
+      classes,
     } = this.props;
     const { focusedId, lineCommentsHiddenState } = this.state;
     const highlightedCode = CodeReview.highlightCode(
@@ -519,7 +597,7 @@ class CodeReview extends Component {
       ];
 
       // check if there are any first level comments
-      // if there are any, just do not render a row
+      // if there are none, do not render a row
       const parentComments = lineComments.filter(
         (comment) => comment.data.parent === null,
       );
@@ -528,7 +606,15 @@ class CodeReview extends Component {
         numThreads && !hiddenCommentState ? (
           <tr className="comment">
             <td className="comment editor" colSpan={2}>
-              {this.renderChildrenComments(lineComments, null)}
+              {parentComments.map((comment) => (
+                <Paper
+                  key={comment._id}
+                  className={classes.commentContainer}
+                  variant="outlined"
+                >
+                  {this.renderCommentThread(comment, lineComments)}
+                </Paper>
+              ))}
             </td>
           </tr>
         ) : null;
@@ -547,7 +633,7 @@ class CodeReview extends Component {
             toggleHiddenStateCallback={this.toggleHiddenCommentState}
             programmingLanguage={programmingLanguage}
           />
-          {hiddenCommentState ? null : renderedComments}
+          {renderedComments}
         </Fragment>
       );
     });

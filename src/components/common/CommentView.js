@@ -12,7 +12,9 @@ import {
   CardActions,
   CardContent,
   CardHeader,
-  Collapse,
+  Menu,
+  MenuItem,
+  TextField,
   Tooltip,
 } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
@@ -20,12 +22,17 @@ import IconButton from '@material-ui/core/IconButton';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import { withTranslation } from 'react-i18next';
-import { ExpandMore, Reply } from '@material-ui/icons';
 import _ from 'lodash';
 import { formatDistance } from 'date-fns';
 import { fr, enGB } from 'date-fns/locale';
+import { MoreVertRounded } from '@material-ui/icons';
 import ConfirmDialog from './ConfirmDialog';
-import { DEFAULT_USER } from '../../config/settings';
+import {
+  DEFAULT_USER,
+  MAX_QUICK_REPLIES_TO_SHOW,
+  MIN_EDITOR_HEIGHT,
+  MIN_PREVIEW_HEIGHT,
+} from '../../config/settings';
 import Loader from './Loader';
 import {
   BOT_COMMENT,
@@ -68,9 +75,27 @@ const styles = (theme) => ({
     // shift text left to align it with the Author name
     paddingLeft: '46px',
   },
+  quickReplyButtons: {
+    textTransform: 'none',
+    height: '40px',
+    margin: '2px',
+  },
+  replyBox: {
+    margin: '2px',
+    // display: 'block',
+    width: '100% important!',
+  },
+  moreQuickReplyMenu: {
+    height: '40px',
+    width: '40px',
+  },
+  replyContainer: {
+    // display: 'inline',
+    gridTemplateColumns: 'auto max-content',
+  },
 });
 
-class CommentEditor extends Component {
+class CommentView extends Component {
   static propTypes = {
     t: PropTypes.func.isRequired,
     comment: PropTypes.shape({
@@ -80,7 +105,9 @@ class CommentEditor extends Component {
         content: PropTypes.string.isRequired,
         botId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         deleted: PropTypes.bool,
+        end: PropTypes.bool,
         thinking: PropTypes.number,
+        options: PropTypes.arrayOf(PropTypes.string),
       }),
       type: PropTypes.string,
       user: PropTypes.string,
@@ -94,6 +121,8 @@ class CommentEditor extends Component {
     onEditComment: PropTypes.func.isRequired,
     onReply: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
+    onQuickResponse: PropTypes.func.isRequired,
+    onDeleteThread: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
     adaptStyle: PropTypes.func.isRequired,
@@ -103,6 +132,10 @@ class CommentEditor extends Component {
       content: PropTypes.string,
       actions: PropTypes.string,
       commentText: PropTypes.string,
+      quickReplyButtons: PropTypes.string,
+      replyBox: PropTypes.string,
+      moreQuickReplyMenu: PropTypes.string,
+      replyContainer: PropTypes.string,
     }).isRequired,
     users: PropTypes.arrayOf(
       PropTypes.shape({
@@ -141,7 +174,8 @@ class CommentEditor extends Component {
     selectedTab: 'preview',
     isHovered: false,
     open: false,
-    expanded: true,
+    anchorEl: null,
+    openQuickReplyMenu: false,
   };
 
   converter = new Showdown.Converter({
@@ -225,6 +259,19 @@ class CommentEditor extends Component {
     adaptStyle();
   };
 
+  handleOnQuickReply = (text) => {
+    const { comment, onQuickResponse } = this.props;
+    onQuickResponse(comment, text);
+  };
+
+  handleOnClickQuickReplyMenu = (event) => {
+    this.setState({ anchorEl: event.currentTarget, openQuickReplyMenu: true });
+  };
+
+  handleOnCloseQuickReplyMenu = () => {
+    this.setState({ anchorEl: null, openQuickReplyMenu: false });
+  };
+
   handleDeleteClicked = () => {
     // todo: functional components can not be given refs
     // here we are trying to give focus to the dialog
@@ -241,10 +288,6 @@ class CommentEditor extends Component {
     const { onDeleteComment, adaptStyle } = this.props;
     onDeleteComment(id);
     adaptStyle();
-  };
-
-  handleExpandComment = () => {
-    this.setState((prevState) => ({ expanded: !prevState.expanded }));
   };
 
   renderAvatar() {
@@ -275,14 +318,11 @@ class CommentEditor extends Component {
 
   renderCardHeader() {
     const {
-      t,
       comment,
       classes,
       readOnly,
       users,
       botUsers,
-      onReply,
-      showReply,
       showDelete,
       showEdit,
       lang,
@@ -298,7 +338,7 @@ class CommentEditor extends Component {
       },
     );
 
-    const { isEdited, isHovered, open, expanded } = this.state;
+    const { isEdited, isHovered, open } = this.state;
     const userName =
       (comment.type === BOT_COMMENT
         ? botUsers.find((u) => u.id === comment.data.botId)?.name
@@ -312,7 +352,7 @@ class CommentEditor extends Component {
         subheader={formattedUpdatedAt}
         action={
           <>
-            {isHovered && !readOnly && expanded ? (
+            {isHovered && !readOnly ? (
               <>
                 {!comment.data.deleted && showEdit ? (
                   <IconButton
@@ -334,24 +374,6 @@ class CommentEditor extends Component {
                 ) : null}
               </>
             ) : null}
-            {showReply ? (
-              <IconButton aria-label="reply" color="primary" onClick={onReply}>
-                <Reply />
-              </IconButton>
-            ) : null}
-            <Tooltip title={t('Toggle Visibility')}>
-              <IconButton
-                onClick={this.handleExpandComment}
-                aria-expanded={expanded}
-                aria-label={t('show more')}
-                style={{
-                  transform: !expanded ? 'rotate(0deg)' : 'rotate(180deg)',
-                  marginLeft: 'auto',
-                }}
-              >
-                <ExpandMore />
-              </IconButton>
-            </Tooltip>
             <ConfirmDialog
               ref={this.dialogRef}
               open={open}
@@ -387,9 +409,99 @@ class CommentEditor extends Component {
     );
   }
 
+  renderReplyOptions() {
+    const { t, onReply, comment, classes, onDeleteThread } = this.props;
+    const { openQuickReplyMenu, anchorEl } = this.state;
+    const { options = null } = comment.data;
+
+    let replyButtons = null;
+    let replyMenu = null;
+
+    if (options) {
+      replyButtons = options
+        .slice(0, MAX_QUICK_REPLIES_TO_SHOW)
+        .map((optText) => (
+          <Button
+            className={classes.quickReplyButtons}
+            variant="outlined"
+            color="primary"
+            onClick={() => this.handleOnQuickReply(optText)}
+          >
+            {optText}
+          </Button>
+        ));
+
+      if (options.length > MAX_QUICK_REPLIES_TO_SHOW) {
+        replyMenu = (
+          <>
+            <IconButton
+              className={classes.moreQuickReplyMenu}
+              onClick={(e) => this.handleOnClickQuickReplyMenu(e)}
+            >
+              <MoreVertRounded />
+            </IconButton>
+            <Menu
+              open={openQuickReplyMenu}
+              anchorEl={anchorEl}
+              onClose={() => this.handleOnCloseQuickReplyMenu()}
+            >
+              {options
+                .slice(MAX_QUICK_REPLIES_TO_SHOW, options.length)
+                .map((optText) => (
+                  <MenuItem
+                    key={optText}
+                    onClick={() => this.handleOnQuickReply(optText)}
+                  >
+                    {optText}
+                  </MenuItem>
+                ))}
+            </Menu>
+          </>
+        );
+      }
+    }
+
+    return (
+      <Grid
+        className={classes.replyContainer}
+        container
+        spacing={1}
+        justifyContent="space-between"
+      >
+        <Grid item xs="auto">
+          {
+            // if the comment is not the end
+            _.isUndefined(comment.data.end) ? (
+              <TextField
+                className={classes.replyBox}
+                size="small"
+                variant="outlined"
+                placeholder={t('Reply ...')}
+                fullWidth
+                onClick={onReply}
+              />
+            ) : (
+              <Button
+                color="secondary"
+                variant="outlined"
+                onClick={() => onDeleteThread(comment._id)}
+              >
+                {t('Restart interaction')}
+              </Button>
+            )
+          }
+        </Grid>
+        <Grid item xs="auto">
+          {replyButtons}
+          {replyMenu}
+        </Grid>
+      </Grid>
+    );
+  }
+
   render() {
-    const { selectedTab, value, isEdited, expanded } = this.state;
-    const { classes, t, activity, comment } = this.props;
+    const { selectedTab, value, isEdited } = this.state;
+    const { classes, t, activity, comment, showReply } = this.props;
 
     if (activity) {
       return <Loader />;
@@ -409,67 +521,66 @@ class CommentEditor extends Component {
         elevation={0}
       >
         {this.renderCardHeader()}
-        <Collapse in={expanded} timeout="auto" unmountOnExit>
-          <CardContent className={classes.content}>
-            {isEdited ? (
-              <ReactMde
-                value={value}
-                onChange={(v) => this.setState({ value: v })}
-                selectedTab={selectedTab}
-                onTabChange={(tab) => this.setState({ selectedTab: tab })}
-                generateMarkdownPreview={(markdown) =>
-                  Promise.resolve(this.converter.makeHtml(markdown))
-                }
-                l18n={{
-                  write: t('Write'),
-                  preview: t('Preview'),
-                }}
-                childProps={{
-                  writeButton: {
-                    tabIndex: -1,
-                  },
-                  textArea: {
-                    autoFocus: true,
-                  },
-                }}
-                minEditorHeight={60}
-                minPreviewHeight={60}
-              />
-            ) : (
-              <Grid
-                container
-                className={`mde-preview standalone ${classes.commentText}`}
-              >
-                <Grid
-                  item
-                  xs={12}
-                  className="mde-preview-content"
-                  dangerouslySetInnerHTML={{
-                    __html: this.converter.makeHtml(value),
-                  }}
-                />
-              </Grid>
-            )}
-          </CardContent>
+        <CardContent className={classes.content}>
           {isEdited ? (
-            <CardActions className={classes.actions}>
-              <Button
-                variant="outlined"
-                color="secondary"
-                onClick={this.handleOnCancel}
-              >
-                {t('Cancel')}
-              </Button>
-              <Button
-                variant="contained"
-                color="primary"
-                onClick={this.handleOnSubmit}
-              >
-                {t('Save')}
-              </Button>
-            </CardActions>
-          ) : null}
-        </Collapse>
+            <ReactMde
+              value={value}
+              onChange={(v) => this.setState({ value: v })}
+              selectedTab={selectedTab}
+              onTabChange={(tab) => this.setState({ selectedTab: tab })}
+              generateMarkdownPreview={(markdown) =>
+                Promise.resolve(this.converter.makeHtml(markdown))
+              }
+              l18n={{
+                write: t('Write'),
+                preview: t('Preview'),
+              }}
+              childProps={{
+                writeButton: {
+                  tabIndex: -1,
+                },
+                textArea: {
+                  autoFocus: true,
+                },
+              }}
+              minEditorHeight={MIN_EDITOR_HEIGHT}
+              minPreviewHeight={MIN_PREVIEW_HEIGHT}
+            />
+          ) : (
+            <Grid
+              container
+              className={`mde-preview standalone ${classes.commentText}`}
+            >
+              <Grid
+                item
+                xs={12}
+                className="mde-preview-content"
+                dangerouslySetInnerHTML={{
+                  __html: this.converter.makeHtml(value),
+                }}
+              />
+              {showReply ? this.renderReplyOptions() : null}
+            </Grid>
+          )}
+        </CardContent>
+        {isEdited ? (
+          <CardActions className={classes.actions}>
+            <Button
+              variant="outlined"
+              color="secondary"
+              onClick={this.handleOnCancel}
+            >
+              {t('Cancel')}
+            </Button>
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={this.handleOnSubmit}
+            >
+              {t('Save')}
+            </Button>
+          </CardActions>
+        ) : null}
       </Card>
     );
   }
@@ -490,8 +601,8 @@ const mapStateToProps = ({ context, users, appInstanceResources }) => ({
   lang: context.lang,
 });
 
-const ConnectedCommentEditor = connect(mapStateToProps)(CommentEditor);
+const ConnectedCommentView = connect(mapStateToProps)(CommentView);
 
-const StyledCommentEditor = withStyles(styles)(ConnectedCommentEditor);
+const StyledCommentView = withStyles(styles)(ConnectedCommentView);
 
-export default withTranslation()(StyledCommentEditor);
+export default withTranslation()(StyledCommentView);
