@@ -225,10 +225,13 @@ class CodeReview extends Component {
   };
 
   handleDeleteThread = (commentId) => {
+    const { dispatchDeleteAppInstanceResource } = this.props;
     const thread = this.getCommentIdsInThread(commentId);
     // remove the line comment
     thread.pop();
-    thread.forEach((id) => this.handleDelete(id));
+    // this approach does not work because of the delay
+    // thread.forEach((id) => this.handleDelete(id));
+    thread.forEach((id) => dispatchDeleteAppInstanceResource(id));
   };
 
   handleCancel = () => {
@@ -499,20 +502,19 @@ class CodeReview extends Component {
     return thread;
   };
 
-  findParent = (comments, parentId) =>
-    comments.find((c) => c.data.parent === parentId);
+  findParent = (comments, parentId) => comments.find((c) => c._id === parentId);
 
   getCommentIdsInThread = (commentId) => {
     const { comments, botComments, teacherComments } = this.props;
     const allComments = [...comments, ...botComments, ...teacherComments];
-    const thread = [commentId];
+    const thread = [];
     let parentId = commentId;
     let parent = null;
     do {
       parent = this.findParent(allComments, parentId);
       if (parent) {
-        parentId = parent._id;
         thread.push(parentId);
+        parentId = parent.data.parent;
       }
     } while (parent);
 
@@ -561,7 +563,7 @@ class CodeReview extends Component {
             onCancel={this.handleCancel}
             onSubmit={(_id, content) => this.handleSubmit(_id, content)}
             onQuickResponse={this.handleQuickResponse}
-            onDeleteThread={this.handleDeleteThread}
+            onDeleteThread={(_id) => this.handleDeleteThread(_id)}
             adaptStyle={this.adaptHeight}
           />
         </Fragment>

@@ -188,8 +188,8 @@ class AvatarDialog extends Component {
     } = this.props;
     const { avatar } = this.state;
 
-    // this is a new bot
-    if (avatarId === '') {
+    // this is a new bot so avatarId is null
+    if (!avatarId) {
       dispatchPostAppInstanceResource({
         data: avatar,
         type: BOT_USER,
