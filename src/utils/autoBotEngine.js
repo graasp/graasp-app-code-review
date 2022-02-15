@@ -25,7 +25,7 @@ const DEFAULT_PERSONALITY_STEP_KEYS = [
 const DEFAULT_PERSONALITY_JSON = {
   start: {
     id: 0,
-    text: 'Ask me about:',
+    text: 'Ask me about option 1 or option 2',
     options: ['option 1', 'option 2'],
   },
   steps: [
@@ -33,7 +33,7 @@ const DEFAULT_PERSONALITY_JSON = {
       id: 1,
       referer: [0],
       match: '1',
-      text: 'You chose option 1! Now you can ask about:',
+      text: 'You chose option 1! Now you can ask about my dog or the weather',
       options: ['the weather', 'my lovely dog'],
     },
     {
@@ -121,7 +121,11 @@ const getFallbackOptionText = (personality, id) => {
   }
   return `${
     personalityObj.fallback.text
-  }${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${getFormattedOptionText(step)}`;
+  }${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${getFormattedOptionText(
+    step,
+  )}${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}You can reply with "${step.options.join(
+    '", "',
+  )}"`;
 };
 
 const getDefaultOptionText = (personality) => {
@@ -134,6 +138,16 @@ const getDefaultOptionText = (personality) => {
     optionId: personalityObj.start.id,
     options: personalityObj.start.options,
   };
+};
+
+const getStep = (personality, stepId) => {
+  let personalityObj = personality;
+  if (typeof personality === 'string') {
+    personalityObj = parsePersonality(personality);
+  }
+  return [...personalityObj.steps, personalityObj.start].find(
+    (s) => s.id === stepId,
+  );
 };
 
 const validatePersonality = (personality) => {
@@ -210,10 +224,12 @@ const handleAutoResponse = (commentId, comment, getState) => {
     let responseText = getFallbackOptionText(personality, prevCommentOptionId);
     let optionId = prevCommentOptionId;
     let isEnd = false;
-    let chosenOption = null;
+    let chosenOption = getStep(personality, prevCommentOptionId);
 
     if (prevCommentStep && !prevCommentStep.options.length) {
       responseText = personality.end.text;
+      // remove quick replies
+      chosenOption = null;
       isEnd = true;
     } else if (availableOptions.length) {
       // find an option that matches its regex against the comment content
@@ -223,6 +239,8 @@ const handleAutoResponse = (commentId, comment, getState) => {
       if (chosenOption) {
         optionId = chosenOption.id;
         responseText = getFormattedOptionText(chosenOption);
+      } else {
+        chosenOption = getStep(personality, prevCommentOptionId);
       }
     }
     // create comment
