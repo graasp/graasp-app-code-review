@@ -17,6 +17,8 @@ export const DEFAULT_SETTINGS = {
   showEditButton: false,
   showVisibility: true,
   codeSamplesArePublic: true,
+  allowComments: true,
+  allowReplies: true,
   code: '',
   programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
 };

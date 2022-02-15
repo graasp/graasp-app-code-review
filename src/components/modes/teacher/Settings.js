@@ -125,6 +125,8 @@ class Settings extends Component {
       showEditButton: PropTypes.bool.isRequired,
       showVisibility: PropTypes.bool.isRequired,
       codeSamplesArePublic: PropTypes.bool.isRequired,
+      allowComments: PropTypes.bool.isRequired,
+      allowReplies: PropTypes.bool.isRequired,
       code: PropTypes.string.isRequired,
     }).isRequired,
     t: PropTypes.func.isRequired,
@@ -246,6 +248,8 @@ class Settings extends Component {
       showEditButton,
       showVisibility,
       codeSamplesArePublic,
+      allowComments,
+      allowReplies,
     } = settings;
 
     const hasChanged = !_.isEqual(settingsProp, settings);
@@ -303,6 +307,24 @@ class Settings extends Component {
       />
     );
 
+    const allowCommentsSwitchControl = (
+      <Switch
+        color="primary"
+        value="allowComments"
+        checked={allowComments}
+        onChange={this.handleChangeCheckbox('allowComments')}
+      />
+    );
+
+    const allowRepliesSwitchControl = (
+      <Switch
+        color="primary"
+        value="allowReplies"
+        checked={allowReplies}
+        onChange={this.handleChangeCheckbox('allowReplies')}
+      />
+    );
+
     const programmingLanguageSelectControl = (
       <Select
         className={classes.formControl}
@@ -351,6 +373,18 @@ class Settings extends Component {
                   <FormControlLabel
                     control={codeSampleVisibilitySwitchControl}
                     label={t("Allow students to see other students' code")}
+                  />
+                </FormGroup>
+              </FormControl>
+              <FormControl>
+                <FormGroup>
+                  <FormControlLabel
+                    control={allowCommentsSwitchControl}
+                    label={t('Allow Comments')}
+                  />
+                  <FormControlLabel
+                    control={allowRepliesSwitchControl}
+                    label={t('Allow Replies')}
                   />
                 </FormGroup>
               </FormControl>

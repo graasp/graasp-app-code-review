@@ -109,6 +109,8 @@ class CodeReview extends Component {
       showEditButton: PropTypes.bool.isRequired,
       showVersionNav: PropTypes.bool.isRequired,
       showVisibility: PropTypes.bool.isRequired,
+      allowReplies: PropTypes.bool.isRequired,
+      allowComments: PropTypes.bool.isRequired,
     }).isRequired,
     userId: PropTypes.string,
     comments: PropTypes.arrayOf(
@@ -527,8 +529,26 @@ class CodeReview extends Component {
     return thread;
   };
 
+  getReplySetting = () => {
+    const { isFeedbackView, isStudentView, settings } = this.props;
+    const { allowReplies } = settings;
+    if (isStudentView) {
+      return allowReplies;
+    }
+    return !isFeedbackView;
+  };
+
+  getLineCommentSetting = () => {
+    const { isFeedbackView, isStudentView, settings } = this.props;
+    const { allowComments } = settings;
+    if (isStudentView) {
+      return allowComments;
+    }
+    return isFeedbackView;
+  };
+
   renderCommentThread(parentComment, comments) {
-    const { isFeedbackView, isStudentView } = this.props;
+    const { isStudentView } = this.props;
     const { focusedId } = this.state;
 
     const thread = this.buildThread(parentComment, comments);
@@ -556,8 +576,8 @@ class CodeReview extends Component {
           <CommentView
             comment={comment}
             readOnly={this.getReadOnlyProperty(comment)}
-            // do not show the reply button if bot comment has reach end of conversation
-            showReply={!isFeedbackView && !hasChildrenComments}
+            // replies are disabled for comments with a response
+            showReply={this.getReplySetting() && !hasChildrenComments}
             showDelete={showDelete}
             showEdit={showEdit}
             focused={focusedId === comment._id}
@@ -579,7 +599,6 @@ class CodeReview extends Component {
 
   renderCodeReviewBody(code, commentList) {
     const {
-      isFeedbackView,
       isTeacherView,
       botComments,
       teacherComments,
@@ -636,7 +655,7 @@ class CodeReview extends Component {
             htmlLine={line}
             lineNumber={i + 1}
             onClickAdd={(lineNum) => this.handleAddComment(lineNum)}
-            disableButton={isFeedbackView}
+            disableButton={this.getLineCommentSetting()}
             numThreads={numThreads}
             toggleHiddenStateCallback={this.toggleHiddenCommentState}
             programmingLanguage={programmingLanguage}
