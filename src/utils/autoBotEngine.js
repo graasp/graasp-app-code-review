@@ -1,4 +1,6 @@
 import { max, min } from 'lodash/math';
+import _ from 'lodash';
+import i18n from '../config/i18n';
 import { BOT_COMMENT, BOT_USER } from '../config/appInstanceResourceTypes';
 
 const DEFAULT_STEP = {
@@ -92,7 +94,7 @@ const parsePersonality = (personality) => JSON.parse(personality);
 
 const addEmptyStep = (personality) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   return {
@@ -112,7 +114,7 @@ const getBotPersonality = (bot) => JSON.parse(bot.data.personality);
 
 const getFallbackOptionText = (personality, id) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   let step = personalityObj.steps.find((m) => m.id === id);
@@ -123,14 +125,14 @@ const getFallbackOptionText = (personality, id) => {
     personalityObj.fallback.text
   }${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${getFormattedOptionText(
     step,
-  )}${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}You can reply with "${step.options.join(
-    '", "',
-  )}"`;
+  )}${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${i18n.t(
+    'You can reply with',
+  )}:"${step.options.join('", "')}"`;
 };
 
 const getDefaultOptionText = (personality) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   return {
@@ -142,7 +144,7 @@ const getDefaultOptionText = (personality) => {
 
 const getStep = (personality, stepId) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   return [...personalityObj.steps, personalityObj.start].find(
@@ -153,7 +155,7 @@ const getStep = (personality, stepId) => {
 const validatePersonality = (personality) => {
   let personalityObj = personality;
   // try to parse the object
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   // check that there is a start
