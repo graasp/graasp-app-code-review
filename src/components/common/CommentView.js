@@ -467,7 +467,6 @@ class CommentView extends Component {
       <Grid
         className={classes.replyContainer}
         container
-        // spacing={1}
         justifyContent="space-between"
       >
         <Grid item>
