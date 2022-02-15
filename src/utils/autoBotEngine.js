@@ -127,7 +127,7 @@ const getFallbackOptionText = (personality, id) => {
     step,
   )}${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${i18n.t(
     'You can reply with',
-  )}:"${step.options.join('", "')}"`;
+  )}: "${step.options.join('", "')}"`;
 };
 
 const getDefaultOptionText = (personality) => {

@@ -36,6 +36,7 @@ import {
   CREATED_COMMENT,
   CREATED_QUICK_REPLY,
   DELETED_COMMENT,
+  RESTART_INTERACTION,
   UPDATED_COMMENT,
 } from '../../config/verbs';
 import { getDefaultOptionText } from '../../utils/autoBotEngine';
@@ -225,13 +226,18 @@ class CodeReview extends Component {
   };
 
   handleDeleteThread = (commentId) => {
-    const { dispatchDeleteAppInstanceResource } = this.props;
+    const { dispatchDeleteAppInstanceResource, dispatchPostAction } =
+      this.props;
     const thread = this.getCommentIdsInThread(commentId);
     // remove the line comment
     thread.pop();
     // this approach does not work because of the delay
     // thread.forEach((id) => this.handleDelete(id));
     thread.forEach((id) => dispatchDeleteAppInstanceResource(id));
+    // track that this thread was deleted
+    dispatchPostAction({
+      verb: RESTART_INTERACTION,
+    });
   };
 
   handleCancel = () => {
