@@ -493,9 +493,11 @@ class CommentView extends Component {
           }
         </Grid>
         <Grid item>
-          <FormLabel className={classes.quickReplyLabel}>
-            {t('Quick Replies')}:
-          </FormLabel>
+          {_.isEmpty(replyButtons) ? null : (
+            <FormLabel className={classes.quickReplyLabel}>
+              {t('Quick Replies')}:
+            </FormLabel>
+          )}
           {replyButtons}
           {replyMenu}
         </Grid>
