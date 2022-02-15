@@ -12,6 +12,7 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  FormLabel,
   Menu,
   MenuItem,
   TextField,
@@ -80,17 +81,17 @@ const styles = (theme) => ({
     height: '40px',
     margin: '2px',
   },
+  quickReplyLabel: {
+    marginRight: '5px',
+  },
   replyBox: {
     margin: '2px',
-    // display: 'block',
-    width: '100% important!',
   },
   moreQuickReplyMenu: {
     height: '40px',
     width: '40px',
   },
   replyContainer: {
-    // display: 'inline',
     gridTemplateColumns: 'auto max-content',
   },
 });
@@ -133,6 +134,7 @@ class CommentView extends Component {
       actions: PropTypes.string,
       commentText: PropTypes.string,
       quickReplyButtons: PropTypes.string,
+      quickReplyLabel: PropTypes.string,
       replyBox: PropTypes.string,
       moreQuickReplyMenu: PropTypes.string,
       replyContainer: PropTypes.string,
@@ -423,7 +425,7 @@ class CommentView extends Component {
         .map((optText) => (
           <Button
             className={classes.quickReplyButtons}
-            variant="outlined"
+            variant="contained"
             color="primary"
             onClick={() => this.handleOnQuickReply(optText)}
           >
@@ -465,10 +467,10 @@ class CommentView extends Component {
       <Grid
         className={classes.replyContainer}
         container
-        spacing={1}
+        // spacing={1}
         justifyContent="space-between"
       >
-        <Grid item xs="auto">
+        <Grid item>
           {
             // if the comment is not the end
             _.isUndefined(comment.data.end) ? (
@@ -476,7 +478,7 @@ class CommentView extends Component {
                 className={classes.replyBox}
                 size="small"
                 variant="outlined"
-                placeholder={t('Reply ...')}
+                placeholder={`${t('Reply')}...`}
                 fullWidth
                 onClick={onReply}
               />
@@ -491,7 +493,10 @@ class CommentView extends Component {
             )
           }
         </Grid>
-        <Grid item xs="auto">
+        <Grid item>
+          <FormLabel className={classes.quickReplyLabel}>
+            {t('Quick Replies')}:
+          </FormLabel>
           {replyButtons}
           {replyMenu}
         </Grid>
