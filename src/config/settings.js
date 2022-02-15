@@ -25,6 +25,7 @@ export const PRIVATE_VISIBILITY = 'private';
 export const DEFAULT_VISIBILITY = PRIVATE_VISIBILITY;
 
 export const JAVASCRIPT = 'javascript';
+export const JAVA = 'java';
 export const PYTHON = 'python';
 export const MATLAB = 'matlab';
 export const JSON_LANG = 'json';
