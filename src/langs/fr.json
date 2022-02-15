@@ -6,6 +6,7 @@
     "Cancel": "Annuler",
     "Finish": "Valider",
     "Save": "Enregistrer",
+    "Send": "Envoyer",
     "Yes": "Oui",
     "Write": "Écrire",
     "Preview": "Aperçu",
@@ -61,6 +62,7 @@
     "Commit Message": "Message de commit",
     "Optional Extended Description": "Description étendue optionnelle",
     "Updated Code sample": "Mis à jour le code",
-    "Add an Optional Description": "Ajouter une description optionnelle"
+    "Add an Optional Description": "Ajouter une description optionnelle",
+    "You can reply with": "Vous pouvez répondre avec"
   }
 }

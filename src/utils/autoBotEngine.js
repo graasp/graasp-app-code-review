@@ -1,4 +1,6 @@
 import { max, min } from 'lodash/math';
+import _ from 'lodash';
+import i18n from '../config/i18n';
 import { BOT_COMMENT, BOT_USER } from '../config/appInstanceResourceTypes';
 
 const DEFAULT_STEP = {
@@ -25,7 +27,7 @@ const DEFAULT_PERSONALITY_STEP_KEYS = [
 const DEFAULT_PERSONALITY_JSON = {
   start: {
     id: 0,
-    text: 'Ask me about:',
+    text: 'Ask me about option 1 or option 2',
     options: ['option 1', 'option 2'],
   },
   steps: [
@@ -33,7 +35,7 @@ const DEFAULT_PERSONALITY_JSON = {
       id: 1,
       referer: [0],
       match: '1',
-      text: 'You chose option 1! Now you can ask about:',
+      text: 'You chose option 1! Now you can ask about my dog or the weather',
       options: ['the weather', 'my lovely dog'],
     },
     {
@@ -92,7 +94,7 @@ const parsePersonality = (personality) => JSON.parse(personality);
 
 const addEmptyStep = (personality) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   return {
@@ -112,7 +114,7 @@ const getBotPersonality = (bot) => JSON.parse(bot.data.personality);
 
 const getFallbackOptionText = (personality, id) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   let step = personalityObj.steps.find((m) => m.id === id);
@@ -121,12 +123,16 @@ const getFallbackOptionText = (personality, id) => {
   }
   return `${
     personalityObj.fallback.text
-  }${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${getFormattedOptionText(step)}`;
+  }${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${getFormattedOptionText(
+    step,
+  )}${DEFAULT_PERSONALITY_FALLBACK_SEPARATOR}${i18n.t(
+    'You can reply with',
+  )}: "${step.options.join('", "')}"`;
 };
 
 const getDefaultOptionText = (personality) => {
   let personalityObj = personality;
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   return {
@@ -136,10 +142,20 @@ const getDefaultOptionText = (personality) => {
   };
 };
 
+const getStep = (personality, stepId) => {
+  let personalityObj = personality;
+  if (_.isString(personality)) {
+    personalityObj = parsePersonality(personality);
+  }
+  return [...personalityObj.steps, personalityObj.start].find(
+    (s) => s.id === stepId,
+  );
+};
+
 const validatePersonality = (personality) => {
   let personalityObj = personality;
   // try to parse the object
-  if (typeof personality === 'string') {
+  if (_.isString(personality)) {
     personalityObj = parsePersonality(personality);
   }
   // check that there is a start
@@ -210,10 +226,12 @@ const handleAutoResponse = (commentId, comment, getState) => {
     let responseText = getFallbackOptionText(personality, prevCommentOptionId);
     let optionId = prevCommentOptionId;
     let isEnd = false;
-    let chosenOption = null;
+    let chosenOption = getStep(personality, prevCommentOptionId);
 
     if (prevCommentStep && !prevCommentStep.options.length) {
       responseText = personality.end.text;
+      // remove quick replies
+      chosenOption = null;
       isEnd = true;
     } else if (availableOptions.length) {
       // find an option that matches its regex against the comment content
@@ -223,6 +241,8 @@ const handleAutoResponse = (commentId, comment, getState) => {
       if (chosenOption) {
         optionId = chosenOption.id;
         responseText = getFormattedOptionText(chosenOption);
+      } else {
+        chosenOption = getStep(personality, prevCommentOptionId);
       }
     }
     // create comment
