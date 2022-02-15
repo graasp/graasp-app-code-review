@@ -577,7 +577,7 @@ class CommentView extends Component {
               color="primary"
               onClick={this.handleOnSubmit}
             >
-              {t('Save')}
+              {t('Send')}
             </Button>
           </CardActions>
         ) : null}
