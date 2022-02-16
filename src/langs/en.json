@@ -7,6 +7,7 @@
     "Finish": "Finish",
     "Save": "Save",
     "Send": "Send",
+    "Reply": "Reply",
     "Yes": "Yes",
     "Write": "Write",
     "Preview": "Preview",
@@ -29,6 +30,7 @@
     "Viewing comments from ": "Viewing comments from ",
     "Bot Users": "Bot Users",
     "Avatar": "Avatar",
+    "Instructor": "Instructor",
     "Actions": "Actions",
     "No Bots": "No Bots",
     "Add a New Bot User": "Add a New Bot User",
@@ -63,6 +65,9 @@
     "Optional Extended Description": "Optional Extended Description",
     "Updated Code sample": "Updated Code sample",
     "Add an Optional Description": "Add an Optional Description",
-    "You can reply with": "You can reply with"
+    "You can reply with": "You can reply with",
+    "Quick Replies": "Quick Replies",
+    "Restart interaction": "Restart interaction",
+    "Default Version": "Default Version"
   }
 }

@@ -7,6 +7,7 @@
     "Finish": "Valider",
     "Save": "Enregistrer",
     "Send": "Envoyer",
+    "Reply": "Répondre",
     "Yes": "Oui",
     "Write": "Écrire",
     "Preview": "Aperçu",
@@ -29,6 +30,7 @@
     "Viewing comments from ": "Affichage des commentaires de ",
     "Bot Users": "Utilisateurs robots",
     "Avatar": "Avatar",
+    "Instructor": "Instructeur",
     "Actions": "Actions",
     "No Bots": "Pas de robots",
     "Add a New Bot User": "Ajouter un nouvel utilisateur robot",
@@ -63,6 +65,9 @@
     "Optional Extended Description": "Description étendue optionnelle",
     "Updated Code sample": "Mis à jour le code",
     "Add an Optional Description": "Ajouter une description optionnelle",
-    "You can reply with": "Vous pouvez répondre avec"
+    "You can reply with": "Vous pouvez répondre avec",
+    "Quick Replies": "Réponses rapides",
+    "Restart interaction": "Recommencer l'interaction",
+    "Default Version": "Version par défaut"
   }
 }
