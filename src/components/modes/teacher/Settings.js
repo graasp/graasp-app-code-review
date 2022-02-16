@@ -24,7 +24,7 @@ import { withTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
 import { closeSettings, patchAppInstance } from '../../../actions';
 import Loader from '../../common/Loader';
-import { JAVASCRIPT, MATLAB, PYTHON } from '../../../config/settings';
+import { JAVA, JAVASCRIPT, MATLAB, PYTHON } from '../../../config/settings';
 import {
   SAVE_SETTINGS_BUTTON_CYPRESS,
   SETTINGS_MODAL_CYPRESS,
@@ -314,6 +314,7 @@ class Settings extends Component {
         }}
       >
         <MenuItem value={JAVASCRIPT}>JavaScript</MenuItem>
+        <MenuItem value={JAVA}>Java</MenuItem>
         <MenuItem value={PYTHON}>Python</MenuItem>
         <MenuItem value={MATLAB}>MATLAB</MenuItem>
       </Select>

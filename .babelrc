@@ -3,7 +3,14 @@
     [
       "prismjs",
       {
-        "languages": ["python", "css", "markup", "javascript", "matlab"],
+        "languages": [
+          "python",
+          "css",
+          "markup",
+          "javascript",
+          "matlab",
+          "java"
+        ],
         "css": true
       }
     ]
