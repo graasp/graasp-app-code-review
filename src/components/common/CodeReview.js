@@ -542,7 +542,8 @@ class CodeReview extends Component {
     const { isFeedbackView, isStudentView, settings } = this.props;
     const { allowComments } = settings;
     if (isStudentView) {
-      return allowComments;
+      // when comments are allowed, disableButton is false -> invert the value
+      return !allowComments;
     }
     return isFeedbackView;
   };

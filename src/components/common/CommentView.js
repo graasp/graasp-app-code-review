@@ -445,6 +445,15 @@ class CommentView extends Component {
             <Menu
               open={openQuickReplyMenu}
               anchorEl={anchorEl}
+              getContentAnchorEl={null}
+              anchorOrigin={{
+                vertical: 'bottom',
+                horizontal: 'left',
+              }}
+              transformOrigin={{
+                vertical: 'top',
+                horizontal: 'left',
+              }}
               onClose={() => this.handleOnCloseQuickReplyMenu()}
             >
               {options
