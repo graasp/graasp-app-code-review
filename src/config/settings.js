@@ -78,6 +78,15 @@ export const DEFAULT_INSTRUCTOR_COMMIT_INFO = [
 // default text to display when comment is deleted but has active children
 export const DELETED_COMMENT_TEXT = '[DELETED]';
 
+// default reactions
+export const DEFAULT_REACTIONS = [
+  { label: '+1', icon: '👍' },
+  { label: '-1', icon: '👎' },
+  { label: 'laugh', icon: '😄' },
+  { label: 'rocket', icon: '🚀' },
+  { label: 'heart', icon: '❤️' },
+];
+
 // user type
 export const GRAASP_USER_TYPE = 'graasp';
 

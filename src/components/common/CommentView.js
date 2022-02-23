@@ -12,6 +12,7 @@ import {
   CardActions,
   CardContent,
   CardHeader,
+  Chip,
   FormLabel,
   Menu,
   MenuItem,
@@ -26,9 +27,10 @@ import { withTranslation } from 'react-i18next';
 import _ from 'lodash';
 import { formatDistance } from 'date-fns';
 import { fr, enGB } from 'date-fns/locale';
-import { MoreVertRounded } from '@material-ui/icons';
+import { InsertEmoticon, MoreVertRounded } from '@material-ui/icons';
 import ConfirmDialog from './ConfirmDialog';
 import {
+  DEFAULT_REACTIONS,
   DEFAULT_USER,
   MAX_QUICK_REPLIES_TO_SHOW,
   MIN_EDITOR_HEIGHT,
@@ -38,9 +40,11 @@ import Loader from './Loader';
 import {
   BOT_COMMENT,
   BOT_USER,
+  REACTION,
   USER_COMMENT_TYPES,
 } from '../../config/appInstanceResourceTypes';
 import DotLoader from './DotLoader';
+import { deleteAppInstanceResource } from '../../actions';
 
 // helper method
 const getInitials = (name) => {
@@ -50,6 +54,16 @@ const getInitials = (name) => {
   }
   return '';
 };
+
+const getInitialReactionChipArray = () =>
+  DEFAULT_REACTIONS.map((reaction) => ({
+    // spread the label and emoji of the reaction
+    ...reaction,
+    count: 0,
+    // is set to the id of the reaction if the user gave one
+    // highlights the chip to indicate to user
+    reactionIdFromUser: null,
+  }));
 
 // to add a new language to the dates
 const locales = { fr, en: enGB };
@@ -123,6 +137,7 @@ class CommentView extends Component {
     onReply: PropTypes.func.isRequired,
     onSubmit: PropTypes.func.isRequired,
     onQuickResponse: PropTypes.func.isRequired,
+    onAddReaction: PropTypes.func.isRequired,
     onDeleteThread: PropTypes.func.isRequired,
     onDeleteComment: PropTypes.func.isRequired,
     onCancel: PropTypes.func.isRequired,
@@ -154,6 +169,16 @@ class CommentView extends Component {
     ),
     activity: PropTypes.number,
     lang: PropTypes.string.isRequired,
+    userId: PropTypes.string.isRequired,
+    reactions: PropTypes.arrayOf(
+      PropTypes.shape({
+        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        userId: PropTypes.string,
+        commentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        reaction: PropTypes.string,
+      }),
+    ),
+    dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -164,6 +189,7 @@ class CommentView extends Component {
     activity: 0,
     users: [],
     botUsers: [],
+    reactions: [],
     readOnly: false,
     showReply: true,
     showDelete: true,
@@ -176,8 +202,10 @@ class CommentView extends Component {
     selectedTab: 'preview',
     isHovered: false,
     open: false,
-    anchorEl: null,
+    quickReplyAnchorEl: null,
+    addReactionsAnchorEl: null,
     openQuickReplyMenu: false,
+    openAddReactionsMenu: false,
   };
 
   converter = new Showdown.Converter({
@@ -266,12 +294,43 @@ class CommentView extends Component {
     onQuickResponse(comment, text);
   };
 
+  handleOnAddReaction = (reactionLabel) => {
+    const { comment, onAddReaction } = this.props;
+    this.handleOnCloseAddReactionMenu();
+    onAddReaction(comment._id, reactionLabel);
+  };
+
+  handleOnClickAddReactionDisplay = (reactionLabel, reactionId) => {
+    const { dispatchDeleteAppInstanceResource, onAddReaction, comment } =
+      this.props;
+    // the reaction id is not null -> the reaction exists, so we want to remove it
+    if (reactionId) {
+      dispatchDeleteAppInstanceResource(reactionId.toString());
+    } else {
+      onAddReaction(comment._id, reactionLabel);
+    }
+  };
+
   handleOnClickQuickReplyMenu = (event) => {
-    this.setState({ anchorEl: event.currentTarget, openQuickReplyMenu: true });
+    this.setState({
+      quickReplyAnchorEl: event.currentTarget,
+      openQuickReplyMenu: true,
+    });
   };
 
   handleOnCloseQuickReplyMenu = () => {
-    this.setState({ anchorEl: null, openQuickReplyMenu: false });
+    this.setState({ quickReplyAnchorEl: null, openQuickReplyMenu: false });
+  };
+
+  handleOnClickAddReactionMenu = (event) => {
+    this.setState({
+      addReactionsAnchorEl: event.currentTarget,
+      openAddReactionsMenu: true,
+    });
+  };
+
+  handleOnCloseAddReactionMenu = () => {
+    this.setState({ addReactionsAnchorEl: null, openAddReactionsMenu: false });
   };
 
   handleDeleteClicked = () => {
@@ -290,6 +349,19 @@ class CommentView extends Component {
     const { onDeleteComment, adaptStyle } = this.props;
     onDeleteComment(id);
     adaptStyle();
+  };
+
+  groupReactions = (reactionChipArray, reaction) => {
+    const { userId } = this.props;
+    const newReactionChipArray = [...reactionChipArray];
+    const reactionIndex = reactionChipArray.findIndex(
+      (r) => reaction.reaction === r.label,
+    );
+    newReactionChipArray[reactionIndex].count += 1;
+    if (reaction.userId === userId) {
+      newReactionChipArray[reactionIndex].reactionIdFromUser = reaction.id;
+    }
+    return newReactionChipArray;
   };
 
   renderAvatar() {
@@ -376,6 +448,7 @@ class CommentView extends Component {
                 ) : null}
               </>
             ) : null}
+            {this.renderAddReactions()}
             <ConfirmDialog
               ref={this.dialogRef}
               open={open}
@@ -411,9 +484,81 @@ class CommentView extends Component {
     );
   }
 
+  renderReactions() {
+    const { reactions } = this.props;
+    const groupedReactions = reactions.reduce(
+      this.groupReactions,
+      getInitialReactionChipArray(),
+    );
+    return (
+      <Grid container item direction="row" spacing={1} alignItems="center">
+        <Grid item>{this.renderAddReactions('small')}</Grid>
+        {groupedReactions.map((reaction) =>
+          reaction.count ? (
+            <Grid item key={reaction.label}>
+              <Chip
+                label={`${reaction.icon} ${reaction.count}`}
+                size="small"
+                color="primary"
+                // here we use undefined because when using "filled" it does not work
+                variant={reaction.reactionIdFromUser ? undefined : 'outlined'}
+                onClick={() =>
+                  this.handleOnClickAddReactionDisplay(
+                    reaction.label,
+                    reaction.reactionIdFromUser,
+                  )
+                }
+              />
+            </Grid>
+          ) : null,
+        )}
+      </Grid>
+    );
+  }
+
+  renderAddReactions(size = 'medium') {
+    const { openAddReactionsMenu, addReactionsAnchorEl } = this.state;
+    return (
+      <>
+        <IconButton
+          aria-label="add reaction"
+          color="primary"
+          size={size}
+          onClick={(e) => this.handleOnClickAddReactionMenu(e)}
+        >
+          <InsertEmoticon />
+        </IconButton>
+        <Menu
+          open={openAddReactionsMenu}
+          anchorEl={addReactionsAnchorEl}
+          getContentAnchorEl={null}
+          // center the popover
+          anchorOrigin={{
+            vertical: 'bottom',
+            horizontal: 'center',
+          }}
+          transformOrigin={{
+            vertical: 'top',
+            horizontal: 'center',
+          }}
+          onClose={() => this.handleOnCloseAddReactionMenu()}
+        >
+          {DEFAULT_REACTIONS.map((reaction) => (
+            <MenuItem
+              key={reaction.label}
+              onClick={() => this.handleOnAddReaction(reaction.label)}
+            >
+              {reaction.icon}
+            </MenuItem>
+          ))}
+        </Menu>
+      </>
+    );
+  }
+
   renderReplyOptions() {
     const { t, onReply, comment, classes, onDeleteThread } = this.props;
-    const { openQuickReplyMenu, anchorEl } = this.state;
+    const { openQuickReplyMenu, quickReplyAnchorEl } = this.state;
     const { options = null } = comment.data;
 
     let replyButtons = null;
@@ -444,7 +589,7 @@ class CommentView extends Component {
             </IconButton>
             <Menu
               open={openQuickReplyMenu}
-              anchorEl={anchorEl}
+              anchorEl={quickReplyAnchorEl}
               getContentAnchorEl={null}
               anchorOrigin={{
                 vertical: 'bottom',
@@ -574,6 +719,7 @@ class CommentView extends Component {
                   __html: this.converter.makeHtml(value),
                 }}
               />
+              {this.renderReactions()}
               {showReply ? this.renderReplyOptions() : null}
             </Grid>
           )}
@@ -601,7 +747,10 @@ class CommentView extends Component {
   }
 }
 
-const mapStateToProps = ({ context, users, appInstanceResources }) => ({
+const mapStateToProps = (
+  { context, users, appInstanceResources },
+  ownProps,
+) => ({
   users: users.content,
   botUsers: appInstanceResources.content
     .filter((res) => res.type === BOT_USER)
@@ -614,9 +763,27 @@ const mapStateToProps = ({ context, users, appInstanceResources }) => ({
     })),
   activity: appInstanceResources.activity.length,
   lang: context.lang,
+  reactions: appInstanceResources.content
+    .filter((res) => res.type === REACTION)
+    // filter reactions that belong to this comment
+    .filter((res) => res.data.commentId === ownProps.comment._id)
+    // spread the reaction data and keep the id
+    .map(({ _id, user, data }) => ({
+      id: _id,
+      userId: user,
+      ...data,
+    })),
+  userId: context.userId,
 });
 
-const ConnectedCommentView = connect(mapStateToProps)(CommentView);
+const mapDispatchToProps = {
+  dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
+};
+
+const ConnectedCommentView = connect(
+  mapStateToProps,
+  mapDispatchToProps,
+)(CommentView);
 
 const StyledCommentView = withStyles(styles)(ConnectedCommentView);
 
