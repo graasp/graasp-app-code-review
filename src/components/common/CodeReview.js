@@ -520,7 +520,7 @@ class CodeReview extends Component {
       // - is in studentView
       if (!standalone && isStudentView) {
         // get height from the root element and add a small margin
-        const actualHeight = this.rootRef.current.scrollHeight + 30;
+        const actualHeight = this.rootRef.current.scrollHeight + 60;
         if (window.frameElement) {
           window.frameElement.style['min-height'] = `${actualHeight}px`;
           window.frameElement.style.overflowY = 'hidden';

@@ -16,6 +16,7 @@ import {
   FormLabel,
   Menu,
   MenuItem,
+  Popover,
   TextField,
   Tooltip,
 } from '@material-ui/core';
@@ -30,6 +31,7 @@ import { fr, enGB } from 'date-fns/locale';
 import { InsertEmoticon, MoreVertRounded } from '@material-ui/icons';
 import ConfirmDialog from './ConfirmDialog';
 import {
+  DEFAULT_REACTION_PICKER_COL_NUMBER,
   DEFAULT_REACTIONS,
   DEFAULT_USER,
   MAX_QUICK_REPLIES_TO_SHOW,
@@ -59,11 +61,25 @@ const getInitialReactionChipArray = () =>
   DEFAULT_REACTIONS.map((reaction) => ({
     // spread the label and emoji of the reaction
     ...reaction,
+    // counter of the number of reaction from a specific type
     count: 0,
-    // is set to the id of the reaction if the user gave one
-    // highlights the chip to indicate to user
+    // is set to the id of the app instance resource so that we can delete it when the user clicks it
+    // is null when user has not given that reaction type
+    // when not null it highlights the selects chip
     reactionIdFromUser: null,
   }));
+
+const groupReactions = (reactionChipArray, reaction) => {
+  const newReactionChipArray = [...reactionChipArray];
+  const reactionIndex = reactionChipArray.findIndex(
+    (r) => reaction.reaction === r.label,
+  );
+  newReactionChipArray[reactionIndex].count += 1;
+  if (reaction.isSelf) {
+    newReactionChipArray[reactionIndex].reactionIdFromUser = reaction.id;
+  }
+  return newReactionChipArray;
+};
 
 // to add a new language to the dates
 const locales = { fr, en: enGB };
@@ -107,6 +123,16 @@ const styles = (theme) => ({
   },
   replyContainer: {
     gridTemplateColumns: 'auto max-content',
+  },
+  emojiButton: {
+    height: '30px',
+    width: '30px',
+    padding: '0',
+    margin: '1px',
+    minWidth: '30px',
+  },
+  emojiPicker: {
+    padding: theme.spacing(0.5),
   },
 });
 
@@ -153,6 +179,8 @@ class CommentView extends Component {
       replyBox: PropTypes.string,
       moreQuickReplyMenu: PropTypes.string,
       replyContainer: PropTypes.string,
+      emojiButton: PropTypes.string,
+      emojiPicker: PropTypes.string,
     }).isRequired,
     users: PropTypes.arrayOf(
       PropTypes.shape({
@@ -169,13 +197,15 @@ class CommentView extends Component {
     ),
     activity: PropTypes.number,
     lang: PropTypes.string.isRequired,
-    userId: PropTypes.string.isRequired,
     reactions: PropTypes.arrayOf(
       PropTypes.shape({
-        id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        userId: PropTypes.string,
-        commentId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
-        reaction: PropTypes.string,
+        icon: PropTypes.string,
+        label: PropTypes.string,
+        count: PropTypes.number,
+        reactionIdFromUser: PropTypes.oneOfType([
+          PropTypes.string,
+          PropTypes.number,
+        ]),
       }),
     ),
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
@@ -200,7 +230,6 @@ class CommentView extends Component {
     isEdited: false,
     value: '',
     selectedTab: 'preview',
-    isHovered: false,
     open: false,
     quickReplyAnchorEl: null,
     addReactionsAnchorEl: null,
@@ -303,6 +332,8 @@ class CommentView extends Component {
   handleOnClickAddReactionDisplay = (reactionLabel, reactionId) => {
     const { dispatchDeleteAppInstanceResource, onAddReaction, comment } =
       this.props;
+    // close menu
+    this.handleOnCloseAddReactionMenu();
     // the reaction id is not null -> the reaction exists, so we want to remove it
     if (reactionId) {
       dispatchDeleteAppInstanceResource(reactionId.toString());
@@ -349,19 +380,6 @@ class CommentView extends Component {
     const { onDeleteComment, adaptStyle } = this.props;
     onDeleteComment(id);
     adaptStyle();
-  };
-
-  groupReactions = (reactionChipArray, reaction) => {
-    const { userId } = this.props;
-    const newReactionChipArray = [...reactionChipArray];
-    const reactionIndex = reactionChipArray.findIndex(
-      (r) => reaction.reaction === r.label,
-    );
-    newReactionChipArray[reactionIndex].count += 1;
-    if (reaction.userId === userId) {
-      newReactionChipArray[reactionIndex].reactionIdFromUser = reaction.id;
-    }
-    return newReactionChipArray;
   };
 
   renderAvatar() {
@@ -412,7 +430,7 @@ class CommentView extends Component {
       },
     );
 
-    const { isEdited, isHovered, open } = this.state;
+    const { isEdited, open } = this.state;
     const userName =
       (comment.type === BOT_COMMENT
         ? botUsers.find((u) => u.id === comment.data.botId)?.name
@@ -426,7 +444,7 @@ class CommentView extends Component {
         subheader={formattedUpdatedAt}
         action={
           <>
-            {isHovered && !readOnly ? (
+            {!readOnly ? (
               <>
                 {!comment.data.deleted && showEdit ? (
                   <IconButton
@@ -486,14 +504,14 @@ class CommentView extends Component {
 
   renderReactions() {
     const { reactions } = this.props;
-    const groupedReactions = reactions.reduce(
-      this.groupReactions,
-      getInitialReactionChipArray(),
-    );
+    // if there are no reactions show nothing
+    if (reactions.every((g) => g.count === 0)) {
+      return null;
+    }
     return (
       <Grid container item direction="row" spacing={1} alignItems="center">
         <Grid item>{this.renderAddReactions('small')}</Grid>
-        {groupedReactions.map((reaction) =>
+        {reactions.map((reaction) =>
           reaction.count ? (
             <Grid item key={reaction.label}>
               <Chip
@@ -517,6 +535,7 @@ class CommentView extends Component {
   }
 
   renderAddReactions(size = 'medium') {
+    const { reactions, classes } = this.props;
     const { openAddReactionsMenu, addReactionsAnchorEl } = this.state;
     return (
       <>
@@ -528,7 +547,7 @@ class CommentView extends Component {
         >
           <InsertEmoticon />
         </IconButton>
-        <Menu
+        <Popover
           open={openAddReactionsMenu}
           anchorEl={addReactionsAnchorEl}
           getContentAnchorEl={null}
@@ -543,15 +562,37 @@ class CommentView extends Component {
           }}
           onClose={() => this.handleOnCloseAddReactionMenu()}
         >
-          {DEFAULT_REACTIONS.map((reaction) => (
-            <MenuItem
-              key={reaction.label}
-              onClick={() => this.handleOnAddReaction(reaction.label)}
-            >
-              {reaction.icon}
-            </MenuItem>
-          ))}
-        </Menu>
+          <Grid container direction="column" className={classes.emojiPicker}>
+            {_.chunk(reactions, DEFAULT_REACTION_PICKER_COL_NUMBER).map(
+              (row) => (
+                <Grid container item direction="row">
+                  {row.map((reaction) => (
+                    <Grid item>
+                      <Button
+                        className={classes.emojiButton}
+                        key={reaction.label}
+                        disableElevation
+                        color="primary"
+                        // here we use undefined because when using "filled" it does not work
+                        variant={
+                          reaction.reactionIdFromUser ? 'contained' : 'outlined'
+                        }
+                        onClick={() =>
+                          this.handleOnClickAddReactionDisplay(
+                            reaction.label,
+                            reaction.reactionIdFromUser,
+                          )
+                        }
+                      >
+                        {reaction.icon}
+                      </Button>
+                    </Grid>
+                  ))}
+                </Grid>
+              ),
+            )}
+          </Grid>
+        </Popover>
       </>
     );
   }
@@ -672,14 +713,7 @@ class CommentView extends Component {
     }
 
     return (
-      <Card
-        className={classes.root}
-        onMouseEnter={() => this.setState({ isHovered: true })}
-        onMouseLeave={() => this.setState({ isHovered: false })}
-        onFocus={() => this.setState({ isHovered: true })}
-        onBlur={() => this.setState({ isHovered: false })}
-        elevation={0}
-      >
+      <Card className={classes.root} elevation={0}>
         {this.renderCardHeader()}
         <CardContent className={classes.content}>
           {isEdited ? (
@@ -770,10 +804,11 @@ const mapStateToProps = (
     // spread the reaction data and keep the id
     .map(({ _id, user, data }) => ({
       id: _id,
-      userId: user,
+      isSelf: user === context.userId,
       ...data,
-    })),
-  userId: context.userId,
+    }))
+    // get the grouped reactions
+    .reduce(groupReactions, getInitialReactionChipArray()),
 });
 
 const mapDispatchToProps = {

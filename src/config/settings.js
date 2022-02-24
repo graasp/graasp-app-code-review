@@ -83,9 +83,14 @@ export const DEFAULT_REACTIONS = [
   { label: '+1', icon: '👍' },
   { label: '-1', icon: '👎' },
   { label: 'laugh', icon: '😄' },
-  { label: 'rocket', icon: '🚀' },
+  { label: 'hooray', icon: '🎉' },
+  { label: 'confused', icon: '😕' },
   { label: 'heart', icon: '❤️' },
+  { label: 'rocket', icon: '🚀' },
+  { label: 'eyes', icon: '👀' },
+  { label: 'laughing-tears', icon: '😂' },
 ];
+export const DEFAULT_REACTION_PICKER_COL_NUMBER = 3;
 
 // user type
 export const GRAASP_USER_TYPE = 'graasp';
