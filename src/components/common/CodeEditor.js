@@ -78,7 +78,7 @@ class CodeEditor extends React.Component {
       commitDescription: PropTypes.string.isRequired,
     }).isRequired,
     programmingLanguage: PropTypes.string.isRequired,
-    codeSamplesArePublic: PropTypes.bool.isRequired,
+    visibility: PropTypes.bool.isRequired,
     userId: PropTypes.string.isRequired,
     maxMessageLength: PropTypes.number,
   };
@@ -117,14 +117,13 @@ class CodeEditor extends React.Component {
     };
 
   handleCommit = () => {
-    const { dispatchPostAppInstanceResource, userId, codeSamplesArePublic } =
-      this.props;
+    const { dispatchPostAppInstanceResource, userId, visibility } = this.props;
     const { commit } = this.state;
     // post app instance resource as public
     dispatchPostAppInstanceResource({
       data: commit,
       type: CODE,
-      visibility: codeSamplesArePublic ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY,
+      visibility: visibility ? PUBLIC_VISIBILITY : PRIVATE_VISIBILITY,
       userId,
     });
 
@@ -257,7 +256,7 @@ const mapStateToProps = ({ appInstance, layout, context }) => {
   return {
     userId: context.userId,
     programmingLanguage: appInstance.content.settings.programmingLanguage,
-    codeSamplesArePublic: appInstance.content.settings.codeSamplesArePublic,
+    visibility: appInstance.content.settings.visibility,
     commit: {
       code: code || defaultCode,
       commitMessage: DEFAULT_COMMIT_MESSAGE,

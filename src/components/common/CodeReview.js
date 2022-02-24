@@ -38,7 +38,7 @@ import {
   CREATED_COMMENT,
   CREATED_QUICK_REPLY,
   DELETED_COMMENT,
-  RESTART_INTERACTION,
+  RESTARTED_INTERACTION,
   UPDATED_COMMENT,
 } from '../../config/verbs';
 import { getDefaultOptionText } from '../../utils/autoBotEngine';
@@ -113,7 +113,7 @@ class CodeReview extends Component {
       showVisibility: PropTypes.bool.isRequired,
       allowReplies: PropTypes.bool.isRequired,
       allowComments: PropTypes.bool.isRequired,
-      codeSamplesArePublic: PropTypes.bool.isRequired,
+      visibility: PropTypes.bool.isRequired,
     }).isRequired,
     userId: PropTypes.string,
     comments: PropTypes.arrayOf(
@@ -241,7 +241,7 @@ class CodeReview extends Component {
     thread.forEach((id) => dispatchDeleteAppInstanceResource(id));
     // track that this thread was deleted
     dispatchPostAction({
-      verb: RESTART_INTERACTION,
+      verb: RESTARTED_INTERACTION,
     });
   };
 
@@ -458,7 +458,7 @@ class CodeReview extends Component {
       commentId,
     };
     const type = REACTION;
-    const visibility = settings.codeSamplesArePublic
+    const visibility = settings.visibility
       ? PUBLIC_VISIBILITY
       : PRIVATE_VISIBILITY;
 

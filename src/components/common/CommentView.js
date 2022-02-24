@@ -46,7 +46,8 @@ import {
   USER_COMMENT_TYPES,
 } from '../../config/appInstanceResourceTypes';
 import DotLoader from './DotLoader';
-import { deleteAppInstanceResource } from '../../actions';
+import { deleteAppInstanceResource, postAction } from '../../actions';
+import { REMOVED_REACTION } from '../../config/verbs';
 
 // helper method
 const getInitials = (name) => {
@@ -209,6 +210,7 @@ class CommentView extends Component {
       }),
     ),
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
+    dispatchPostAction: PropTypes.func.isRequired,
   };
 
   static defaultProps = {
@@ -330,13 +332,23 @@ class CommentView extends Component {
   };
 
   handleOnClickAddReactionDisplay = (reactionLabel, reactionId) => {
-    const { dispatchDeleteAppInstanceResource, onAddReaction, comment } =
-      this.props;
+    const {
+      dispatchDeleteAppInstanceResource,
+      dispatchPostAction,
+      onAddReaction,
+      comment,
+    } = this.props;
     // close menu
     this.handleOnCloseAddReactionMenu();
     // the reaction id is not null -> the reaction exists, so we want to remove it
     if (reactionId) {
       dispatchDeleteAppInstanceResource(reactionId.toString());
+      dispatchPostAction({
+        data: {
+          label: reactionLabel,
+        },
+        verb: REMOVED_REACTION,
+      });
     } else {
       onAddReaction(comment._id, reactionLabel);
     }
@@ -813,6 +825,7 @@ const mapStateToProps = (
 
 const mapDispatchToProps = {
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
+  dispatchPostAction: postAction,
 };
 
 const ConnectedCommentView = connect(

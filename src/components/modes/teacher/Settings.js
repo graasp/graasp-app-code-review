@@ -124,7 +124,7 @@ class Settings extends Component {
       showVersionNav: PropTypes.bool.isRequired,
       showEditButton: PropTypes.bool.isRequired,
       showVisibility: PropTypes.bool.isRequired,
-      codeSamplesArePublic: PropTypes.bool.isRequired,
+      visibility: PropTypes.bool.isRequired,
       allowComments: PropTypes.bool.isRequired,
       allowReplies: PropTypes.bool.isRequired,
       code: PropTypes.string.isRequired,
@@ -247,7 +247,7 @@ class Settings extends Component {
       showVersionNav,
       showEditButton,
       showVisibility,
-      codeSamplesArePublic,
+      visibility,
       allowComments,
       allowReplies,
     } = settings;
@@ -300,9 +300,9 @@ class Settings extends Component {
     const codeSampleVisibilitySwitchControl = (
       <Switch
         color="primary"
-        value="codeSamplesArePublic"
-        checked={codeSamplesArePublic}
-        onChange={this.handleChangeCheckbox('codeSamplesArePublic')}
+        value="visibility"
+        checked={visibility}
+        onChange={this.handleChangeCheckbox('visibility')}
         disabled={!topBarVisible}
       />
     );
