@@ -38,7 +38,7 @@ import {
   MIN_EDITOR_HEIGHT,
   MIN_PREVIEW_HEIGHT,
 } from '../../config/settings';
-import Loader from './Loader';
+// import Loader from './Loader';
 import {
   BOT_COMMENT,
   BOT_USER,
@@ -196,7 +196,7 @@ class CommentView extends Component {
         initials: PropTypes.string,
       }),
     ),
-    activity: PropTypes.number,
+    // activity: PropTypes.number,
     lang: PropTypes.string.isRequired,
     reactions: PropTypes.arrayOf(
       PropTypes.shape({
@@ -218,7 +218,7 @@ class CommentView extends Component {
       user: '',
       updatedAt: '',
     },
-    activity: 0,
+    // activity: 0,
     users: [],
     botUsers: [],
     reactions: [],
@@ -530,8 +530,7 @@ class CommentView extends Component {
                 label={`${reaction.icon} ${reaction.count}`}
                 size="small"
                 color="primary"
-                // here we use undefined because when using "filled" it does not work
-                variant={reaction.reactionIdFromUser ? undefined : 'outlined'}
+                variant={reaction.reactionIdFromUser ? 'default' : 'outlined'}
                 onClick={() =>
                   this.handleOnClickAddReactionDisplay(
                     reaction.label,
@@ -585,7 +584,6 @@ class CommentView extends Component {
                         key={reaction.label}
                         disableElevation
                         color="primary"
-                        // here we use undefined because when using "filled" it does not work
                         variant={
                           reaction.reactionIdFromUser ? 'contained' : 'outlined'
                         }
@@ -714,11 +712,18 @@ class CommentView extends Component {
 
   render() {
     const { selectedTab, value, isEdited } = this.state;
-    const { classes, t, activity, comment, showReply } = this.props;
+    const {
+      classes,
+      t,
+      // activity,
+      comment,
+      showReply,
+    } = this.props;
 
-    if (activity) {
-      return <Loader />;
-    }
+    // todo: change activity to target a specific comment
+    // if (activity) {
+    //   return <Loader />;
+    // }
 
     if (comment.data.thinking) {
       return this.renderThinkingComment();
@@ -807,7 +812,7 @@ const mapStateToProps = (
       uri: data.uri,
       description: data.description,
     })),
-  activity: appInstanceResources.activity.length,
+  // activity: appInstanceResources.activity.length,
   lang: context.lang,
   reactions: appInstanceResources.content
     .filter((res) => res.type === REACTION)
