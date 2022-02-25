@@ -18,6 +18,7 @@ import {
   BOT_COMMENT,
   BOT_USER,
   COMMENT,
+  REACTION,
   TEACHER_COMMENT,
 } from '../../config/appInstanceResourceTypes';
 import {
@@ -32,11 +33,12 @@ import {
   STUDENT_MODES,
 } from '../../config/settings';
 import {
+  ADDED_REACTION,
   CLICKED_ADD_COMMENT,
   CREATED_COMMENT,
   CREATED_QUICK_REPLY,
   DELETED_COMMENT,
-  RESTART_INTERACTION,
+  RESTARTED_INTERACTION,
   UPDATED_COMMENT,
 } from '../../config/verbs';
 import { getDefaultOptionText } from '../../utils/autoBotEngine';
@@ -111,6 +113,7 @@ class CodeReview extends Component {
       showVisibility: PropTypes.bool.isRequired,
       allowReplies: PropTypes.bool.isRequired,
       allowComments: PropTypes.bool.isRequired,
+      visibility: PropTypes.bool.isRequired,
     }).isRequired,
     userId: PropTypes.string,
     comments: PropTypes.arrayOf(
@@ -238,7 +241,7 @@ class CodeReview extends Component {
     thread.forEach((id) => dispatchDeleteAppInstanceResource(id));
     // track that this thread was deleted
     dispatchPostAction({
-      verb: RESTART_INTERACTION,
+      verb: RESTARTED_INTERACTION,
     });
   };
 
@@ -441,6 +444,40 @@ class CodeReview extends Component {
     });
   };
 
+  handleAddReaction = (commentId, reaction) => {
+    const {
+      dispatchPostAppInstanceResource,
+      dispatchPostAction,
+      userId,
+      settings,
+    } = this.props;
+
+    // define the data
+    const data = {
+      reaction,
+      commentId,
+    };
+    const type = REACTION;
+    const visibility = settings.visibility
+      ? PUBLIC_VISIBILITY
+      : PRIVATE_VISIBILITY;
+
+    dispatchPostAppInstanceResource({
+      data,
+      type,
+      visibility,
+      userId,
+    });
+    // post action that the user has reacted
+    dispatchPostAction({
+      data: {
+        data,
+        type,
+      },
+      verb: ADDED_REACTION,
+    });
+  };
+
   handleHideAllComments = (checked) => {
     // set hidden state
     this.setState((prevState) => ({
@@ -483,7 +520,7 @@ class CodeReview extends Component {
       // - is in studentView
       if (!standalone && isStudentView) {
         // get height from the root element and add a small margin
-        const actualHeight = this.rootRef.current.scrollHeight + 30;
+        const actualHeight = this.rootRef.current.scrollHeight + 60;
         if (window.frameElement) {
           window.frameElement.style['min-height'] = `${actualHeight}px`;
           window.frameElement.style.overflowY = 'hidden';
@@ -542,7 +579,8 @@ class CodeReview extends Component {
     const { isFeedbackView, isStudentView, settings } = this.props;
     const { allowComments } = settings;
     if (isStudentView) {
-      return allowComments;
+      // when comments are allowed, disableButton is false -> invert the value
+      return !allowComments;
     }
     return isFeedbackView;
   };
@@ -589,6 +627,7 @@ class CodeReview extends Component {
             onCancel={this.handleCancel}
             onSubmit={(_id, content) => this.handleSubmit(_id, content)}
             onQuickResponse={this.handleQuickResponse}
+            onAddReaction={this.handleAddReaction}
             onDeleteThread={(_id) => this.handleDeleteThread(_id)}
             adaptStyle={this.adaptHeight}
           />

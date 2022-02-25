@@ -16,7 +16,7 @@ export const DEFAULT_SETTINGS = {
   showVersionNav: false,
   showEditButton: false,
   showVisibility: true,
-  codeSamplesArePublic: true,
+  visibility: true,
   allowComments: true,
   allowReplies: true,
   code: '',
