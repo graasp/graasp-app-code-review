@@ -39,7 +39,8 @@ const DEFAULT_AVATAR = {
   name: '',
   uri: '',
   autoBot: false,
-  autoSeed: false,
+  autoSeed: true,
+  allowHumanIntervention: true,
   personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
   description: '',
 };
@@ -140,6 +141,7 @@ class AvatarDialog extends Component {
       uri: PropTypes.string,
       autoBot: PropTypes.bool,
       autoSeed: PropTypes.bool,
+      allowHumanIntervention: PropTypes.bool,
       personality: PropTypes.string,
       description: PropTypes.string,
     }),
@@ -379,6 +381,16 @@ class AvatarDialog extends Component {
       />
     );
 
+    const allowHumanInterventionSwitchControl = (
+      <Switch
+        color="primary"
+        value="allowHumanIntervention"
+        size="small"
+        checked={avatar.allowHumanIntervention}
+        onChange={this.handleChangeSwitch('allowHumanIntervention')}
+      />
+    );
+
     const addEmptyStepButton = (
       <Button
         color="primary"
@@ -451,6 +463,14 @@ class AvatarDialog extends Component {
                 <FormControlLabel
                   control={autoSeedSwitchControl}
                   label={t('Enable Automatic Message Seeding')}
+                />
+              </Grid>
+            ) : null}
+            {avatar.autoBot ? (
+              <Grid item>
+                <FormControlLabel
+                  control={allowHumanInterventionSwitchControl}
+                  label={t('Allow Human Intervention')}
                 />
               </Grid>
             ) : null}

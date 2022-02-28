@@ -34,6 +34,8 @@ export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
 export const DEFAULT_USER = 'Anonymous';
 export const DEFAULT_CODE_ID = 'Instructor';
 
+export const DEFAULT_HELP_WANTED_ONLY_SETTING = false;
+
 // time to wait in ms
 export const ADAPT_HEIGHT_TIMEOUT = 50;
 
@@ -91,6 +93,9 @@ export const DEFAULT_REACTIONS = [
   { label: 'laughing-tears', icon: '😂' },
 ];
 export const DEFAULT_REACTION_PICKER_COL_NUMBER = 3;
+
+// hint for flag message is empty
+export const FLAG_REASON_EMPTY = 'Reason must not be empty';
 
 // user type
 export const GRAASP_USER_TYPE = 'graasp';

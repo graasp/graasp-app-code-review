@@ -8,7 +8,10 @@ import {
   FLAG_GETTING_APP_INSTANCE,
 } from '../types';
 import { showErrorToast } from '../utils/toasts';
-import { DEFAULT_PROGRAMMING_LANGUAGE } from '../config/settings';
+import {
+  DEFAULT_HELP_WANTED_ONLY_SETTING,
+  DEFAULT_PROGRAMMING_LANGUAGE,
+} from '../config/settings';
 
 export const DEFAULT_SETTINGS = {
   headerVisible: false,
@@ -19,6 +22,7 @@ export const DEFAULT_SETTINGS = {
   visibility: true,
   allowComments: true,
   allowReplies: true,
+  helpWantedOnly: DEFAULT_HELP_WANTED_ONLY_SETTING,
   code: '',
   programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
 };

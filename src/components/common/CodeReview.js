@@ -71,6 +71,7 @@ class CodeReview extends Component {
     classes: PropTypes.shape({
       container: PropTypes.string,
       commentContainer: PropTypes.string,
+      requireHelpComment: PropTypes.string,
     }).isRequired,
     isTeacherView: PropTypes.bool,
     isStudentView: PropTypes.bool,

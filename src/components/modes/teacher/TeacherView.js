@@ -15,7 +15,8 @@ import IconButton from '@material-ui/core/IconButton';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
 import './TeacherView.css';
-import { Input } from '@material-ui/icons';
+import { Input, PanTool } from '@material-ui/icons';
+import { Chip, FormControlLabel, Switch, Tooltip } from '@material-ui/core';
 import {
   patchAppInstanceResource,
   postAppInstanceResource,
@@ -25,10 +26,12 @@ import {
   setSelectedStudent,
   openFeedbackView,
   getAppInstanceResources,
+  patchAppInstance,
 } from '../../../actions';
 import Settings from './Settings';
-import { COMMENT } from '../../../config/appInstanceResourceTypes';
+import { BOT_COMMENT, COMMENT } from '../../../config/appInstanceResourceTypes';
 import FeedbackView from './FeedbackView';
+import { DEFAULT_HELP_WANTED_ONLY_SETTING } from '../../../config/settings';
 
 export class TeacherView extends Component {
   static propTypes = {
@@ -46,6 +49,7 @@ export class TeacherView extends Component {
     dispatchGetUsers: PropTypes.func.isRequired,
     dispatchGetAppInstanceResources: PropTypes.func.isRequired,
     dispatchSetSelectedStudent: PropTypes.func.isRequired,
+    dispatchPatchAppInstance: PropTypes.func.isRequired,
     // inside the shape method you should put the shape
     // that the resources your app uses will have
     comments: PropTypes.arrayOf(
@@ -67,6 +71,9 @@ export class TeacherView extends Component {
         spaceId: PropTypes.string,
       }),
     ),
+    settings: PropTypes.shape({
+      helpWantedOnly: PropTypes.bool,
+    }).isRequired,
   };
 
   static defaultProps = {
@@ -114,9 +121,11 @@ export class TeacherView extends Component {
     const {
       students,
       comments,
+      t,
       dispatchOpenFeedbackView,
       dispatchSetSelectedStudent,
       dispatchGetAppInstanceResources,
+      settings: { helpWantedOnly = DEFAULT_HELP_WANTED_ONLY_SETTING },
     } = this.props;
     // if there are no resources, show an empty table
     if (!comments.length) {
@@ -130,29 +139,66 @@ export class TeacherView extends Component {
     return students.map(({ id, name }) => {
       const numberOfComments =
         comments.filter((r) => r.user === id)?.length || 0;
-      return numberOfComments ? (
+      const numberOfInterventions =
+        comments.filter((r) => r.user === id && r.data.requireIntervention)
+          ?.length || 0;
+      // only show a row when the student has made comments
+      // and if the `helpWantedOnly` setting is true only include users that asked for help
+      return numberOfComments && !(!numberOfInterventions && helpWantedOnly) ? (
         <TableRow key={id}>
           <TableCell>{name}</TableCell>
+          <TableCell>
+            {numberOfInterventions ? (
+              <Tooltip title={t('Help requested')}>
+                <Chip
+                  color="primary"
+                  variant="outlined"
+                  icon={<PanTool color="primary" />}
+                  label={numberOfInterventions}
+                />
+              </Tooltip>
+            ) : null}
+          </TableCell>
           <TableCell>{numberOfComments}</TableCell>
           <TableCell>
-            <IconButton
-              color="primary"
-              onClick={() => {
-                // force update the comments
-                dispatchGetAppInstanceResources();
-                // dispatch the selected student to layout
-                dispatchSetSelectedStudent({
-                  selectedStudent: id,
-                });
-                dispatchOpenFeedbackView();
-              }}
-            >
-              <Input />
-            </IconButton>
+            <Tooltip title={t('View in Context')}>
+              <IconButton
+                color="primary"
+                onClick={() => {
+                  // force update the comments
+                  dispatchGetAppInstanceResources();
+                  // dispatch the selected student to layout
+                  dispatchSetSelectedStudent({
+                    selectedStudent: id,
+                  });
+                  dispatchOpenFeedbackView();
+                }}
+              >
+                <Input />
+              </IconButton>
+            </Tooltip>
           </TableCell>
         </TableRow>
       ) : null;
     });
+  };
+
+  saveSettings = (settingsToChange) => {
+    const { settings, dispatchPatchAppInstance } = this.props;
+    const newSettings = {
+      ...settings,
+      ...settingsToChange,
+    };
+    dispatchPatchAppInstance({
+      data: newSettings,
+    });
+  };
+
+  handleChangeHelpWantedFilter = ({ target: { checked } }) => {
+    const settingsToChange = {
+      helpWantedOnly: checked,
+    };
+    this.saveSettings(settingsToChange);
   };
 
   render() {
@@ -163,7 +209,17 @@ export class TeacherView extends Component {
       // this property allows us to do translations and is injected by i18next
       t,
       dispatchOpenSettings,
+      settings: { helpWantedOnly = DEFAULT_HELP_WANTED_ONLY_SETTING },
     } = this.props;
+
+    const switchComponent = (
+      <Switch
+        checked={helpWantedOnly}
+        onChange={this.handleChangeHelpWantedFilter}
+        name="helpWantedOnly"
+        color="primary"
+      />
+    );
 
     return (
       <>
@@ -172,11 +228,18 @@ export class TeacherView extends Component {
             <Typography variant="h6" color="inherit">
               {t('Student Comments')}
             </Typography>
+            <div align="right">
+              <FormControlLabel
+                control={switchComponent}
+                label={t('Need Help Only')}
+              />
+            </div>
             <Paper className={classes.root}>
               <Table className={classes.table}>
                 <TableHead>
                   <TableRow>
                     <TableCell>{t('Name')}</TableCell>
+                    <TableCell>{t('Help needed')}</TableCell>
                     <TableCell>{t('Total Number of comments')}</TableCell>
                     <TableCell>{t('View Student comments')}</TableCell>
                   </TableRow>
@@ -202,14 +265,17 @@ export class TeacherView extends Component {
 }
 
 // get the app instance resources that are saved in the redux store
-const mapStateToProps = ({ users, appInstanceResources }) => ({
+const mapStateToProps = ({ users, appInstanceResources, appInstance }) => ({
   // we transform the list of students in the database
   // to the shape needed by the select component
   students: users.content.map(({ id, name }) => ({
     id,
     name,
   })),
-  comments: appInstanceResources.content.filter((r) => r.type === COMMENT),
+  comments: appInstanceResources.content.filter((r) =>
+    [COMMENT, BOT_COMMENT].includes(r.type),
+  ),
+  settings: appInstance.content.settings,
 });
 
 // allow this component to dispatch a post
@@ -223,6 +289,7 @@ const mapDispatchToProps = {
   dispatchOpenSettings: openSettings,
   dispatchOpenFeedbackView: openFeedbackView,
   dispatchSetSelectedStudent: setSelectedStudent,
+  dispatchPatchAppInstance: patchAppInstance,
 };
 
 const ConnectedComponent = connect(
