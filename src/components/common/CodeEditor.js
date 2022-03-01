@@ -14,8 +14,11 @@ import {
 import { CODE } from '../../config/appInstanceResourceTypes';
 import {
   COMMIT_MESSAGE_TOO_LONG,
+  DEFAULT_CODE_CONTENT_SETTING,
   DEFAULT_COMMIT_MESSAGE,
   DEFAULT_MAX_COMMIT_MESSAGE_LENGTH,
+  DEFAULT_PROGRAMMING_LANGUAGE,
+  DEFAULT_VISIBILITY_MODE_SETTING,
   DEFAULT_WARNING_COLOR,
   PRIVATE_VISIBILITY,
   PUBLIC_VISIBILITY,
@@ -252,11 +255,15 @@ class CodeEditor extends React.Component {
 
 const mapStateToProps = ({ appInstance, layout, context }) => {
   const { code } = layout.codeEditorSettings;
-  const { code: defaultCode } = appInstance.content.settings;
+  const {
+    code: defaultCode = DEFAULT_CODE_CONTENT_SETTING,
+    programmingLanguage = DEFAULT_PROGRAMMING_LANGUAGE,
+    visibility = DEFAULT_VISIBILITY_MODE_SETTING,
+  } = appInstance.content.settings;
   return {
     userId: context.userId,
-    programmingLanguage: appInstance.content.settings.programmingLanguage,
-    visibility: appInstance.content.settings.visibility,
+    programmingLanguage,
+    visibility,
     commit: {
       code: code || defaultCode,
       commitMessage: DEFAULT_COMMIT_MESSAGE,
