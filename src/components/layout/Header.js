@@ -10,6 +10,7 @@ import {
   Code,
   TableChart as TableIcon,
   Refresh as RefreshIcon,
+  Flag,
 } from '@material-ui/icons';
 import IconButton from '@material-ui/core/IconButton';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -17,7 +18,12 @@ import { faRobot } from '@fortawesome/free-solid-svg-icons';
 import { ReactComponent as Logo } from '../../resources/logo.svg';
 import './Header.css';
 import { addQueryParamsToUrl } from '../../utils/url';
-import { AVATAR_VIEW, DEFAULT_VIEW, PRESET_VIEW } from '../../config/views';
+import {
+  AVATAR_VIEW,
+  DEFAULT_VIEW,
+  PRESET_VIEW,
+  REPORTED_VIEW,
+} from '../../config/views';
 import { DEFAULT_MODE, TEACHER_MODES } from '../../config/settings';
 import { getAppInstanceResources, getUsers } from '../../actions';
 
@@ -78,6 +84,14 @@ class Header extends Component {
           href={`index.html${addQueryParamsToUrl({ view: DEFAULT_VIEW })}`}
         >
           <TableIcon />
+        </IconButton>,
+        <IconButton
+          key="flagged"
+          disabled={view === REPORTED_VIEW}
+          className={classes.button}
+          href={`index.html${addQueryParamsToUrl({ view: REPORTED_VIEW })}`}
+        >
+          <Flag />
         </IconButton>,
         <IconButton
           key="avatar"
