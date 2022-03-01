@@ -54,7 +54,11 @@ const getUsers = async () => async (dispatch, getState) => {
         // fetch the user info
         const infoUrl = `${GRAASP_MAIN_DOMAIN + USERS_ENDPOINT}/${user.id}`;
         const userResponse = await fetch(infoUrl, JSON_GET_REQUEST);
-        await isErrorResponse(userResponse);
+        // did not manage to find the user
+        if (userResponse.status === 404) {
+          // return the user unchanged
+          return user;
+        }
         const graaspUserInfo = await userResponse.json();
         return {
           ...user,
