@@ -23,9 +23,14 @@ import {
 } from '../../config/appInstanceResourceTypes';
 import {
   ADAPT_HEIGHT_TIMEOUT,
+  DEFAULT_ALLOW_COMMENTS_SETTING,
+  DEFAULT_ALLOW_REPLIES_SETTING,
   DEFAULT_CODE_ID,
   DEFAULT_COMMENT_CONTENT,
   DEFAULT_COMMENT_HIDDEN_STATE,
+  DEFAULT_SHOW_EDIT_BUTTON_SETTING,
+  DEFAULT_SHOW_VERSION_NAVIGATION_SETTING,
+  DEFAULT_VISIBILITY_MODE_SETTING,
   DELETED_COMMENT_TEXT,
   NEW_COMMENT_ID,
   PRIVATE_VISIBILITY,
@@ -453,13 +458,16 @@ class CodeReview extends Component {
       settings,
     } = this.props;
 
+    const { visibility: visibilitySetting = DEFAULT_VISIBILITY_MODE_SETTING } =
+      settings;
+
     // define the data
     const data = {
       reaction,
       commentId,
     };
     const type = REACTION;
-    const visibility = settings.visibility
+    const visibility = visibilitySetting
       ? PUBLIC_VISIBILITY
       : PRIVATE_VISIBILITY;
 
@@ -569,7 +577,7 @@ class CodeReview extends Component {
 
   getReplySetting = () => {
     const { isFeedbackView, isStudentView, settings } = this.props;
-    const { allowReplies } = settings;
+    const { allowReplies = DEFAULT_ALLOW_REPLIES_SETTING } = settings;
     if (isStudentView) {
       return allowReplies;
     }
@@ -578,7 +586,7 @@ class CodeReview extends Component {
 
   getLineCommentSetting = () => {
     const { isFeedbackView, isStudentView, settings } = this.props;
-    const { allowComments } = settings;
+    const { allowComments = DEFAULT_ALLOW_COMMENTS_SETTING } = settings;
     if (isStudentView) {
       // when comments are allowed, disableButton is false -> invert the value
       return !allowComments;
@@ -717,7 +725,11 @@ class CodeReview extends Component {
       teacherComments,
     } = this.props;
     const { comments, lineCommentsHiddenState } = this.state;
-    const { showEditButton, showVersionNav, showVisibility } = settings;
+    const {
+      showEditButton = DEFAULT_SHOW_EDIT_BUTTON_SETTING,
+      showVersionNav = DEFAULT_SHOW_VERSION_NAVIGATION_SETTING,
+      showVisibility = DEFAULT_VISIBILITY_MODE_SETTING,
+    } = settings;
 
     const totalNumberOfComments =
       comments.length + botComments.length + teacherComments.length;

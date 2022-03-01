@@ -24,7 +24,21 @@ import { withTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
 import { closeSettings, patchAppInstance } from '../../../actions';
 import Loader from '../../common/Loader';
-import { JAVA, JAVASCRIPT, MATLAB, PYTHON } from '../../../config/settings';
+import {
+  DEFAULT_ALLOW_COMMENTS_SETTING,
+  DEFAULT_ALLOW_REPLIES_SETTING,
+  DEFAULT_CODE_CONTENT_SETTING,
+  DEFAULT_PROGRAMMING_LANGUAGE,
+  DEFAULT_SHOW_EDIT_BUTTON_SETTING,
+  DEFAULT_SHOW_VERSION_NAVIGATION_SETTING,
+  DEFAULT_SHOW_VISIBILITY_BUTTON_SETTING,
+  DEFAULT_TOP_BAR_VISIBLE_SETTING,
+  DEFAULT_VISIBILITY_MODE_SETTING,
+  JAVA,
+  JAVASCRIPT,
+  MATLAB,
+  PYTHON,
+} from '../../../config/settings';
 import {
   SAVE_SETTINGS_BUTTON_CYPRESS,
   SETTINGS_MODAL_CYPRESS,
@@ -241,15 +255,15 @@ class Settings extends Component {
     const { t, activity, classes, settings: settingsProp } = this.props;
     const { settings, tabIndex } = this.state;
     const {
-      topBarVisible,
-      code,
-      programmingLanguage,
-      showVersionNav,
-      showEditButton,
-      showVisibility,
-      visibility,
-      allowComments,
-      allowReplies,
+      topBarVisible = DEFAULT_TOP_BAR_VISIBLE_SETTING,
+      code = DEFAULT_CODE_CONTENT_SETTING,
+      programmingLanguage = DEFAULT_PROGRAMMING_LANGUAGE,
+      showVersionNav = DEFAULT_SHOW_VERSION_NAVIGATION_SETTING,
+      showEditButton = DEFAULT_SHOW_EDIT_BUTTON_SETTING,
+      showVisibility = DEFAULT_SHOW_VISIBILITY_BUTTON_SETTING,
+      visibility = DEFAULT_VISIBILITY_MODE_SETTING,
+      allowComments = DEFAULT_ALLOW_COMMENTS_SETTING,
+      allowReplies = DEFAULT_ALLOW_REPLIES_SETTING,
     } = settings;
 
     const hasChanged = !_.isEqual(settingsProp, settings);

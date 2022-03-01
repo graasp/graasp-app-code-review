@@ -34,6 +34,15 @@ export const DEFAULT_PROGRAMMING_LANGUAGE = PYTHON;
 export const DEFAULT_USER = 'Anonymous';
 export const DEFAULT_CODE_ID = 'Instructor';
 
+export const DEFAULT_HEADER_VISIBLE_SETTING = false;
+export const DEFAULT_TOP_BAR_VISIBLE_SETTING = true;
+export const DEFAULT_SHOW_VERSION_NAVIGATION_SETTING = false;
+export const DEFAULT_SHOW_EDIT_BUTTON_SETTING = false;
+export const DEFAULT_SHOW_VISIBILITY_BUTTON_SETTING = true;
+export const DEFAULT_VISIBILITY_MODE_SETTING = true;
+export const DEFAULT_ALLOW_REPLIES_SETTING = true;
+export const DEFAULT_ALLOW_COMMENTS_SETTING = true;
+export const DEFAULT_CODE_CONTENT_SETTING = '';
 export const DEFAULT_HELP_WANTED_ONLY_SETTING = false;
 
 // time to wait in ms

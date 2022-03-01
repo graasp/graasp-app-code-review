@@ -20,7 +20,9 @@ import {
   setCodeEditorSettings,
 } from '../../actions';
 import {
+  DEFAULT_CODE_CONTENT_SETTING,
   DEFAULT_CODE_ID,
+  DEFAULT_TOP_BAR_VISIBLE_SETTING,
   DEFAULT_TRUNCATION_COMMIT_MESSAGE_LENGTH,
   DEFAULT_USER,
   PLACEHOLDER_DATE,
@@ -382,18 +384,21 @@ const mapStateToProps = (
 
   // build an array of arrays: [label: someTextAndADate, value: {code, codeId}]
   const codeVersions = mapCodeVersions(codeContributors, codeSamples, lang);
-
+  const {
+    topBarVisible = DEFAULT_TOP_BAR_VISIBLE_SETTING,
+    code: codeContentSetting = DEFAULT_CODE_CONTENT_SETTING,
+  } = appInstance.content.settings;
   const instructorCode = {
     label: t('Default Version'),
     value: {
-      code: appInstance.content.settings.code,
+      code: codeContentSetting,
       codeId: DEFAULT_CODE_ID,
     },
   };
 
   return {
     codeEditorSettings: layout.codeEditorSettings,
-    topBarVisible: appInstance.content.settings.topBarVisible,
+    topBarVisible,
     codeContributors: [instructorContributor, ...codeContributors],
     // codeVersions is an array of array and to respect this convention instructorCode is put inside an array
     codeVersions: [[instructorCode], ...codeVersions],
