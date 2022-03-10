@@ -57,5 +57,3 @@ All notable changes to this project will be documented in this file. See [standa
 ### Tests
 
 - fix app tests ([a28024c](https://github.com/graasp/graasp-app-code-review/commit/a28024cbdeafc19a7933c8f493526aa613917d05))
-
-# Change Log
