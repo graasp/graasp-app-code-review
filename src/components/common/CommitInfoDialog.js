@@ -32,6 +32,7 @@ export class CommitInfoDialog extends Component {
     classes: PropTypes.shape({
       grid: PropTypes.string,
       gridItems: PropTypes.string,
+      descriptionText: PropTypes.string,
     }).isRequired,
     dispatchCloseCommitInfoDialog: PropTypes.func.isRequired,
     commit: PropTypes.arrayOf(
@@ -47,9 +48,13 @@ export class CommitInfoDialog extends Component {
   static styles = (theme) => ({
     grid: {
       width: '60vw',
+      maxWidth: '700px',
     },
     gridItems: {
       padding: theme.spacing(2),
+    },
+    descriptionText: {
+      whiteSpace: 'pre-line',
     },
   });
 
@@ -68,7 +73,7 @@ export class CommitInfoDialog extends Component {
         className={classes.grid}
         container
         direction="column"
-        spacing={3}
+        spacing={1}
         alignItems="stretch"
       >
         {commit.map(({ label, value }) => (
@@ -77,15 +82,9 @@ export class CommitInfoDialog extends Component {
               <FormLabel>{t(label)}</FormLabel>
             </Grid>
             <Grid item xs={12} sm={8}>
-              {
-                // split the value on new line to display them in separate paragraphs
-                value.split('\n').map((v) => (
-                  <>
-                    <Typography variant="body1">{v}</Typography>
-                    <br />
-                  </>
-                ))
-              }
+              <Typography className={classes.descriptionText} variant="body1">
+                {value}
+              </Typography>
             </Grid>
           </Grid>
         ))}
