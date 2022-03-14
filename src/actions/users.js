@@ -1,3 +1,4 @@
+import { StatusCodes } from 'http-status-codes';
 import { flag, getApiContext, isErrorResponse, postMessage } from './common';
 import {
   FLAG_GETTING_USERS,
@@ -55,7 +56,7 @@ const getUsers = async () => async (dispatch, getState) => {
         const infoUrl = `${GRAASP_MAIN_DOMAIN + USERS_ENDPOINT}/${user.id}`;
         const userResponse = await fetch(infoUrl, JSON_GET_REQUEST);
         // did not manage to find the user
-        if (userResponse.status === 404) {
+        if (userResponse.status === StatusCodes.NOT_FOUND) {
           // return the user unchanged
           return user;
         }
