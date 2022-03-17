@@ -37,6 +37,17 @@ cypress
 # exclude coverage
 /coverage
 .nyc_output
+cypress/videos
+cypress/screenshots
 
 # exclude local database
 db.json
+
+# yarn
+.yarn/
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+yarn-error.log

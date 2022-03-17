@@ -1,3 +1,4 @@
+// todo: delete this
 import {
   OPEN_SETTINGS,
   CLOSE_SETTINGS,

@@ -1,13 +1,6 @@
 {
-  "extends": [
-    "airbnb",
-    "prettier"
-  ],
-  "plugins": [
-    "import",
-    "jsx-a11y",
-    "react"
-  ],
+  "extends": ["prettier", "eslint:recommended", "react-app"],
+  "plugins": [],
   "env": {
     "browser": true,
     "node": true,
@@ -18,15 +11,12 @@
     "cy": true,
     "Cypress": true
   },
-  "parser": "babel-eslint",
+  "parser": "@babel/eslint-parser",
   "rules": {
     "no-underscore-dangle": [
       "error",
       {
-        "allow": [
-          "_id",
-          "__REDUX_DEVTOOLS_EXTENSION__"
-        ]
+        "allow": ["_id", "__REDUX_DEVTOOLS_EXTENSION__"]
       }
     ],
     "jsx-a11y/anchor-is-valid": [
@@ -36,22 +26,6 @@
         "specialLink": ["to", "hrefLeft", "hrefRight"],
         "aspects": ["noHref", "invalidHref", "preferButton"]
       }
-    ],
-    "react/jsx-filename-extension": [
-      1,
-      {
-        "extensions": [".js", ".jsx"]
-      }
-    ],
-    "import/no-named-as-default": 0,
-    "react/static-property-placement": ["error", "property assignment", {
-      "childContextTypes": "static public field",
-      "contextTypes": "static public field",
-      "contextType": "static public field",
-      "defaultProps": "static public field",
-      "displayName": "static public field",
-      "propTypes": "static public field"
-    }],
-    "react/state-in-constructor": ["error", "never"]
+    ]
   }
 }

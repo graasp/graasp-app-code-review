@@ -1,3 +1,4 @@
+// todo: delete this
 export const FLAG_POSTING_ACTION = 'FLAG_POSTING_ACTION';
 export const POST_ACTION = 'POST_ACTION';
 export const POST_ACTION_SUCCEEDED = 'POST_ACTION_SUCCEEDED';

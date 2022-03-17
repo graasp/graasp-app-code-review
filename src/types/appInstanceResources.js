@@ -1,3 +1,4 @@
+// todo: delete this
 // app instance resources
 export const FLAG_GETTING_APP_INSTANCE_RESOURCES =
   'FLAG_GETTING_APP_INSTANCE_RESOURCES';

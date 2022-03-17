@@ -1,3 +1,5 @@
+// todo: use
+//  export const APP_DATA_TYPES = { INPUT: 'input', FEEDBACK: 'feedback' };
 // here you define the types of app instance resources you have
 export const COMMENT = 'comment';
 export const BOT_COMMENT = 'bot_comment';

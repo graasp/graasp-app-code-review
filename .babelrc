@@ -14,5 +14,6 @@
         "css": true
       }
     ]
-  ]
+  ],
+  "presets": ["@babel/preset-react"]
 }

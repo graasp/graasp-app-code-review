@@ -1,3 +1,4 @@
+// todo: delete this
 import {
   FLAG_GETTING_ACTIONS,
   FLAG_POSTING_ACTION,

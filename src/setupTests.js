@@ -1,4 +1,3 @@
-import Enzyme from 'enzyme';
-import Adapter from 'enzyme-adapter-react-16';
-
-Enzyme.configure({ adapter: new Adapter() });
+// react-testing-library renders your components to document.body,
+// this adds jest-dom's custom assertions
+import '@testing-library/jest-dom';
