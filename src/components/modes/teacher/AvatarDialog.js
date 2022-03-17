@@ -36,7 +36,9 @@ import {
 import Loader from '../../common/Loader';
 import { BOT_USER } from '../../../config/appInstanceResourceTypes';
 import {
+  DEFAULT_BOT_USE_USER_LIST_SETTING,
   DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+  DEFAULT_BOT_USER_LIST_SETTING,
   HIDE_BOT,
   JSON_LANG,
   PUBLIC_VISIBILITY,
@@ -55,13 +57,13 @@ import {
 const DEFAULT_AVATAR = {
   name: '',
   uri: '',
+  description: '',
   autoBot: false,
   autoSeed: false,
-  useUserList: false,
-  userListPolarity: DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
-  userList: [],
   personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
-  description: '',
+  useUserList: DEFAULT_BOT_USE_USER_LIST_SETTING,
+  userListPolarity: DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+  userList: DEFAULT_BOT_USER_LIST_SETTING,
 };
 
 const BOT_IDENTITY_SETTINGS_TAB = 'BOT_IDENTITY_SETTINGS_TAB';
@@ -245,7 +247,15 @@ class AvatarDialog extends Component {
       dispatchCloseAvatarDialog,
       dispatchPatchAppInstanceResource,
     } = this.props;
-    const { avatar } = this.state;
+    const { avatar: avatarState } = this.state;
+
+    // merging non-existing default settings with spread
+    // properties from default avatar that do not exist in
+    // state will be added with their default value
+    const avatar = {
+      ...DEFAULT_AVATAR,
+      ...avatarState,
+    };
 
     // this is a new bot so avatarId is null
     if (!avatarId) {
@@ -301,7 +311,6 @@ class AvatarDialog extends Component {
   };
 
   handleChangeBotVisibility = (value) => {
-    console.log(value);
     this.setState((prevState) => ({
       avatar: { ...prevState.avatar, userListPolarity: value },
     }));
@@ -375,15 +384,17 @@ class AvatarDialog extends Component {
 
   handleOnClickUserChecked = (value) => {
     const { avatar } = this.state;
-    const { userList } = avatar;
+    const { userList = DEFAULT_BOT_USER_LIST_SETTING } = avatar;
     const currentIndex = userList.indexOf(value);
     // make a copy of the array
     const newUserList = [...userList];
 
     // not found
     if (currentIndex === -1) {
+      // user is added to the list (checkbox -> true)
       newUserList.push(value);
     } else {
+      // user is removed from the list (checkbox -> false)
       newUserList.splice(currentIndex, 1);
     }
     this.setState((prevState) => ({
@@ -394,10 +405,12 @@ class AvatarDialog extends Component {
   handleOnClickAllUsers = (check) => {
     const { users } = this.props;
     if (check) {
+      // add all users to the list
       this.setState((prevState) => ({
         avatar: { ...prevState.avatar, userList: users.map((u) => u.id) },
       }));
     } else {
+      // remove all users from the list -> set the list ot empty array
       this.setState((prevState) => ({
         avatar: { ...prevState.avatar, userList: [] },
       }));
@@ -411,6 +424,11 @@ class AvatarDialog extends Component {
   renderModalContent() {
     const { t, activity, classes, avatar: avatarProp, users } = this.props;
     const { avatar, validator, tabIndex } = this.state;
+    const {
+      useUserList = DEFAULT_BOT_USE_USER_LIST_SETTING,
+      userList = DEFAULT_BOT_USER_LIST_SETTING,
+      userListPolarity = DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+    } = avatar;
 
     const hasChanged = !_.isEqual(avatarProp, avatar);
 
@@ -485,7 +503,7 @@ class AvatarDialog extends Component {
         color="primary"
         value="useUserList"
         size="small"
-        checked={avatar.useUserList}
+        checked={useUserList}
         onChange={this.handleChangeSwitch('useUserList')}
       />
     );
@@ -647,7 +665,7 @@ class AvatarDialog extends Component {
                 label={t('Enable selective audience')}
               />
             </Grid>
-            {avatar.useUserList ? (
+            {useUserList ? (
               <>
                 <Grid
                   container
@@ -657,7 +675,6 @@ class AvatarDialog extends Component {
                 >
                   <Grid item>{checkAllButton}</Grid>
                   <Grid item>{unCheckAllButton}</Grid>
-                  {/* <Grid item>{fileUploadControl}</Grid> */}
                 </Grid>
                 <Grid item>
                   <FormLabel component="legend">
@@ -666,10 +683,7 @@ class AvatarDialog extends Component {
                   <RadioGroup
                     aria-label="show-bot"
                     name="userListPolarity"
-                    value={
-                      avatar.userListPolarity ||
-                      DEFAULT_BOT_USER_LIST_POLARITY_SETTING
-                    }
+                    value={userListPolarity}
                     onChange={(e) =>
                       this.handleChangeBotVisibility(e.target.value)
                     }
@@ -703,8 +717,8 @@ class AvatarDialog extends Component {
                           <ListItemIcon>
                             <Checkbox
                               color="primary"
-                              // if the index is different from -1 means the user is included in the list
-                              checked={avatar.userList.indexOf(u.id) !== -1}
+                              // check if user is in the userList
+                              checked={userList.includes(u.id)}
                             />
                           </ListItemIcon>
                           <ListItemText primary={u.name} secondary={u.id} />
