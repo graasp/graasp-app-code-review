@@ -25,6 +25,8 @@ import {
   ADAPT_HEIGHT_TIMEOUT,
   DEFAULT_ALLOW_COMMENTS_SETTING,
   DEFAULT_ALLOW_REPLIES_SETTING,
+  DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+  DEFAULT_BOT_USER_LIST_SETTING,
   DEFAULT_CODE_ID,
   DEFAULT_COMMENT_CONTENT,
   DEFAULT_COMMENT_HIDDEN_STATE,
@@ -32,9 +34,11 @@ import {
   DEFAULT_SHOW_VERSION_NAVIGATION_SETTING,
   DEFAULT_VISIBILITY_MODE_SETTING,
   DELETED_COMMENT_TEXT,
+  HIDE_BOT,
   NEW_COMMENT_ID,
   PRIVATE_VISIBILITY,
   PUBLIC_VISIBILITY,
+  SHOW_BOT,
   STUDENT_MODES,
 } from '../../config/settings';
 import {
@@ -158,12 +162,6 @@ class CodeReview extends Component {
     return Prism.highlight(code, Prism.languages[syntax], syntax);
   }
 
-  constructor(props) {
-    super(props);
-    // create ref to track the height of the component
-    this.rootRef = createRef();
-  }
-
   state = (() => {
     const { comments, code } = this.props;
     const numLines = code.split('\n').length;
@@ -175,6 +173,12 @@ class CodeReview extends Component {
       comments,
     };
   })();
+
+  constructor(props) {
+    super(props);
+    // create ref to track the height of the component
+    this.rootRef = createRef();
+  }
 
   componentDidMount() {
     const { dispatchGetUsers } = this.props;
@@ -593,6 +597,33 @@ class CodeReview extends Component {
     return isFeedbackView;
   };
 
+  shouldShowComment = (comment) => {
+    const { userId, botUsers, isStudentView, isFeedbackView } = this.props;
+    // only apply the visibility filter in the student view and when the teacher sees the comments in context
+    if (isStudentView || isFeedbackView) {
+      // check bot visibility setting
+      if (comment.type === BOT_COMMENT) {
+        const bot = botUsers.find((u) => u._id === comment.data.botId);
+        // check that the bot is found and that it wants to restrict access
+        if (bot && bot.data?.useUserList) {
+          const {
+            userListPolarity = DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+            userList = DEFAULT_BOT_USER_LIST_SETTING,
+          } = bot.data;
+          // when polarity is HIDE_BOT, users in the list should not see the bot
+          // when polarity is SHOW_BOT, users outside the list should not see the bot
+          if (
+            (userListPolarity === HIDE_BOT && userList.includes(userId)) ||
+            (userListPolarity === SHOW_BOT && !userList.includes(userId))
+          ) {
+            return false;
+          }
+        }
+      }
+    }
+    return true;
+  };
+
   renderCommentThread(parentComment, comments) {
     const { isStudentView } = this.props;
     const { focusedId } = this.state;
@@ -680,15 +711,18 @@ class CodeReview extends Component {
         numThreads && !hiddenCommentState ? (
           <tr className="comment">
             <td className="comment editor" colSpan={2}>
-              {parentComments.map((comment) => (
-                <Paper
-                  key={comment._id}
-                  className={classes.commentContainer}
-                  variant="outlined"
-                >
-                  {this.renderCommentThread(comment, lineComments)}
-                </Paper>
-              ))}
+              {parentComments.map(
+                (comment) =>
+                  this.shouldShowComment(comment) && (
+                    <Paper
+                      key={comment._id}
+                      className={classes.commentContainer}
+                      variant="outlined"
+                    >
+                      {this.renderCommentThread(comment, lineComments)}
+                    </Paper>
+                  ),
+              )}
             </td>
           </tr>
         ) : null;
