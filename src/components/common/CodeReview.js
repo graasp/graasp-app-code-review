@@ -708,24 +708,25 @@ class CodeReview extends Component {
       );
       const numThreads = parentComments.length;
       const renderedComments =
-        numThreads && !hiddenCommentState ? (
-          <tr className="comment">
-            <td className="comment editor" colSpan={2}>
-              {parentComments.map(
-                (comment) =>
-                  this.shouldShowComment(comment) && (
-                    <Paper
-                      key={comment._id}
-                      className={classes.commentContainer}
-                      variant="outlined"
-                    >
-                      {this.renderCommentThread(comment, lineComments)}
-                    </Paper>
-                  ),
-              )}
-            </td>
-          </tr>
-        ) : null;
+        numThreads && !hiddenCommentState
+          ? parentComments.map(
+              (comment) =>
+                // should render this comment (bot list)
+                this.shouldShowComment(comment) && (
+                  <tr className="comment">
+                    <td className="comment editor" colSpan={2}>
+                      <Paper
+                        key={comment._id}
+                        className={classes.commentContainer}
+                        variant="outlined"
+                      >
+                        {this.renderCommentThread(comment, lineComments)}
+                      </Paper>
+                    </td>
+                  </tr>
+                ),
+            )
+          : null;
 
       return (
         <Fragment
