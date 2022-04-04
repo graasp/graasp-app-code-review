@@ -31,7 +31,7 @@ import {
 import Settings from './Settings';
 import { BOT_COMMENT, COMMENT } from '../../../config/appInstanceResourceTypes';
 import FeedbackView from './FeedbackView';
-import { DEFAULT_HELP_WANTED_ONLY_SETTING } from '../../../config/settings';
+import { DEFAULT_HELP_REQUESTS_ONLY_SETTING } from '../../../config/settings';
 
 export class TeacherView extends Component {
   static propTypes = {
@@ -72,7 +72,7 @@ export class TeacherView extends Component {
       }),
     ),
     settings: PropTypes.shape({
-      helpWantedOnly: PropTypes.bool,
+      helpRequestsOnly: PropTypes.bool,
     }).isRequired,
   };
 
@@ -125,7 +125,7 @@ export class TeacherView extends Component {
       dispatchOpenFeedbackView,
       dispatchSetSelectedStudent,
       dispatchGetAppInstanceResources,
-      settings: { helpWantedOnly = DEFAULT_HELP_WANTED_ONLY_SETTING },
+      settings: { helpRequestsOnly = DEFAULT_HELP_REQUESTS_ONLY_SETTING },
     } = this.props;
     // if there are no resources, show an empty table
     if (!comments.length) {
@@ -144,7 +144,8 @@ export class TeacherView extends Component {
           ?.length || 0;
       // only show a row when the student has made comments
       // and if the `helpWantedOnly` setting is true only include users that asked for help
-      return numberOfComments && !(!numberOfInterventions && helpWantedOnly) ? (
+      return numberOfComments &&
+        !(!numberOfInterventions && helpRequestsOnly) ? (
         <TableRow key={id}>
           <TableCell>{name}</TableCell>
           <TableCell>
@@ -196,7 +197,7 @@ export class TeacherView extends Component {
 
   handleChangeHelpWantedFilter = ({ target: { checked } }) => {
     const settingsToChange = {
-      helpWantedOnly: checked,
+      helpRequestsOnly: checked,
     };
     this.saveSettings(settingsToChange);
   };
@@ -209,12 +210,12 @@ export class TeacherView extends Component {
       // this property allows us to do translations and is injected by i18next
       t,
       dispatchOpenSettings,
-      settings: { helpWantedOnly = DEFAULT_HELP_WANTED_ONLY_SETTING },
+      settings: { helpRequestsOnly = DEFAULT_HELP_REQUESTS_ONLY_SETTING },
     } = this.props;
 
     const switchComponent = (
       <Switch
-        checked={helpWantedOnly}
+        checked={helpRequestsOnly}
         onChange={this.handleChangeHelpWantedFilter}
         name="helpWantedOnly"
         color="primary"
@@ -231,7 +232,7 @@ export class TeacherView extends Component {
             <div align="right">
               <FormControlLabel
                 control={switchComponent}
-                label={t('Only show comments that need help')}
+                label={t('Only Show Help Requests')}
               />
             </div>
             <Paper className={classes.root}>

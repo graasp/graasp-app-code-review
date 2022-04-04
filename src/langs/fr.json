@@ -74,8 +74,9 @@
     "Default Version": "Version par défaut",
     "Add Reaction": "Ajouter une réaction",
     "Reason": "Raison",
-    "Please provide bellow the reason for reporting this comment": "Veuillez préciser la raison du signalement",
+    "Please provide below the reason for reporting this comment": "Veuillez préciser la raison du signalement",
     "Reason must not be empty": "Entrez une raison",
-    "Only show comments that need help": "Montrer seulement les commentaires qui ont besoin d'aide"
+    "Only Show Help Requests": "Montrer seulement les demandes d'aide",
+    "Allow Request Human Intervention": "Autoriser les demandes d'intervention humaines"
   }
 }

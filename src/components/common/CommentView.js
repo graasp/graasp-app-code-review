@@ -609,7 +609,7 @@ class CommentView extends Component {
             open={openFlagDialog}
             title={t('Report a comment')}
             content={t(
-              'Please provide bellow the reason for reporting this comment',
+              'Please provide below the reason for reporting this comment',
             )}
             handleClose={this.handleOnCloseFlagDialog}
             handleConfirm={(reason) => this.handleOnConfirmFlag(reason)}

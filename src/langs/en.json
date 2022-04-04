@@ -74,8 +74,9 @@
     "Default Version": "Default Version",
     "Add Reaction": "Add Reaction",
     "Reason": "Reason",
-    "Please provide bellow the reason for reporting this comment": "Please provide bellow the reason for reporting this comment",
+    "Please provide below the reason for reporting this comment": "Please provide below the reason for reporting this comment",
     "Reason must not be empty": "Reason must not be empty",
-    "Only show comments that need help": "Only show comments that need help"
+    "Only Show Help Requests": "Only Show Help Requests",
+    "Allow Request Human Intervention": "Allow Request Human Intervention"
   }
 }

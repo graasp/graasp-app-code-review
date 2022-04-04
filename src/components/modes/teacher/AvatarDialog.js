@@ -470,7 +470,7 @@ class AvatarDialog extends Component {
               <Grid item>
                 <FormControlLabel
                   control={allowHumanInterventionSwitchControl}
-                  label={t('Allow Human Intervention')}
+                  label={t('Allow Request Human Intervention')}
                 />
               </Grid>
             ) : null}
