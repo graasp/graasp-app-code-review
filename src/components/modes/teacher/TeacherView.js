@@ -231,7 +231,7 @@ export class TeacherView extends Component {
             <div align="right">
               <FormControlLabel
                 control={switchComponent}
-                label={t('Need Help Only')}
+                label={t('Only show comments that need help')}
               />
             </div>
             <Paper className={classes.root}>
