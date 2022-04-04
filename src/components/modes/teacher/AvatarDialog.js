@@ -59,7 +59,8 @@ const DEFAULT_AVATAR = {
   uri: '',
   description: '',
   autoBot: false,
-  autoSeed: false,
+  autoSeed: true,
+  allowHumanIntervention: true,
   personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
   useUserList: DEFAULT_BOT_USE_USER_LIST_SETTING,
   userListPolarity: DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
@@ -182,6 +183,7 @@ class AvatarDialog extends Component {
       uri: PropTypes.string,
       autoBot: PropTypes.bool,
       autoSeed: PropTypes.bool,
+      allowHumanIntervention: PropTypes.bool,
       useUserList: PropTypes.bool,
       userListPolarity: PropTypes.string,
       userList: PropTypes.arrayOf(
@@ -498,6 +500,16 @@ class AvatarDialog extends Component {
       />
     );
 
+    const allowHumanInterventionSwitchControl = (
+      <Switch
+        color="primary"
+        value="allowHumanIntervention"
+        size="small"
+        checked={avatar.allowHumanIntervention}
+        onChange={this.handleChangeSwitch('allowHumanIntervention')}
+      />
+    );
+
     const userListSwitchControl = (
       <Switch
         color="primary"
@@ -648,6 +660,14 @@ class AvatarDialog extends Component {
                   </Alert>
                 </Grid>
               </>
+            ) : null}
+            {avatar.autoBot ? (
+              <Grid item>
+                <FormControlLabel
+                  control={allowHumanInterventionSwitchControl}
+                  label={t('Allow Request Human Intervention')}
+                />
+              </Grid>
             ) : null}
           </Grid>
         </div>

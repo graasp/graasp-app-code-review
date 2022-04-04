@@ -2,6 +2,7 @@ import { max, min } from 'lodash/math';
 import _ from 'lodash';
 import i18n from '../config/i18n';
 import { BOT_COMMENT, BOT_USER } from '../config/appInstanceResourceTypes';
+import { PRIVATE_VISIBILITY } from '../config/settings';
 
 const DEFAULT_STEP = {
   id: null,
@@ -75,6 +76,9 @@ const DEFAULT_PERSONALITY_JSON = {
       "We've arrived to the end of this interaction. I don't have anything else to say.\n\n" +
       'If you want to restart this conversation, please reply to the first comment I added in this thread.',
   },
+  humanIntervention: {
+    text: 'You have requested Human Intervention. This thread is now locked. A human will get back to you shortly',
+  },
 };
 
 // this is used to join the options of a step and display them as a list
@@ -109,6 +113,9 @@ const getFormattedOptionText = (step) => step.text;
 // return the text with the bullet point options
 const getFormattedOptionTextAndOptionsList = (step) =>
   [step.text, ...step.options].join(DEFAULT_PERSONALITY_OPTION_SEPARATOR);
+
+const getFormattedHumanInterventionText = (personality) =>
+  personality.humanIntervention?.text || '🤖';
 
 const getBotPersonality = (bot) => JSON.parse(bot.data.personality);
 
@@ -211,7 +218,9 @@ const handleAutoResponse = (commentId, comment, getState) => {
     ? botUsers.find((bot) => bot._id === parentComment.data.botId)
     : null;
 
-  if (botAuthor && botAuthor.data.autoBot) {
+  // we check that the parent of the given comment given is a bot comment
+  // and also that the comment itself is not a bot comment (bot should not respond to itself)
+  if (botAuthor && botAuthor.data.autoBot && comment.type !== BOT_COMMENT) {
     // get the matching option
     const personality = getBotPersonality(botAuthor);
     // filter only the options that are reachable
@@ -266,6 +275,25 @@ const handleAutoResponse = (commentId, comment, getState) => {
   return null;
 };
 
+const getHumanIntervention = (botUser, comment, userId) => {
+  const personality = getBotPersonality(botUser);
+  const response = getFormattedHumanInterventionText(personality);
+  return {
+    data: {
+      line: comment.data.line,
+      codeId: comment.data.codeId,
+      parent: comment._id,
+      content: `> *User requested Human Intervention*\n\n${response}`,
+      end: true,
+      botId: botUser.id,
+      requireIntervention: true,
+    },
+    type: BOT_COMMENT,
+    visibility: PRIVATE_VISIBILITY,
+    userId,
+  };
+};
+
 export {
   DEFAULT_STEP,
   DEFAULT_PERSONALITY_JSON,
@@ -280,4 +308,5 @@ export {
   getFormattedOptionTextAndOptionsList,
   getDefaultOptionText,
   handleAutoResponse,
+  getHumanIntervention,
 };

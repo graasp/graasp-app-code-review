@@ -326,8 +326,7 @@ class CodeReviewTools extends React.Component {
             item
             xs={2}
             spacing={1}
-            justifyContent="space-between"
-            justify="flex-end"
+            justifyContent="flex-end"
           >
             {showEditButton ? (
               <Grid item>

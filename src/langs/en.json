@@ -57,6 +57,7 @@
     "Show Visibility Toggle": "Show Visibility Toggle",
     "Allow students to see other students' code": "Allow students to see other students' code",
     "Edit": "Edit",
+    "Delete": "Delete",
     "Commit Info": "Commit Info",
     "Author": "Author",
     "Message": "Message",
@@ -68,6 +69,14 @@
     "You can reply with": "You can reply with",
     "Quick Replies": "Quick Replies",
     "Restart interaction": "Restart interaction",
-    "Default Version": "Default Version"
+    "Report": "Report",
+    "Report a comment": "Report a comment",
+    "Default Version": "Default Version",
+    "Add Reaction": "Add Reaction",
+    "Reason": "Reason",
+    "Please provide below the reason for reporting this comment": "Please provide below the reason for reporting this comment",
+    "Reason must not be empty": "Reason must not be empty",
+    "Only Show Help Requests": "Only Show Help Requests",
+    "Allow Request Human Intervention": "Allow Request Human Intervention"
   }
 }

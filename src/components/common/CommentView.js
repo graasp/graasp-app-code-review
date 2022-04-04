@@ -14,6 +14,8 @@ import {
   CardHeader,
   Chip,
   FormLabel,
+  ListItemIcon,
+  ListItemText,
   Menu,
   MenuItem,
   Popover,
@@ -28,7 +30,13 @@ import { withTranslation } from 'react-i18next';
 import _ from 'lodash';
 import { formatDistance } from 'date-fns';
 import { fr, enGB } from 'date-fns/locale';
-import { InsertEmoticon, MoreVertRounded } from '@material-ui/icons';
+import {
+  Flag,
+  InsertEmoticon,
+  MoreVert,
+  MoreVertRounded,
+  PanTool,
+} from '@material-ui/icons';
 import ConfirmDialog from './ConfirmDialog';
 import {
   DEFAULT_REACTION_PICKER_COL_NUMBER,
@@ -37,17 +45,29 @@ import {
   MAX_QUICK_REPLIES_TO_SHOW,
   MIN_EDITOR_HEIGHT,
   MIN_PREVIEW_HEIGHT,
+  PUBLIC_VISIBILITY,
 } from '../../config/settings';
 // import Loader from './Loader';
 import {
   BOT_COMMENT,
   BOT_USER,
+  FLAG,
   REACTION,
   USER_COMMENT_TYPES,
 } from '../../config/appInstanceResourceTypes';
 import DotLoader from './DotLoader';
-import { deleteAppInstanceResource, postAction } from '../../actions';
-import { REMOVED_REACTION } from '../../config/verbs';
+import {
+  deleteAppInstanceResource,
+  postAction,
+  postAppInstanceResource,
+} from '../../actions';
+import {
+  ASKED_FOR_HELP,
+  FLAGGED_COMMENT,
+  REMOVED_REACTION,
+} from '../../config/verbs';
+import FormDialog from './FormDialog';
+import { getHumanIntervention } from '../../utils/autoBotEngine';
 
 // helper method
 const getInitials = (name) => {
@@ -150,6 +170,8 @@ class CommentView extends Component {
         end: PropTypes.bool,
         thinking: PropTypes.number,
         options: PropTypes.arrayOf(PropTypes.string),
+        flag: PropTypes.bool,
+        requireIntervention: PropTypes.bool,
       }),
       type: PropTypes.string,
       user: PropTypes.string,
@@ -194,6 +216,8 @@ class CommentView extends Component {
         id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         name: PropTypes.string,
         initials: PropTypes.string,
+        allowHumanIntervention: PropTypes.bool,
+        data: { personality: PropTypes.string },
       }),
     ),
     // activity: PropTypes.number,
@@ -209,7 +233,9 @@ class CommentView extends Component {
         ]),
       }),
     ),
+    userId: PropTypes.string.isRequired,
     dispatchDeleteAppInstanceResource: PropTypes.func.isRequired,
+    dispatchPostAppInstanceResource: PropTypes.func.isRequired,
     dispatchPostAction: PropTypes.func.isRequired,
   };
 
@@ -235,8 +261,11 @@ class CommentView extends Component {
     open: false,
     quickReplyAnchorEl: null,
     addReactionsAnchorEl: null,
+    actionsMenuAnchorEl: null,
     openQuickReplyMenu: false,
     openAddReactionsMenu: false,
+    openActionsMenu: false,
+    openFlagDialog: false,
   };
 
   converter = new Showdown.Converter({
@@ -248,8 +277,8 @@ class CommentView extends Component {
 
   constructor(props) {
     super(props);
-    // create ref to focus confirmation dialog
-    this.dialogRef = createRef();
+    // create ref to anchor the dialogs at the height of the comment
+    this.commentRef = createRef();
   }
 
   componentDidMount() {
@@ -365,6 +394,17 @@ class CommentView extends Component {
     this.setState({ quickReplyAnchorEl: null, openQuickReplyMenu: false });
   };
 
+  handleOnClickActionsMenu = (event) => {
+    this.setState({
+      actionsMenuAnchorEl: event.currentTarget,
+      openActionsMenu: true,
+    });
+  };
+
+  handleOnCloseActionsMenu = () => {
+    this.setState({ actionsMenuAnchorEl: null, openActionsMenu: false });
+  };
+
   handleOnClickAddReactionMenu = (event) => {
     this.setState({
       addReactionsAnchorEl: event.currentTarget,
@@ -376,15 +416,58 @@ class CommentView extends Component {
     this.setState({ addReactionsAnchorEl: null, openAddReactionsMenu: false });
   };
 
+  handleOnClickFlagComment = () => {
+    this.setState({ openFlagDialog: true });
+  };
+
+  handleOnCloseFlagDialog = () => {
+    this.setState({ openFlagDialog: false });
+    this.handleOnCloseActionsMenu();
+  };
+
+  handleOnConfirmFlag = (reason) => {
+    const {
+      dispatchPostAction,
+      dispatchPostAppInstanceResource,
+      comment,
+      userId,
+    } = this.props;
+    dispatchPostAppInstanceResource({
+      data: {
+        comment,
+        reason,
+      },
+      type: FLAG,
+      visibility: PUBLIC_VISIBILITY,
+      userId,
+    });
+    dispatchPostAction({
+      data: {
+        reason,
+        comment,
+      },
+      verb: FLAGGED_COMMENT,
+    });
+    this.handleOnCloseFlagDialog();
+  };
+
+  handleOnClickHumanIntervention = () => {
+    const {
+      comment,
+      userId,
+      dispatchPostAppInstanceResource,
+      dispatchPostAction,
+    } = this.props;
+    const botUser = this.getBotUser();
+    const response = getHumanIntervention(botUser, comment, userId);
+    dispatchPostAppInstanceResource(response);
+    dispatchPostAction({
+      data: response,
+      verb: ASKED_FOR_HELP,
+    });
+  };
+
   handleDeleteClicked = () => {
-    // todo: functional components can not be given refs
-    // here we are trying to give focus to the dialog
-    // this does not seems to work yet
-    // focus the confirmation dialog
-    const { current: confirmationDialogElement } = this.dialogRef;
-    if (confirmationDialogElement !== null) {
-      confirmationDialogElement.focus();
-    }
     this.setState({ open: true });
   };
 
@@ -392,6 +475,11 @@ class CommentView extends Component {
     const { onDeleteComment, adaptStyle } = this.props;
     onDeleteComment(id);
     adaptStyle();
+  };
+
+  getBotUser = () => {
+    const { botUsers, comment } = this.props;
+    return botUsers.find((b) => b.id === comment.data.botId);
   };
 
   renderAvatar() {
@@ -420,17 +508,121 @@ class CommentView extends Component {
     return <Avatar>{getInitials(DEFAULT_USER)}</Avatar>;
   }
 
+  renderActionMenu() {
+    const { t, comment, showDelete, showEdit } = this.props;
+    const { open, openActionsMenu, actionsMenuAnchorEl, openFlagDialog } =
+      this.state;
+
+    const menuList = [];
+
+    if (!comment.data.deleted && showEdit) {
+      menuList.push(
+        <MenuItem
+          dense
+          onClick={(e) => {
+            this.handleOnCloseActionsMenu();
+            this.onEdit(e);
+          }}
+        >
+          <ListItemIcon>
+            <EditIcon fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText dense>{t('Edit')}</ListItemText>
+        </MenuItem>,
+      );
+    }
+
+    if (showDelete) {
+      menuList.push(
+        <MenuItem
+          dense
+          onClick={(e) => {
+            this.handleOnCloseActionsMenu();
+            this.handleDeleteClicked(e);
+          }}
+        >
+          <ListItemIcon dense>
+            <DeleteIcon fontSize="small" color="secondary" />
+          </ListItemIcon>
+          <ListItemText dense>{t('Delete')}</ListItemText>
+        </MenuItem>,
+      );
+    }
+
+    if (!comment.data.deleted) {
+      menuList.push(
+        <MenuItem
+          dense
+          onClick={(e) => {
+            this.handleOnCloseActionsMenu();
+            this.handleOnClickFlagComment(e);
+          }}
+        >
+          <ListItemIcon>
+            <Flag fontSize="small" color="primary" />
+          </ListItemIcon>
+          <ListItemText dense>{t('Report')}</ListItemText>
+        </MenuItem>,
+      );
+    }
+
+    if (menuList.length) {
+      return (
+        <>
+          <Tooltip title={t('Actions')}>
+            <IconButton onClick={(e) => this.handleOnClickActionsMenu(e)}>
+              <MoreVert />
+            </IconButton>
+          </Tooltip>
+          <Menu
+            dense
+            open={openActionsMenu}
+            anchorEl={actionsMenuAnchorEl}
+            getContentAnchorEl={null}
+            // center the popover
+            anchorOrigin={{
+              vertical: 'bottom',
+              horizontal: 'right',
+            }}
+            transformOrigin={{
+              vertical: 'top',
+              horizontal: 'right',
+            }}
+            onClose={() => this.handleOnCloseActionsMenu()}
+          >
+            {menuList}
+          </Menu>
+          {showDelete ? (
+            <ConfirmDialog
+              open={open}
+              setOpen={(v) => this.setState({ open: v })}
+              onClose={(m) => {
+                if (m) {
+                  this.handleDelete(comment._id);
+                }
+              }}
+              anchor={this.commentRef}
+            />
+          ) : null}
+
+          <FormDialog
+            open={openFlagDialog}
+            title={t('Report a comment')}
+            content={t(
+              'Please provide below the reason for reporting this comment',
+            )}
+            handleClose={this.handleOnCloseFlagDialog}
+            handleConfirm={(reason) => this.handleOnConfirmFlag(reason)}
+            anchor={this.commentRef}
+          />
+        </>
+      );
+    }
+    return null;
+  }
+
   renderCardHeader() {
-    const {
-      comment,
-      classes,
-      readOnly,
-      users,
-      botUsers,
-      showDelete,
-      showEdit,
-      lang,
-    } = this.props;
+    const { comment, classes, readOnly, users, botUsers, lang } = this.props;
     const { updatedAt = new Date().toISOString() } = comment;
     // compare the date and format the distance to now
     const formattedUpdatedAt = formatDistance(
@@ -442,7 +634,7 @@ class CommentView extends Component {
       },
     );
 
-    const { isEdited, open } = this.state;
+    const { isEdited } = this.state;
     const userName =
       (comment.type === BOT_COMMENT
         ? botUsers.find((u) => u.id === comment.data.botId)?.name
@@ -454,43 +646,7 @@ class CommentView extends Component {
         avatar={this.renderAvatar()}
         title={userName}
         subheader={formattedUpdatedAt}
-        action={
-          <>
-            {!readOnly ? (
-              <>
-                {!comment.data.deleted && showEdit ? (
-                  <IconButton
-                    aria-label="edit"
-                    color="primary"
-                    onClick={this.onEdit}
-                  >
-                    <EditIcon />
-                  </IconButton>
-                ) : null}
-                {showDelete ? (
-                  <IconButton
-                    aria-label="delete"
-                    color="secondary"
-                    onClick={this.handleDeleteClicked}
-                  >
-                    <DeleteIcon />
-                  </IconButton>
-                ) : null}
-              </>
-            ) : null}
-            {this.renderAddReactions()}
-            <ConfirmDialog
-              ref={this.dialogRef}
-              open={open}
-              setOpen={(v) => this.setState({ open: v })}
-              onClose={(m) => {
-                if (m) {
-                  this.handleDelete(comment._id);
-                }
-              }}
-            />
-          </>
-        }
+        action={!readOnly ? this.renderActionMenu() : null}
       />
     );
   }
@@ -520,44 +676,41 @@ class CommentView extends Component {
     if (reactions.every((g) => g.count === 0)) {
       return null;
     }
-    return (
-      <Grid container item direction="row" spacing={1} alignItems="center">
-        <Grid item>{this.renderAddReactions('small')}</Grid>
-        {reactions.map((reaction) =>
-          reaction.count ? (
-            <Grid item key={reaction.label}>
-              <Chip
-                label={`${reaction.icon} ${reaction.count}`}
-                size="small"
-                color="primary"
-                variant={reaction.reactionIdFromUser ? 'default' : 'outlined'}
-                onClick={() =>
-                  this.handleOnClickAddReactionDisplay(
-                    reaction.label,
-                    reaction.reactionIdFromUser,
-                  )
-                }
-              />
-            </Grid>
-          ) : null,
-        )}
-      </Grid>
+    return reactions.map((reaction) =>
+      reaction.count ? (
+        <Grid item key={reaction.label}>
+          <Chip
+            label={`${reaction.icon} ${reaction.count}`}
+            size="small"
+            color="primary"
+            variant={reaction.reactionIdFromUser ? 'default' : 'outlined'}
+            onClick={() =>
+              this.handleOnClickAddReactionDisplay(
+                reaction.label,
+                reaction.reactionIdFromUser,
+              )
+            }
+          />
+        </Grid>
+      ) : null,
     );
   }
 
   renderAddReactions(size = 'medium') {
-    const { reactions, classes } = this.props;
+    const { reactions, classes, t } = this.props;
     const { openAddReactionsMenu, addReactionsAnchorEl } = this.state;
     return (
       <>
-        <IconButton
-          aria-label="add reaction"
-          color="primary"
-          size={size}
-          onClick={(e) => this.handleOnClickAddReactionMenu(e)}
-        >
-          <InsertEmoticon />
-        </IconButton>
+        <Tooltip title={t('Add Reaction')}>
+          <IconButton
+            aria-label="add reaction"
+            color="primary"
+            size={size}
+            onClick={(e) => this.handleOnClickAddReactionMenu(e)}
+          >
+            <InsertEmoticon />
+          </IconButton>
+        </Tooltip>
         <Popover
           open={openAddReactionsMenu}
           anchorEl={addReactionsAnchorEl}
@@ -604,6 +757,15 @@ class CommentView extends Component {
           </Grid>
         </Popover>
       </>
+    );
+  }
+
+  renderInteractions() {
+    return (
+      <Grid container item direction="row" spacing={1} alignItems="center">
+        <Grid item>{this.renderAddReactions('small')}</Grid>
+        {this.renderReactions()}
+      </Grid>
     );
   }
 
@@ -705,6 +867,18 @@ class CommentView extends Component {
           )}
           {replyButtons}
           {replyMenu}
+          {comment.type === BOT_COMMENT &&
+          !comment.data.end &&
+          this.getBotUser()?.allowHumanIntervention ? (
+            <Tooltip title={t('Ask for Human Intervention')}>
+              <IconButton
+                color="primary"
+                onClick={() => this.handleOnClickHumanIntervention()}
+              >
+                <PanTool />
+              </IconButton>
+            </Tooltip>
+          ) : null}
         </Grid>
       </Grid>
     );
@@ -715,6 +889,7 @@ class CommentView extends Component {
     const {
       classes,
       t,
+      readOnly,
       // activity,
       comment,
       showReply,
@@ -730,70 +905,81 @@ class CommentView extends Component {
     }
 
     return (
-      <Card className={classes.root} elevation={0}>
-        {this.renderCardHeader()}
-        <CardContent className={classes.content}>
-          {isEdited ? (
-            <ReactMde
-              value={value}
-              onChange={(v) => this.setState({ value: v })}
-              selectedTab={selectedTab}
-              onTabChange={(tab) => this.setState({ selectedTab: tab })}
-              generateMarkdownPreview={(markdown) =>
-                Promise.resolve(this.converter.makeHtml(markdown))
-              }
-              l18n={{
-                write: t('Write'),
-                preview: t('Preview'),
-              }}
-              childProps={{
-                writeButton: {
-                  tabIndex: -1,
-                },
-                textArea: {
-                  autoFocus: true,
-                },
-              }}
-              minEditorHeight={MIN_EDITOR_HEIGHT}
-              minPreviewHeight={MIN_PREVIEW_HEIGHT}
-            />
-          ) : (
-            <Grid
-              container
-              className={`mde-preview standalone ${classes.commentText}`}
-            >
-              <Grid
-                item
-                xs={12}
-                className="mde-preview-content"
-                dangerouslySetInnerHTML={{
-                  __html: this.converter.makeHtml(value),
+      <div ref={this.commentRef}>
+        <Card
+          className={classes.root}
+          elevation={0}
+          // this is used to color the comments that need help in the feedback view only
+          style={
+            comment.data.requireIntervention && readOnly
+              ? { backgroundColor: '#eeeeee' }
+              : null
+          }
+        >
+          {this.renderCardHeader()}
+          <CardContent className={classes.content}>
+            {isEdited ? (
+              <ReactMde
+                value={value}
+                onChange={(v) => this.setState({ value: v })}
+                selectedTab={selectedTab}
+                onTabChange={(tab) => this.setState({ selectedTab: tab })}
+                generateMarkdownPreview={(markdown) =>
+                  Promise.resolve(this.converter.makeHtml(markdown))
+                }
+                l18n={{
+                  write: t('Write'),
+                  preview: t('Preview'),
                 }}
+                childProps={{
+                  writeButton: {
+                    tabIndex: -1,
+                  },
+                  textArea: {
+                    autoFocus: true,
+                  },
+                }}
+                minEditorHeight={MIN_EDITOR_HEIGHT}
+                minPreviewHeight={MIN_PREVIEW_HEIGHT}
               />
-              {this.renderReactions()}
-              {showReply ? this.renderReplyOptions() : null}
-            </Grid>
-          )}
-        </CardContent>
-        {isEdited ? (
-          <CardActions className={classes.actions}>
-            <Button
-              variant="outlined"
-              color="secondary"
-              onClick={this.handleOnCancel}
-            >
-              {t('Cancel')}
-            </Button>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={this.handleOnSubmit}
-            >
-              {t('Send')}
-            </Button>
-          </CardActions>
-        ) : null}
-      </Card>
+            ) : (
+              <Grid
+                container
+                className={`mde-preview standalone ${classes.commentText}`}
+              >
+                <Grid
+                  item
+                  xs={12}
+                  className="mde-preview-content"
+                  dangerouslySetInnerHTML={{
+                    __html: this.converter.makeHtml(value),
+                  }}
+                />
+                {this.renderInteractions()}
+                {showReply ? this.renderReplyOptions() : null}
+              </Grid>
+            )}
+          </CardContent>
+          {isEdited ? (
+            <CardActions className={classes.actions}>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={this.handleOnCancel}
+              >
+                {t('Cancel')}
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={this.handleOnSubmit}
+              >
+                {t('Send')}
+              </Button>
+            </CardActions>
+          ) : null}
+        </Card>
+      </div>
     );
   }
 }
@@ -811,6 +997,8 @@ const mapStateToProps = (
       initials: getInitials(data.name),
       uri: data.uri,
       description: data.description,
+      allowHumanIntervention: data.allowHumanIntervention,
+      data: { personality: data.personality },
     })),
   // activity: appInstanceResources.activity.length,
   lang: context.lang,
@@ -826,10 +1014,12 @@ const mapStateToProps = (
     }))
     // get the grouped reactions
     .reduce(groupReactions, getInitialReactionChipArray()),
+  userId: context.userId,
 });
 
 const mapDispatchToProps = {
   dispatchDeleteAppInstanceResource: deleteAppInstanceResource,
+  dispatchPostAppInstanceResource: postAppInstanceResource,
   dispatchPostAction: postAction,
 };
 

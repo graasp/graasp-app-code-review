@@ -9,6 +9,7 @@ import {
 } from '../types';
 import { showErrorToast } from '../utils/toasts';
 import {
+  DEFAULT_HELP_REQUESTS_ONLY_SETTING,
   DEFAULT_ALLOW_COMMENTS_SETTING,
   DEFAULT_ALLOW_REPLIES_SETTING,
   DEFAULT_CODE_CONTENT_SETTING,
@@ -31,6 +32,7 @@ export const DEFAULT_SETTINGS = {
   allowComments: DEFAULT_ALLOW_COMMENTS_SETTING,
   allowReplies: DEFAULT_ALLOW_REPLIES_SETTING,
   code: DEFAULT_CODE_CONTENT_SETTING,
+  helpRequestsOnly: DEFAULT_HELP_REQUESTS_ONLY_SETTING,
   programmingLanguage: DEFAULT_PROGRAMMING_LANGUAGE,
 };
 

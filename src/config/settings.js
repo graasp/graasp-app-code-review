@@ -43,6 +43,7 @@ export const DEFAULT_VISIBILITY_MODE_SETTING = true;
 export const DEFAULT_ALLOW_REPLIES_SETTING = true;
 export const DEFAULT_ALLOW_COMMENTS_SETTING = true;
 export const DEFAULT_CODE_CONTENT_SETTING = '';
+export const DEFAULT_HELP_REQUESTS_ONLY_SETTING = false;
 
 export const SHOW_BOT = 'visible';
 export const HIDE_BOT = 'hidden';
@@ -107,6 +108,9 @@ export const DEFAULT_REACTIONS = [
   { label: 'laughing-tears', icon: '😂' },
 ];
 export const DEFAULT_REACTION_PICKER_COL_NUMBER = 3;
+
+// hint for flag message is empty
+export const FLAG_REASON_EMPTY = 'Reason must not be empty';
 
 // user type
 export const GRAASP_USER_TYPE = 'graasp';

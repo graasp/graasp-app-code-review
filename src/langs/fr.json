@@ -57,6 +57,7 @@
     "Show Visibility Toggle": "Afficher le contrôle de la visibilité",
     "Allow students to see other students' code": "Autoriser les étudiants à voir le code d'autres étudiants",
     "Edit": "Éditer",
+    "Delete": "Supprimer",
     "Commit Info": "Information sur le commit",
     "Author": "Auteur",
     "Message": "Message",
@@ -68,6 +69,14 @@
     "You can reply with": "Vous pouvez répondre avec",
     "Quick Replies": "Réponses rapides",
     "Restart interaction": "Recommencer l'interaction",
-    "Default Version": "Version par défaut"
+    "Report": "Signaler",
+    "Report a comment": "Signaler un commentaire",
+    "Default Version": "Version par défaut",
+    "Add Reaction": "Ajouter une réaction",
+    "Reason": "Raison",
+    "Please provide below the reason for reporting this comment": "Veuillez préciser la raison du signalement",
+    "Reason must not be empty": "Entrez une raison",
+    "Only Show Help Requests": "Montrer seulement les demandes d'aide",
+    "Allow Request Human Intervention": "Autoriser les demandes d'intervention humaines"
   }
 }
