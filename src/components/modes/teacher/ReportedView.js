@@ -162,17 +162,6 @@ export class ReportedView extends Component {
     }
   };
 
-  handleHideFlag = (flaggedComment) => {
-    const { dispatchPatchAppInstanceResource } = this.props;
-    dispatchPatchAppInstanceResource({
-      id: flaggedComment._id,
-      data: {
-        ...flaggedComment.data,
-        state: HIDDEN_FLAGGED_COMMENT,
-      },
-    });
-  };
-
   handleChangeHelpWantedFilter = ({ target: { checked } }) => {
     const settingsToChange = {
       pendingFlagsOnly: checked,
