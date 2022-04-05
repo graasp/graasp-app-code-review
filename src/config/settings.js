@@ -112,7 +112,7 @@ export const DEFAULT_REACTION_PICKER_COL_NUMBER = 3;
 
 // hint for flag message is empty
 export const FLAG_REASON_EMPTY = 'Reason must not be empty';
-export const HIDDEN_FLAGGED_COMMENT = 'hidden';
+export const DISMISS_FLAGGED_COMMENT = 'dismissed';
 export const PENDING_FLAGGED_COMMENT = 'pending';
 
 // user type

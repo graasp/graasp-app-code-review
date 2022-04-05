@@ -30,7 +30,7 @@ import { FLAG } from '../../../config/appInstanceResourceTypes';
 import { CLEARED_FLAGGED_COMMENT } from '../../../config/verbs';
 import {
   DEFAULT_PENDING_FLAGS_ONLY_SETTING,
-  HIDDEN_FLAGGED_COMMENT,
+  DISMISS_FLAGGED_COMMENT,
   PENDING_FLAGGED_COMMENT,
 } from '../../../config/settings';
 
@@ -43,7 +43,7 @@ export class ReportedView extends Component {
       table: PropTypes.string,
       main: PropTypes.string,
       button: PropTypes.string,
-      hiddenFlag: PropTypes.string,
+      dismissedFlag: PropTypes.string,
       fab: PropTypes.string,
     }).isRequired,
     dispatchGetUsers: PropTypes.func.isRequired,
@@ -104,7 +104,7 @@ export class ReportedView extends Component {
     table: {
       minWidth: 700,
     },
-    hiddenFlag: {
+    dismissedFlag: {
       backgroundColor: '#e5e5e5',
     },
     fab: {
@@ -203,7 +203,7 @@ export class ReportedView extends Component {
           <TableRow
             key={id}
             className={clsx({
-              [classes.hiddenFlag]: state === HIDDEN_FLAGGED_COMMENT,
+              [classes.dismissedFlag]: state === DISMISS_FLAGGED_COMMENT,
             })}
           >
             <TableCell>{reportingUser}</TableCell>
@@ -214,10 +214,10 @@ export class ReportedView extends Component {
             <TableCell>{state}</TableCell>
             <TableCell>
               {state === PENDING_FLAGGED_COMMENT ? (
-                <Tooltip title={t('Set Flag to hidden')}>
+                <Tooltip title={t('Dismiss Flag')}>
                   <IconButton
                     onClick={() =>
-                      this.handleChangeFlagState(id, HIDDEN_FLAGGED_COMMENT)
+                      this.handleChangeFlagState(id, DISMISS_FLAGGED_COMMENT)
                     }
                   >
                     <VisibilityOff color="primary" />
