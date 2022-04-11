@@ -21,14 +21,8 @@ const flagPatchingAppInstance = flag(FLAG_PATCHING_APP_INSTANCE);
 const getAppInstance = async () => async (dispatch, getState) => {
   dispatch(flagGettingAppInstance(true));
   try {
-    const {
-      appInstanceId,
-      apiHost,
-      offline,
-      spaceId,
-      subSpaceId,
-      standalone,
-    } = getApiContext(getState);
+    const { appInstanceId, apiHost, offline, spaceId, subSpaceId, standalone } =
+      getApiContext(getState);
 
     // if standalone, you cannot connect to api
     if (standalone) {
@@ -71,55 +65,53 @@ const getAppInstance = async () => async (dispatch, getState) => {
   }
 };
 
-const patchAppInstance = async ({ data } = {}) => async (
-  dispatch,
-  getState,
-) => {
-  dispatch(flagPatchingAppInstance(true));
-  try {
-    const { appInstanceId, apiHost, offline, standalone } = getApiContext(
-      getState,
-    );
+const patchAppInstance =
+  async ({ data } = {}) =>
+  async (dispatch, getState) => {
+    dispatch(flagPatchingAppInstance(true));
+    try {
+      const { appInstanceId, apiHost, offline, standalone } =
+        getApiContext(getState);
 
-    // if standalone, you cannot connect to api
-    if (standalone) {
-      return false;
-    }
+      // if standalone, you cannot connect to api
+      if (standalone) {
+        return false;
+      }
 
-    // if offline send message to parent requesting resources
-    if (offline) {
-      return postMessage({
-        type: PATCH_APP_INSTANCE,
+      // if offline send message to parent requesting resources
+      if (offline) {
+        return postMessage({
+          type: PATCH_APP_INSTANCE,
+        });
+      }
+
+      const url = `//${apiHost + APP_INSTANCES_ENDPOINT}/${appInstanceId}`;
+      const body = {
+        settings: data,
+      };
+
+      const response = await fetch(url, {
+        ...DEFAULT_PATCH_REQUEST,
+        body: JSON.stringify(body),
       });
+
+      // throws if it is an error
+      await isErrorResponse(response);
+
+      const appInstance = await response.json();
+
+      return dispatch({
+        type: PATCH_APP_INSTANCE_SUCCEEDED,
+        payload: appInstance,
+      });
+    } catch (err) {
+      return dispatch({
+        type: PATCH_APP_INSTANCE_FAILED,
+        payload: err,
+      });
+    } finally {
+      dispatch(flagPatchingAppInstance(false));
     }
-
-    const url = `//${apiHost + APP_INSTANCES_ENDPOINT}/${appInstanceId}`;
-    const body = {
-      settings: data,
-    };
-
-    const response = await fetch(url, {
-      ...DEFAULT_PATCH_REQUEST,
-      body: JSON.stringify(body),
-    });
-
-    // throws if it is an error
-    await isErrorResponse(response);
-
-    const appInstance = await response.json();
-
-    return dispatch({
-      type: PATCH_APP_INSTANCE_SUCCEEDED,
-      payload: appInstance,
-    });
-  } catch (err) {
-    return dispatch({
-      type: PATCH_APP_INSTANCE_FAILED,
-      payload: err,
-    });
-  } finally {
-    dispatch(flagPatchingAppInstance(false));
-  }
-};
+  };
 
 export { patchAppInstance, getAppInstance };

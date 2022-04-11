@@ -45,6 +45,7 @@ import {
   MAX_QUICK_REPLIES_TO_SHOW,
   MIN_EDITOR_HEIGHT,
   MIN_PREVIEW_HEIGHT,
+  PENDING_FLAGGED_COMMENT,
   PUBLIC_VISIBILITY,
 } from '../../config/settings';
 // import Loader from './Loader';
@@ -436,6 +437,7 @@ class CommentView extends Component {
       data: {
         comment,
         reason,
+        state: PENDING_FLAGGED_COMMENT,
       },
       type: FLAG,
       visibility: PUBLIC_VISIBILITY,
