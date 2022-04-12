@@ -32,6 +32,7 @@ import Settings from './Settings';
 import { BOT_COMMENT, COMMENT } from '../../../config/appInstanceResourceTypes';
 import FeedbackView from './FeedbackView';
 import { DEFAULT_HELP_REQUESTS_ONLY_SETTING } from '../../../config/settings';
+import OrphanComments from './OrphanComments';
 
 export class TeacherView extends Component {
   static propTypes = {
@@ -260,6 +261,7 @@ export class TeacherView extends Component {
         >
           <SettingsIcon />
         </Fab>
+        <OrphanComments />
       </>
     );
   }
