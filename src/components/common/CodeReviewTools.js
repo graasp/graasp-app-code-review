@@ -116,9 +116,7 @@ class CodeReviewTools extends React.Component {
   static propTypes = {
     classes: PropTypes.shape({
       container: PropTypes.string.isRequired,
-      gridRow: PropTypes.string.isRequired,
       toolbar: PropTypes.string.isRequired,
-      lastGrid: PropTypes.string.isRequired,
       selectUsers: PropTypes.string.isRequired,
       selectVersions: PropTypes.string.isRequired,
       toggleButton: PropTypes.string.isRequired,
@@ -134,8 +132,8 @@ class CodeReviewTools extends React.Component {
     showHistoryDropdown: PropTypes.bool,
     hideCommentsCallback: PropTypes.func.isRequired,
     codeEditorSettings: PropTypes.shape({
-      codeId: PropTypes.string.isRequired,
-      code: PropTypes.string.isRequired,
+      codeId: PropTypes.string,
+      code: PropTypes.string,
     }).isRequired,
     topBarVisible: PropTypes.bool.isRequired,
     allVisibleState: PropTypes.bool.isRequired,
