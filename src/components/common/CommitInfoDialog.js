@@ -77,7 +77,7 @@ export class CommitInfoDialog extends Component {
         alignItems="stretch"
       >
         {commit.map(({ label, value }) => (
-          <Grid item container spacing={1}>
+          <Grid item container spacing={1} key={label}>
             <Grid item xs={12} sm={4}>
               <FormLabel>{t(label)}</FormLabel>
             </Grid>

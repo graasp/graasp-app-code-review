@@ -579,6 +579,17 @@ class CodeReview extends Component {
     return thread;
   };
 
+  getNumberOfThreadsShown = () => {
+    const { botComments, teacherComments } = this.props;
+    const { comments } = this.state;
+    const allComments = [...comments, ...botComments, ...teacherComments];
+    const allParentComments = allComments.filter((c) => c.data.parent === null);
+    const allShownParentComments = allParentComments.filter((c) =>
+      this.shouldShowComment(c),
+    );
+    return allShownParentComments.length;
+  };
+
   getReplySetting = () => {
     const { isFeedbackView, isStudentView, settings } = this.props;
     const { allowReplies = DEFAULT_ALLOW_REPLIES_SETTING } = settings;
@@ -707,28 +718,27 @@ class CodeReview extends Component {
       const parentComments = lineComments.filter(
         (comment) => comment.data.parent === null,
       );
-      const numThreads = parentComments.length;
-      const renderedComments =
-        numThreads && !hiddenCommentState
-          ? parentComments.map(
-              (comment) =>
-                // should render this comment (bot list)
-                this.shouldShowComment(comment) && (
-                  <tr className="comment">
-                    <td className="comment editor" colSpan={2}>
-                      <Paper
-                        key={comment._id}
-                        className={classes.commentContainer}
-                        variant="outlined"
-                      >
-                        {this.renderCommentThread(comment, lineComments)}
-                      </Paper>
-                    </td>
-                  </tr>
-                ),
-            )
-          : null;
 
+      // should render this comment (bot list)
+      const parentCommentsToShow = parentComments.filter((c) =>
+        this.shouldShowComment(c),
+      );
+      const renderedComments = !hiddenCommentState
+        ? parentCommentsToShow.map((comment) => (
+            <tr className="comment" key={comment._id}>
+              <td className="comment editor" colSpan={2}>
+                <Paper
+                  key={comment._id}
+                  className={classes.commentContainer}
+                  variant="outlined"
+                >
+                  {this.renderCommentThread(comment, lineComments)}
+                </Paper>
+              </td>
+            </tr>
+          ))
+        : null;
+      const numThreads = parentCommentsToShow.length;
       return (
         <Fragment
           // eslint-disable-next-line react/no-array-index-key
@@ -750,15 +760,8 @@ class CodeReview extends Component {
   }
 
   renderCodeReview() {
-    const {
-      classes,
-      code,
-      isStudentView,
-      isFeedbackView,
-      settings,
-      botComments,
-      teacherComments,
-    } = this.props;
+    const { classes, code, isStudentView, isFeedbackView, settings } =
+      this.props;
     const { comments, lineCommentsHiddenState } = this.state;
     const {
       showEditButton = DEFAULT_SHOW_EDIT_BUTTON_SETTING,
@@ -766,8 +769,7 @@ class CodeReview extends Component {
       showVisibility = DEFAULT_VISIBILITY_MODE_SETTING,
     } = settings;
 
-    const totalNumberOfComments =
-      comments.length + botComments.length + teacherComments.length;
+    const totalNumberOfComments = this.getNumberOfThreadsShown();
 
     return (
       <>

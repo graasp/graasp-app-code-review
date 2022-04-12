@@ -218,7 +218,7 @@ class CommentView extends Component {
         name: PropTypes.string,
         initials: PropTypes.string,
         allowHumanIntervention: PropTypes.bool,
-        data: { personality: PropTypes.string },
+        data: PropTypes.shape({ personality: PropTypes.string }),
       }),
     ),
     // activity: PropTypes.number,
@@ -907,7 +907,7 @@ class CommentView extends Component {
     }
 
     return (
-      <div ref={this.commentRef}>
+      <div ref={this.commentRef} key={comment._id}>
         <Card
           className={classes.root}
           elevation={0}
