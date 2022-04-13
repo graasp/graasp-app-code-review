@@ -210,13 +210,18 @@ class CodeReview extends Component {
       teacherComments,
       comments,
       botComments,
+      isTeacherView,
     } = this.props;
     const allComments = [...teacherComments, ...comments, ...botComments];
     const allChildComments = allComments.filter(
       (comment) => comment.data.parent === _id,
     );
     const comment = allComments.find((c) => c._id === _id);
-    if (allChildComments.length) {
+    // only patch comment with [DELETED] when there are responses
+    // and we are not in the TeacherView
+    // we want to let teachers delete comments even if they have private children
+    // because it makes more sens in the UI than only being able to patch them
+    if (allChildComments.length && !isTeacherView) {
       dispatchPatchAppInstanceResource({
         id: _id,
         data: {
@@ -227,6 +232,12 @@ class CodeReview extends Component {
       });
     } else {
       dispatchDeleteAppInstanceResource(_id);
+      if (allChildComments.length) {
+        // cleanup orphan comments
+        allChildComments.forEach((c) => {
+          dispatchDeleteAppInstanceResource(c._id);
+        });
+      }
     }
     // track that this comment was deleted, along
     // with the state at the time of deletion

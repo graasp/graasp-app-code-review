@@ -53,9 +53,11 @@
     "Code Settings": "Paramètres de code",
     "Display Settings": "Paramètres d'affichage",
     "Show Version Navigation": "Afficher la navigation de versions",
-    "Show Code Edit Button": "Afficher le bouton d'éditition",
+    "Show Code Edit Button": "Afficher le bouton d'édition",
     "Show Visibility Toggle": "Afficher le contrôle de la visibilité",
     "Allow students to see other students' code": "Autoriser les étudiants à voir le code d'autres étudiants",
+    "Allow Replies": "Autoriser les réponses",
+    "Allow Comments": "Autoriser les commentaires",
     "Edit": "Éditer",
     "Delete": "Supprimer",
     "Commit Info": "Information sur le commit",
@@ -77,6 +79,9 @@
     "Please provide below the reason for reporting this comment": "Veuillez préciser la raison du signalement",
     "Reason must not be empty": "Entrez une raison",
     "Only Show Help Requests": "Montrer seulement les demandes d'aide",
-    "Allow Request Human Intervention": "Autoriser les demandes d'intervention humaines"
+    "Help needed": "Aide demandée",
+    "Allow Request Human Intervention": "Autoriser les demandes d'intervention humaines",
+    "Number of orphan threads": "Nombre de fils orphelins",
+    "total comments": "commentaires au total"
   }
 }
