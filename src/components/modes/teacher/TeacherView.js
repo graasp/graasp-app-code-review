@@ -29,10 +29,15 @@ import {
   patchAppInstance,
 } from '../../../actions';
 import Settings from './Settings';
-import { BOT_COMMENT, COMMENT } from '../../../config/appInstanceResourceTypes';
+import {
+  BOT_COMMENT,
+  COMMENT,
+  TEACHER_COMMENT,
+} from '../../../config/appInstanceResourceTypes';
 import FeedbackView from './FeedbackView';
 import { DEFAULT_HELP_REQUESTS_ONLY_SETTING } from '../../../config/settings';
 import OrphanComments from './OrphanComments';
+import { getOrphans } from '../../../utils/comments';
 
 export class TeacherView extends Component {
   static propTypes = {
@@ -42,7 +47,9 @@ export class TeacherView extends Component {
     classes: PropTypes.shape({
       root: PropTypes.string,
       table: PropTypes.string,
-      main: PropTypes.string,
+      controls: PropTypes.string,
+      title: PropTypes.string,
+      mainContainer: PropTypes.string,
       button: PropTypes.string,
       message: PropTypes.string,
       fab: PropTypes.string,
@@ -61,6 +68,19 @@ export class TeacherView extends Component {
         data: PropTypes.shape({
           line: PropTypes.number,
           content: PropTypes.string,
+          parent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        }),
+      }),
+    ),
+    teacherComments: PropTypes.arrayOf(
+      PropTypes.shape({
+        // we need to specify number to avoid warnings with local server
+        _id: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
+        appInstanceId: PropTypes.string,
+        data: PropTypes.shape({
+          line: PropTypes.number,
+          content: PropTypes.string,
+          parent: PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
         }),
       }),
     ),
@@ -79,24 +99,29 @@ export class TeacherView extends Component {
 
   static defaultProps = {
     comments: [],
+    teacherComments: [],
     students: [],
   };
 
   static styles = (theme) => ({
     root: {
-      width: '100%',
-      marginTop: theme.spacing(3),
-      overflowX: 'auto',
+      marginTop: theme.spacing(2),
     },
-    main: {
-      textAlign: 'center',
-      margin: theme.spacing(),
+    mainContainer: {
+      padding: theme.spacing(1),
     },
     button: {
       marginTop: theme.spacing(3),
     },
     table: {
       minWidth: 700,
+    },
+    controls: {
+      marginTop: theme.spacing(2),
+    },
+    title: {
+      marginTop: theme.spacing(2),
+      textAlign: 'center',
     },
     message: {
       padding: theme.spacing(),
@@ -122,24 +147,27 @@ export class TeacherView extends Component {
     const {
       students,
       comments,
+      teacherComments,
       t,
       dispatchOpenFeedbackView,
       dispatchSetSelectedStudent,
       dispatchGetAppInstanceResources,
       settings: { helpRequestsOnly = DEFAULT_HELP_REQUESTS_ONLY_SETTING },
     } = this.props;
+    const orphans = getOrphans([...comments, ...teacherComments]);
     // if there are no resources, show an empty table
-    if (!comments.length) {
+    if (comments.length - orphans.length <= 0) {
       return (
         <TableRow>
-          <TableCell colSpan={4}>No App Instance Resources</TableCell>
+          <TableCell colSpan={4}>{t('No Interactions')}</TableCell>
         </TableRow>
       );
     }
     // map each app instance resource to a row in the table
     return students.map(({ id, name }) => {
       const numberOfComments =
-        comments.filter((r) => r.user === id)?.length || 0;
+        comments.filter((r) => r.user === id)?.length -
+          orphans.filter((r) => r.user === id)?.length || 0;
       const numberOfInterventions =
         comments.filter((r) => r.user === id && r.data.requireIntervention)
           ?.length || 0;
@@ -225,17 +253,34 @@ export class TeacherView extends Component {
 
     return (
       <>
-        <Grid container spacing={0}>
-          <Grid item xs={12} className={classes.main}>
+        <Grid
+          container
+          direction="column"
+          justifyContent="center"
+          className={classes.mainContainer}
+        >
+          <Grid item className={classes.title}>
             <Typography variant="h6" color="inherit">
               {t('Student Comments')}
             </Typography>
-            <div align="right">
+          </Grid>
+          <Grid
+            container
+            item
+            justifyContent="space-between"
+            className={classes.controls}
+          >
+            <Grid item>
+              <OrphanComments />
+            </Grid>
+            <Grid item>
               <FormControlLabel
                 control={switchComponent}
                 label={t('Only Show Help Requests')}
               />
-            </div>
+            </Grid>
+          </Grid>
+          <Grid item>
             <Paper className={classes.root}>
               <Table className={classes.table}>
                 <TableHead>
@@ -261,7 +306,6 @@ export class TeacherView extends Component {
         >
           <SettingsIcon />
         </Fab>
-        <OrphanComments />
       </>
     );
   }
@@ -277,6 +321,9 @@ const mapStateToProps = ({ users, appInstanceResources, appInstance }) => ({
   })),
   comments: appInstanceResources.content.filter((r) =>
     [COMMENT, BOT_COMMENT].includes(r.type),
+  ),
+  teacherComments: appInstanceResources.content.filter(
+    (r) => r.type === TEACHER_COMMENT,
   ),
   settings: appInstance.content.settings,
 });

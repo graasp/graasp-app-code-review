@@ -2,7 +2,7 @@ import React from 'react';
 import { connect } from 'react-redux';
 import { withTranslation } from 'react-i18next';
 import PropTypes from 'prop-types';
-import { Button, Typography } from '@material-ui/core';
+import { Button, FormControlLabel, makeStyles } from '@material-ui/core';
 import _ from 'lodash';
 import { ALL_COMMENT_TYPES } from '../../../config/appInstanceResourceTypes';
 import { deleteAppInstanceResource } from '../../../actions';
@@ -11,8 +11,16 @@ import {
   getThreadIdsFromFirstCommentId,
 } from '../../../utils/comments';
 
+const useStyles = makeStyles((theme) => ({
+  button: {
+    margin: theme.spacing(0, 1),
+  },
+}));
+
 const OrphanComments = (props) => {
   const { comments, t } = props;
+  const classes = useStyles();
+
   const getOrphanComments = (allComments) => {
     const orphans = getOrphans(allComments);
     const orphanThreads = orphans.map((o) =>
@@ -36,22 +44,22 @@ const OrphanComments = (props) => {
     return null;
   }
 
-  return (
-    <>
-      <Button
-        variant="outlined"
-        onClick={() => handleOnClickRemoveOrphans(orphanThreads)}
-        disabled={orphanThreads.length === 0}
-      >
-        Remove orphans
-      </Button>
-      <Typography variant="caption">{`${t('Number of orphan threads')}: ${
-        orphanThreads.length
-      } (${_.sum(orphanThreads.map((thread) => thread.length))} ${t(
-        'total comments',
-      )})`}</Typography>
-    </>
+  const buttonControl = (
+    <Button
+      className={classes.button}
+      variant="outlined"
+      color="secondary"
+      onClick={() => handleOnClickRemoveOrphans(orphanThreads)}
+      disabled={orphanThreads.length === 0}
+    >
+      {t('Remove orphans')}
+    </Button>
   );
+  const buttonLabel = `${t('Orphan threads')}: ${orphanThreads.length} (${_.sum(
+    orphanThreads.map((thread) => thread.length),
+  )} ${t('total comments')})`;
+
+  return <FormControlLabel control={buttonControl} label={buttonLabel} />;
 };
 
 OrphanComments.propTypes = {
