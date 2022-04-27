@@ -49,6 +49,7 @@ export const DEFAULT_PENDING_FLAGS_ONLY_SETTING = true;
 export const SHOW_BOT = 'visible';
 export const HIDE_BOT = 'hidden';
 export const DEFAULT_BOT_USER_LIST_POLARITY_SETTING = HIDE_BOT;
+export const DEFAULT_BOT_USER_LIST_SORT_BY_NAME_SETTING = true;
 export const DEFAULT_BOT_USER_LIST_SETTING = [];
 export const DEFAULT_BOT_USE_USER_LIST_SETTING = false;
 

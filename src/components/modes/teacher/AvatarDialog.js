@@ -20,6 +20,7 @@ import {
   Paper,
   RadioGroup,
   Radio,
+  Snackbar,
 } from '@material-ui/core';
 import { withStyles } from '@material-ui/core/styles';
 import Typography from '@material-ui/core/Typography';
@@ -39,6 +40,7 @@ import {
   DEFAULT_BOT_USE_USER_LIST_SETTING,
   DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
   DEFAULT_BOT_USER_LIST_SETTING,
+  DEFAULT_BOT_USER_LIST_SORT_BY_NAME_SETTING,
   HIDE_BOT,
   JSON_LANG,
   PUBLIC_VISIBILITY,
@@ -64,6 +66,7 @@ const DEFAULT_AVATAR = {
   personality: stringifyPersonality(DEFAULT_PERSONALITY_JSON),
   useUserList: DEFAULT_BOT_USE_USER_LIST_SETTING,
   userListPolarity: DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+  userSortByName: DEFAULT_BOT_USER_LIST_SORT_BY_NAME_SETTING,
   userList: DEFAULT_BOT_USER_LIST_SETTING,
 };
 
@@ -186,6 +189,7 @@ class AvatarDialog extends Component {
       allowHumanIntervention: PropTypes.bool,
       useUserList: PropTypes.bool,
       userListPolarity: PropTypes.string,
+      userSortByName: PropTypes.bool,
       userList: PropTypes.arrayOf(
         PropTypes.oneOfType([PropTypes.string, PropTypes.number]),
       ),
@@ -220,6 +224,7 @@ class AvatarDialog extends Component {
         message: DEFAULT_VALIDATOR_MESSAGE,
       },
       tabIndex: TABS.indexOf(DEFAULT_TAB),
+      snackOpen: false,
     };
   })();
 
@@ -351,13 +356,31 @@ class AvatarDialog extends Component {
 
   handleFile = ({ target }) => {
     const reader = new FileReader();
-    reader.addEventListener('load', ({ target: fileTarget }) => {
+    reader.onload = ({ target: fileTarget }) => {
       const fileContent = fileTarget.result;
       this.setState((prevSate) => ({
         avatar: { ...prevSate.avatar, personality: fileContent },
       }));
       this.handlePersonalityVerification();
-    });
+    };
+    reader.readAsText(target.files[0]);
+  };
+
+  handleUserListFile = ({ target }) => {
+    const reader = new FileReader();
+    reader.onload = ({ target: fileTarget }) => {
+      const fileContent = fileTarget.result;
+      try {
+        const userList = JSON.parse(fileContent);
+        this.setState((prevSate) => ({
+          avatar: { ...prevSate.avatar, userList },
+        }));
+      } catch (error) {
+        if (error instanceof SyntaxError) {
+          this.setState({ snackOpen: true });
+        }
+      }
+    };
     reader.readAsText(target.files[0]);
   };
 
@@ -379,8 +402,14 @@ class AvatarDialog extends Component {
   };
 
   handleClose = () => {
-    const { dispatchCloseAvatarDialog } = this.props;
-    this.setState({ avatar: DEFAULT_AVATAR });
+    const { dispatchCloseAvatarDialog, avatar: avatarProps } = this.props;
+    const { avatar: avatarState } = this.state;
+    // unsaved modifications
+    if (!_.isEqual(avatarState, avatarProps)) {
+      this.setState({ avatar: avatarProps });
+    }
+    // reset tab index
+    this.setState({ tabIndex: TABS.indexOf(DEFAULT_TAB) });
     dispatchCloseAvatarDialog();
   };
 
@@ -423,13 +452,21 @@ class AvatarDialog extends Component {
     this.setState({ tabIndex: newValue });
   };
 
+  handleCloseSnackAlert = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    this.setState({ snackOpen: false });
+  };
+
   renderModalContent() {
     const { t, activity, classes, avatar: avatarProp, users } = this.props;
-    const { avatar, validator, tabIndex } = this.state;
+    const { avatar, validator, tabIndex, snackOpen } = this.state;
     const {
       useUserList = DEFAULT_BOT_USE_USER_LIST_SETTING,
       userList = DEFAULT_BOT_USER_LIST_SETTING,
       userListPolarity = DEFAULT_BOT_USER_LIST_POLARITY_SETTING,
+      userSortByName = DEFAULT_BOT_USER_LIST_SORT_BY_NAME_SETTING,
     } = avatar;
 
     const hasChanged = !_.isEqual(avatarProp, avatar);
@@ -437,6 +474,16 @@ class AvatarDialog extends Component {
     if (activity) {
       return <Loader />;
     }
+
+    const sortedUsers = users.sort((a, b) => {
+      if (userSortByName) {
+        return a.name.localeCompare(b.name);
+      }
+      if (typeof a.id === 'string') {
+        return a.id.localeCompare(b.id);
+      }
+      return a.id - b.id;
+    });
 
     const nameControl = (
       <TextField
@@ -518,6 +565,31 @@ class AvatarDialog extends Component {
         checked={useUserList}
         onChange={this.handleChangeSwitch('useUserList')}
       />
+    );
+
+    const userSortByNameSwitchControl = (
+      <Switch
+        color="primary"
+        value="userSortByName"
+        size="small"
+        checked={userSortByName}
+        onChange={this.handleChangeSwitch('userSortByName')}
+      />
+    );
+
+    const userListUploadControl = (
+      <label htmlFor="button-file-userList">
+        <input
+          accept="application/json"
+          className={classes.input}
+          id="button-file-userList"
+          type="file"
+          onChange={this.handleUserListFile}
+        />
+        <Button color="primary" variant="outlined" component="span">
+          {t('Upload User List from ids')}
+        </Button>
+      </label>
     );
 
     const checkAllButton = (
@@ -695,30 +767,44 @@ class AvatarDialog extends Component {
                 >
                   <Grid item>{checkAllButton}</Grid>
                   <Grid item>{unCheckAllButton}</Grid>
+                  <Grid item>{userListUploadControl}</Grid>
                 </Grid>
-                <Grid item>
-                  <FormLabel component="legend">
-                    {t('For the selected users, bot will be')}{' '}
-                  </FormLabel>
-                  <RadioGroup
-                    aria-label="show-bot"
-                    name="userListPolarity"
-                    value={userListPolarity}
-                    onChange={(e) =>
-                      this.handleChangeBotVisibility(e.target.value)
-                    }
-                  >
+                <Grid
+                  item
+                  container
+                  direction="row"
+                  justifyContent="space-between"
+                >
+                  <Grid item>
+                    <FormLabel component="legend">
+                      {t('For the selected users, bot will be')}{' '}
+                    </FormLabel>
+                    <RadioGroup
+                      aria-label="show-bot"
+                      name="userListPolarity"
+                      value={userListPolarity}
+                      onChange={(e) =>
+                        this.handleChangeBotVisibility(e.target.value)
+                      }
+                    >
+                      <FormControlLabel
+                        value={SHOW_BOT}
+                        control={<Radio color="primary" />}
+                        label={t(SHOW_BOT)}
+                      />
+                      <FormControlLabel
+                        value={HIDE_BOT}
+                        control={<Radio color="primary" />}
+                        label={t(HIDE_BOT)}
+                      />
+                    </RadioGroup>
+                  </Grid>
+                  <Grid item>
                     <FormControlLabel
-                      value={SHOW_BOT}
-                      control={<Radio color="primary" />}
-                      label={t(SHOW_BOT)}
+                      control={userSortByNameSwitchControl}
+                      label={t('Sort Users by Name')}
                     />
-                    <FormControlLabel
-                      value={HIDE_BOT}
-                      control={<Radio color="primary" />}
-                      label={t(HIDE_BOT)}
-                    />
-                  </RadioGroup>
+                  </Grid>
                 </Grid>
                 <Grid item>
                   <Paper
@@ -727,7 +813,7 @@ class AvatarDialog extends Component {
                     className={classes.userListContainer}
                   >
                     <List>
-                      {users.map((u) => (
+                      {sortedUsers.map((u) => (
                         <ListItem
                           key={u.id}
                           dense
@@ -769,6 +855,15 @@ class AvatarDialog extends Component {
         >
           {t('Cancel')}
         </Button>
+        <Snackbar
+          open={snackOpen}
+          autoHideDuration={6000}
+          onClose={this.handleCloseSnackAlert}
+        >
+          <Alert onClose={this.handleCloseSnackAlert} severity="error">
+            {t('User List could not be parsed correctly')}
+          </Alert>
+        </Snackbar>
       </>
     );
   }
