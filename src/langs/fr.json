@@ -25,6 +25,7 @@
     "Code Review": "Revue de code",
     "Total Number of comments": "Nombre total de commentaires",
     "View Student comments": "Voir les commentaires",
+    "View in Context": "Voir dans le context",
     "Select a bot to impersonate": "Selectionnez un bot à utiliser",
     "Close": "Fermer",
     "Viewing comments from ": "Affichage des commentaires de ",
@@ -53,9 +54,11 @@
     "Code Settings": "Paramètres de code",
     "Display Settings": "Paramètres d'affichage",
     "Show Version Navigation": "Afficher la navigation de versions",
-    "Show Code Edit Button": "Afficher le bouton d'éditition",
+    "Show Code Edit Button": "Afficher le bouton d'édition",
     "Show Visibility Toggle": "Afficher le contrôle de la visibilité",
     "Allow students to see other students' code": "Autoriser les étudiants à voir le code d'autres étudiants",
+    "Allow Replies": "Autoriser les réponses",
+    "Allow Comments": "Autoriser les commentaires",
     "Edit": "Éditer",
     "Delete": "Supprimer",
     "Commit Info": "Information sur le commit",
@@ -77,6 +80,10 @@
     "Please provide below the reason for reporting this comment": "Veuillez préciser la raison du signalement",
     "Reason must not be empty": "Entrez une raison",
     "Only Show Help Requests": "Montrer seulement les demandes d'aide",
-    "Allow Request Human Intervention": "Autoriser les demandes d'intervention humaines"
+    "Help needed": "Aide demandée",
+    "Allow Request Human Intervention": "Autoriser les demandes d'intervention humaines",
+    "Orphan threads": "Threads orphelins",
+    "Remove orphans": "Supprimer les orphelins",
+    "total comments": "commentaires au total"
   }
 }

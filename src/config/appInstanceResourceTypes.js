@@ -9,3 +9,4 @@ export const FLAG = 'flag';
 
 // Combine comments that are associated to user resources
 export const USER_COMMENT_TYPES = [COMMENT, TEACHER_COMMENT];
+export const ALL_COMMENT_TYPES = [COMMENT, TEACHER_COMMENT, BOT_COMMENT];

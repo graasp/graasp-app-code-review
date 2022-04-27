@@ -113,7 +113,6 @@ const mapStateToProps = ({ users, appInstanceResources, layout }) => {
       })),
     selectedStudent: layout.selectedStudent,
     studentName,
-    appInstanceResources: appInstanceResources.content,
     open: layout.feedbackView.open,
   };
 };
