@@ -166,8 +166,8 @@ export class TeacherView extends Component {
     // map each app instance resource to a row in the table
     return students.map(({ id, name }) => {
       const numberOfComments =
-        comments.filter((r) => r.user === id)?.length -
-          orphans.filter((r) => r.user === id)?.length || 0;
+        (comments.filter((r) => r.user === id)?.length || 0) -
+        (orphans.filter((r) => r.user === id)?.length || 0);
       const numberOfInterventions =
         comments.filter((r) => r.user === id && r.data.requireIntervention)
           ?.length || 0;
