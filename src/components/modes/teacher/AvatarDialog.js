@@ -45,6 +45,7 @@ import {
   JSON_LANG,
   PUBLIC_VISIBILITY,
   SHOW_BOT,
+  SNACKBAR_AUTO_HIDE_DURATION,
 } from '../../../config/settings';
 import {
   DEFAULT_PERSONALITY_JSON,
@@ -476,12 +477,17 @@ class AvatarDialog extends Component {
     }
 
     const sortedUsers = users.sort((a, b) => {
+      // sort users by name
       if (userSortByName) {
+        // use localCompare to determine lexicographical order of strings (a->z)
         return a.name.localeCompare(b.name);
       }
+      // sort users by id when ids are strings
       if (typeof a.id === 'string') {
+        // use localCompare to determine lexicographical order of strings (a->z)
         return a.id.localeCompare(b.id);
       }
+      // by default assume ids are numbers, and order them by ascending order
       return a.id - b.id;
     });
 
@@ -857,7 +863,7 @@ class AvatarDialog extends Component {
         </Button>
         <Snackbar
           open={snackOpen}
-          autoHideDuration={6000}
+          autoHideDuration={SNACKBAR_AUTO_HIDE_DURATION}
           onClose={this.handleCloseSnackAlert}
         >
           <Alert onClose={this.handleCloseSnackAlert} severity="error">

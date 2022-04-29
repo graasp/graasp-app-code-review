@@ -56,6 +56,9 @@ export const DEFAULT_BOT_USE_USER_LIST_SETTING = false;
 // time to wait in ms
 export const ADAPT_HEIGHT_TIMEOUT = 50;
 
+// snackbar auto hide duration in ms
+export const SNACKBAR_AUTO_HIDE_DURATION = 6000;
+
 // special id for newly created comments
 export const NEW_COMMENT_ID = '';
 
