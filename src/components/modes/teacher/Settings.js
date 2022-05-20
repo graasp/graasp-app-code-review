@@ -22,7 +22,7 @@ import Select from '@material-ui/core/Select';
 import MenuItem from '@material-ui/core/MenuItem';
 import { withTranslation } from 'react-i18next';
 import Editor from '@monaco-editor/react';
-import { closeSettings, patchAppInstance } from '../../../actions';
+import { closeSettings, patchAppInstance, postAction } from '../../../actions';
 import Loader from '../../common/Loader';
 import {
   DEFAULT_ALLOW_COMMENTS_SETTING,
@@ -45,6 +45,7 @@ import {
 } from '../../../config/selectors';
 import { DEFAULT_SETTINGS } from '../../../reducers/appInstance';
 import { programmingLanguageSettings } from '../../../constants/programmingLanguages';
+import { EDITED_SETTINGS } from '../../../config/verbs';
 
 const CODE_SETTINGS_TAB = 'code-settings-tab';
 const DISPLAY_SETTINGS_TAB = 'display-settings-tab';
@@ -146,6 +147,7 @@ class Settings extends Component {
     t: PropTypes.func.isRequired,
     dispatchCloseSettings: PropTypes.func.isRequired,
     dispatchPatchAppInstance: PropTypes.func.isRequired,
+    dispatchPostAction: PropTypes.func.isRequired,
     i18n: PropTypes.shape({
       defaultNS: PropTypes.string,
     }).isRequired,
@@ -161,7 +163,11 @@ class Settings extends Component {
   })();
 
   handleSave = () => {
-    const { dispatchPatchAppInstance, dispatchCloseSettings } = this.props;
+    const {
+      dispatchPatchAppInstance,
+      dispatchCloseSettings,
+      dispatchPostAction,
+    } = this.props;
     const { settings } = this.state;
 
     // todo: trim string values on save
@@ -169,6 +175,13 @@ class Settings extends Component {
       data: settings,
     });
     dispatchCloseSettings();
+    // record settings changed
+    dispatchPostAction({
+      data: {
+        settings,
+      },
+      verb: EDITED_SETTINGS,
+    });
   };
 
   handleChangeSwitch =
@@ -509,6 +522,7 @@ const mapStateToProps = ({ layout, appInstance }) => ({
 const mapDispatchToProps = {
   dispatchCloseSettings: closeSettings,
   dispatchPatchAppInstance: patchAppInstance,
+  dispatchPostAction: postAction,
 };
 
 const ConnectedComponent = connect(
