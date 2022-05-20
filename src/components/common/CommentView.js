@@ -267,6 +267,7 @@ class CommentView extends Component {
     openAddReactionsMenu: false,
     openActionsMenu: false,
     openFlagDialog: false,
+    disableResponses: false,
   };
 
   converter = new Showdown.Converter({
@@ -352,6 +353,7 @@ class CommentView extends Component {
 
   handleOnQuickReply = (text) => {
     const { comment, onQuickResponse } = this.props;
+    this.setState({ disableResponses: true });
     onQuickResponse(comment, text);
   };
 
@@ -460,6 +462,7 @@ class CommentView extends Component {
       dispatchPostAppInstanceResource,
       dispatchPostAction,
     } = this.props;
+    this.setState({ disableResponses: true });
     const botUser = this.getBotUser();
     const response = getHumanIntervention(botUser, comment, userId);
     dispatchPostAppInstanceResource(response);
@@ -773,7 +776,8 @@ class CommentView extends Component {
 
   renderReplyOptions() {
     const { t, onReply, comment, classes, onDeleteThread } = this.props;
-    const { openQuickReplyMenu, quickReplyAnchorEl } = this.state;
+    const { openQuickReplyMenu, quickReplyAnchorEl, disableResponses } =
+      this.state;
     const { options = null } = comment.data;
 
     let replyButtons = null;
@@ -787,6 +791,7 @@ class CommentView extends Component {
             className={classes.quickReplyButtons}
             variant="contained"
             color="primary"
+            disabled={disableResponses}
             onClick={() => this.handleOnQuickReply(optText)}
           >
             {optText}
@@ -821,6 +826,7 @@ class CommentView extends Component {
                 .map((optText) => (
                   <MenuItem
                     key={optText}
+                    disabled={disableResponses}
                     onClick={() => this.handleOnQuickReply(optText)}
                   >
                     {optText}
