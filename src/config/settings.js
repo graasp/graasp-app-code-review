@@ -49,11 +49,15 @@ export const DEFAULT_PENDING_FLAGS_ONLY_SETTING = true;
 export const SHOW_BOT = 'visible';
 export const HIDE_BOT = 'hidden';
 export const DEFAULT_BOT_USER_LIST_POLARITY_SETTING = HIDE_BOT;
+export const DEFAULT_BOT_USER_LIST_SORT_BY_NAME_SETTING = true;
 export const DEFAULT_BOT_USER_LIST_SETTING = [];
 export const DEFAULT_BOT_USE_USER_LIST_SETTING = false;
 
 // time to wait in ms
 export const ADAPT_HEIGHT_TIMEOUT = 50;
+
+// snackbar auto hide duration in ms
+export const SNACKBAR_AUTO_HIDE_DURATION = 6000;
 
 // special id for newly created comments
 export const NEW_COMMENT_ID = '';
